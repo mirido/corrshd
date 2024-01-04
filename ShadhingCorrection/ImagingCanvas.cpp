@@ -96,13 +96,12 @@ void ImagingCanvas::rotate(const int dir)
 		return;
 	}
 
-	// ソース画像とキャンバス回転
+	// ソース画像回転
 	const auto dirFlag = (dir < 0) ? cv::ROTATE_90_COUNTERCLOCKWISE : cv::ROTATE_90_CLOCKWISE;
 	cv::rotate(*m_pSrcImage, *m_pSrcImage, dirFlag);
-	cv::rotate(m_canvas, m_canvas, dirFlag);
 
-	// dirty area回転
-	m_dirtyArea = rotate_rect(m_dirtyArea, dir);
+	// キャンバス再設定
+	setSrcImage(m_pSrcImage);
 }
 
 /// ソース画像を参照する。

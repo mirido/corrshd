@@ -1,20 +1,10 @@
 #include "stdafx.h"
 #include "ClickedPointList.h"
 
-#include "geometryutil.h"
+#include "geometry2futil.h"
 
 // [CONF] 選択する点の数
 #define NPOINTS_MAX					4
-
-namespace
-{
-	/// ベクトルの長さを取得する。
-	double get_vec_len(const cv::Point& v)
-	{
-		return std::sqrt((double)v.x * (double)v.x + (double)v.y * (double)v.y);
-	}
-
-}	// namespace
 
 ClickedPointList::ClickedPointList()
 	: m_curIdx(-1)
@@ -75,14 +65,14 @@ void ClickedPointList::selectOrAdd(const int x, const int y)
 }
 
 /// 最も左上から時計回りの順のリストを取得する。
-std::vector<cv::Point> ClickedPointList::getClockwizeLlist() const
+std::vector<cv::Point2f> ClickedPointList::getClockwizeLlist() const
 {
-	std::vector<cv::Point> points(m_points);
+	std::vector<cv::Point2f> points(m_points);
 	return get_clockwize_list(points);
 }
 
 /// 現在選択中の座標を取得する。
-cv::Point ClickedPointList::getCurPoint() const
+cv::Point2f ClickedPointList::getCurPoint() const
 {
 	if (m_curIdx < 0) {
 		// (既存座標無し)
@@ -93,20 +83,20 @@ cv::Point ClickedPointList::getCurPoint() const
 }
 
 /// 座標列の外接矩形を取得する。
-bool ClickedPointList::getOutRect(cv::Rect& rect) const
+bool ClickedPointList::getOutRect(cv::Rect2f& rect) const
 {
-	rect = cv::Rect();
+	rect = cv::Rect2f();
 
 	if (m_points.empty()) {
 		return false;
 	}
 
-	int sx, sy, ex, ey;
+	float sx, sy, ex, ey;
 	sx = ex = m_points.front().x;
 	sy = ey = m_points.front().y;
 	const int sz = (int)m_points.size();
 	for (int i = 1; i < sz; i++) {
-		const cv::Point& pt = m_points[i];		// Alias
+		const cv::Point2f& pt = m_points[i];		// Alias
 		if (pt.x < sx) {
 			sx = pt.x;
 		}
@@ -139,10 +129,15 @@ bool ClickedPointList::getOutRect(cv::Rect& rect) const
 }
 
 /// キャンバスを90°回転する。(座標系は左手系前提)
-void ClickedPointList::rotate(const int dir)
+void ClickedPointList::rotate(const cv::Point2f& centerPt, const int dir)
 {
 	for (auto it = m_points.begin(); it != m_points.end(); it++) {
-		rotate_point(*it, dir);
+		cv::Point2f srcPt = *it;
+		srcPt.x -= centerPt.x;
+		srcPt.y -= centerPt.y;
+		*it = rotate_point(srcPt, dir);
+		it->x += centerPt.x;
+		it->x += centerPt.y;
 	}
 }
 
@@ -151,7 +146,7 @@ void ClickedPointList::rotate(const int dir)
 //
 
 /// 最も左上の座標を取得する。
-int ClickedPointList::get_most_topleft(const std::vector<cv::Point>& points)
+int ClickedPointList::get_most_topleft(const std::vector<cv::Point2f>& points)
 {
 	const int sz = (int)points.size();
 	int distMin = 0;
@@ -168,19 +163,19 @@ int ClickedPointList::get_most_topleft(const std::vector<cv::Point>& points)
 }
 
 /// 時計回りで隣の座標を取得する。
-int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::vector<cv::Point>& points)
+int ClickedPointList::get_clockwise_neighbor(const cv::Point2f& pt1, const std::vector<cv::Point2f>& points)
 {
 	const int sz = (int)points.size();
 	cv::Point2d cur_nvec;
 	int neigborIdx = -1;
 	for (int i = 0; i < sz; i++) {
-		const cv::Point& pt2 = points[i];			// Alias
+		const cv::Point2f& pt2 = points[i];		// Alias
 		if (pt2 == pt1) {
 			continue;
 		}
 
 		// 左上頂点の座標pt1から別の頂点座標p2に向かうベクトルrelVec
-		const cv::Point relVec = pt2 - pt1;
+		const cv::Point2f relVec = pt2 - pt1;
 
 		// relVecと平行な単位ベクトルevec
 		const double relVecLen = get_vec_len(relVec);
@@ -204,9 +199,9 @@ int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::ve
 }
 
 /// 最も左上から時計回りの順のリストを取得する。
-std::vector<cv::Point> ClickedPointList::get_clockwize_list(std::vector<cv::Point>& points)
+std::vector<cv::Point2f> ClickedPointList::get_clockwize_list(std::vector<cv::Point2f>& points)
 {
-	std::vector<cv::Point> cwPtList;
+	std::vector<cv::Point2f> cwPtList;
 
 	// 最も左上の点取得
 	{
@@ -221,7 +216,7 @@ std::vector<cv::Point> ClickedPointList::get_clockwize_list(std::vector<cv::Poin
 
 	// その他の点を順次取得
 	while (!points.empty()) {
-		const cv::Point& pt1 = cwPtList.back();		// Alias
+		const cv::Point2f& pt1 = cwPtList.back();		// Alias
 		const int neighborIdx = get_clockwise_neighbor(pt1, points);
 		if (neighborIdx < 0) {
 			throw std::logic_error("*** ERR ***");

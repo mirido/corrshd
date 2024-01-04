@@ -3,7 +3,9 @@
 #include "ClickedPointList.h"
 #include "ImagingContext.h"
 
+#include "imaging_op.h"
 #include "geometryutil.h"
+#include "geometry2futil.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
@@ -55,50 +57,54 @@ void ImagingContext::refreshCanvas()
 	m_imagingCanvas.cleanup();
 
 	// ガイド線描画
-	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwizeLlist();
+	const std::vector<cv::Point2f> vertexes2f = m_clickedPointList.getClockwizeLlist();
+	std::vector<cv::Point> vertexes;
+	vertexes.reserve(vertexes2f.size());
+	for (auto it = vertexes2f.begin(); it != vertexes2f.end(); it++) {
+		vertexes.push_back(cv::Point((int)(it->x), (int)(it->y)));
+	}
 	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, thickness);
 }
 
 /// キャンバスとソース画像回転
 void ImagingContext::rotate(const int dir)
 {
+	//const float cx = (float)m_srcArea.x + (float)m_srcArea.width / 2.0F;
+	//const float cy = (float)m_srcArea.y + (float)m_srcArea.height / 2.0F;
+	const float cx = (float)(m_imagingCanvas.getSrcImagePtr()->cols) / 2.0F;
+	const float cy = (float)(m_imagingCanvas.getSrcImagePtr()->rows) / 2.0F;
+	const cv::Point2f centerPt = cv::Point2f(cx, cy);
+	cout << "centerPt=" << centerPt << endl;
+
+	// ソース画像90°回転
+	// これはソース画像中心を回転軸とする回転である。
 	m_imagingCanvas.rotate(dir);
-	m_clickedPointList.rotate(dir);
+
+	// ソース領域90°回転
+	cv::Rect2f srcRect = m_srcArea;
+	srcRect.x -= cx;
+	srcRect.y -= cy;
+	rotate_rect(srcRect, dir);
+	srcRect.x += cx;
+	srcRect.y += cy;
+	m_srcArea = srcRect;
+
+	// 既存座標リスト内容90°回転
+	m_clickedPointList.rotate(centerPt, dir);
 }
 
 /// 歪み補正
 bool ImagingContext::correctDistortion(const double relWidth, const double relHeight, const int outputWidth)
 {
-	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwizeLlist();
-	if (vertexes.size() != 4) {
+	const std::vector<cv::Point2f> srcPts = m_clickedPointList.getClockwizeLlist();
+	if (srcPts.size() != 4) {
 		return false;
 	}
+	const int npts = (int)srcPts.size();
 
-	// 変換前の4点
-	cv::Point2f srcPts[4];
-	for (int i = 0; i < 4; i++) {
-		srcPts[i].x = (float)vertexes[i].x;
-		srcPts[i].y = (float)vertexes[i].y;
-	}
-
-	// 変換後の4点
-	const int nOutWidth = outputWidth;
-	const int nOutHeight = (int)std::round(((double)outputWidth * relHeight) / relWidth);
-	const float left = (float)nOutWidth;
-	const float btm = (float)nOutHeight;
-	cv::Point2f dstPts[4];
-	dstPts[0] = cv::Point2f(0.0F, 0.0F);
-	dstPts[1] = cv::Point2f(left, 0.0F);
-	dstPts[2] = cv::Point2f(left, btm);
-	dstPts[3] = cv::Point2f(0.0f, btm);
-
-	// 変換行列取得
-	const cv::Mat M = cv::getPerspectiveTransform(srcPts, dstPts);
-
-	// 変換実施
-	cv::Ptr<cv::Mat> pTransformed;
-	cv::warpPerspective(*(m_imagingCanvas.getSrcImagePtr()), *pTransformed, M, cv::Size(nOutWidth, nOutHeight));
-
+	cv::Mat dstImg;
+	warp_image(*(m_imagingCanvas.getSrcImagePtr()), dstImg, &(srcPts[0]), npts, relWidth, relHeight, outputWidth);
+	*(m_imagingCanvas.getSrcImagePtr()) = dstImg;
 	return true;
 }
 

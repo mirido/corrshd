@@ -1,6 +1,12 @@
 #include "stdafx.h"
 #include "geometryutil.h"
 
+/// ベクトルの長さを取得する。
+double get_vec_len(const cv::Point& v)
+{
+	return std::sqrt((double)v.x * (double)v.x + (double)v.y * (double)v.y);
+}
+
 /// 空の矩形か否か判定する。
 bool is_empty_rect(const cv::Rect& rect)
 {

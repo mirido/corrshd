@@ -183,9 +183,21 @@ int main(const int argc, char* argv[])
 		}
 
 		// キーボードコマンド処理
-		if (c == 'r') {
+		switch (c) {
+		case 'r':
 			// 時計回りに90度回転
-
+			ctx.rotate(1);
+			break;
+		case 'R':
+			// 反時計回りに90度回転
+			ctx.rotate(-1);
+			break;
+		case 'z':
+			g_bShowAsSameMag = !g_bShowAsSameMag;
+			break;
+		default:
+			/*pass*/
+			break;
 		}
 
 		// 再表示
@@ -194,6 +206,7 @@ int main(const int argc, char* argv[])
 		};
 		show_image(IMAGE_WND_NAME, ctx.refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
 		ctx.setDispGeometry(srcArea, dispWidth);
+		ctx.refreshCanvas();
 	}
 
 	return 0;
