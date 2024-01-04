@@ -5,7 +5,6 @@
 
 #include "imaging_op.h"
 #include "geometryutil.h"
-#include "geometry2futil.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
@@ -51,59 +50,51 @@ void ImagingContext::selectOrAdd(const int x, const int y)
 /// キャンバス更新
 void ImagingContext::refreshCanvas()
 {
-	const int thickness = std::min(1, m_srcArea.width / m_dispWidth);
+	const double magToDisp = (double)m_srcArea.width / (double)m_dispWidth;
 
 	// 描画済みのガイド線消去
 	m_imagingCanvas.cleanup();
 
 	// ガイド線描画
-	const std::vector<cv::Point2f> vertexes2f = m_clickedPointList.getClockwizeLlist();
-	std::vector<cv::Point> vertexes;
-	vertexes.reserve(vertexes2f.size());
-	for (auto it = vertexes2f.begin(); it != vertexes2f.end(); it++) {
-		vertexes.push_back(cv::Point((int)(it->x), (int)(it->y)));
-	}
-	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, thickness);
+	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwizeLlist();
+	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, magToDisp);
 }
 
 /// キャンバスとソース画像回転
 void ImagingContext::rotate(const int dir)
 {
-	//const float cx = (float)m_srcArea.x + (float)m_srcArea.width / 2.0F;
-	//const float cy = (float)m_srcArea.y + (float)m_srcArea.height / 2.0F;
-	const float cx = (float)(m_imagingCanvas.getSrcImagePtr()->cols) / 2.0F;
-	const float cy = (float)(m_imagingCanvas.getSrcImagePtr()->rows) / 2.0F;
-	const cv::Point2f centerPt = cv::Point2f(cx, cy);
-	cout << "centerPt=" << centerPt << endl;
-
 	// ソース画像90°回転
-	// これはソース画像中心を回転軸とする回転である。
-	m_imagingCanvas.rotate(dir);
+	// 画像は回転を経ても第1象限にあり続ける。
+	cv::Point ofsAfterRot;
+	m_imagingCanvas.rotate(dir, ofsAfterRot);
 
 	// ソース領域90°回転
-	cv::Rect2f srcRect = m_srcArea;
-	srcRect.x -= cx;
-	srcRect.y -= cy;
-	rotate_rect(srcRect, dir);
-	srcRect.x += cx;
-	srcRect.y += cy;
-	m_srcArea = srcRect;
+	// 画像と同じく回転を経ても第1象限とする。
+	rotate_rect(m_srcArea, dir);
+	m_srcArea.x += ofsAfterRot.x;
+	m_srcArea.y += ofsAfterRot.y;
 
 	// 既存座標リスト内容90°回転
-	m_clickedPointList.rotate(centerPt, dir);
+	m_clickedPointList.rotate(dir, ofsAfterRot);
 }
 
 /// 歪み補正
 bool ImagingContext::correctDistortion(const double relWidth, const double relHeight, const int outputWidth)
 {
-	const std::vector<cv::Point2f> srcPts = m_clickedPointList.getClockwizeLlist();
-	if (srcPts.size() != 4) {
+	const int nptsExp = 4;
+
+	const std::vector<cv::Point> srcPts = m_clickedPointList.getClockwizeLlist();
+	if (srcPts.size() != nptsExp) {
 		return false;
 	}
-	const int npts = (int)srcPts.size();
+
+	cv::Point2f srcPts2f[nptsExp];
+	for (int i = 0; i < nptsExp; i++) {
+		srcPts2f[i] = cv::Point2f((float)srcPts[i].x, (float)srcPts[i].y);
+	}
 
 	cv::Mat dstImg;
-	warp_image(*(m_imagingCanvas.getSrcImagePtr()), dstImg, &(srcPts[0]), npts, relWidth, relHeight, outputWidth);
+	warp_image(*(m_imagingCanvas.getSrcImagePtr()), dstImg, srcPts2f, nptsExp, relWidth, relHeight, outputWidth);
 	*(m_imagingCanvas.getSrcImagePtr()) = dstImg;
 	return true;
 }

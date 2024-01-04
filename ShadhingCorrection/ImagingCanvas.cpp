@@ -35,8 +35,10 @@ bool ImagingCanvas::setSrcImage(cv::Ptr<cv::Mat> pSrcImage)
 }
 
 /// キャンバスに多角形を描画する。
-void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int thickness)
+void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius_, const double magToDisp)
 {
+	const int thickness = std::max(1, (int)std::round(magToDisp));
+		
 	if (vertexes.empty()) {
 		return;
 	}
@@ -49,6 +51,7 @@ void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const 
 	cv::polylines(m_canvas, ppts, npts, 1, true, GUIDE_COLOR, thickness);
 
 	// 頂点マーカー描画
+	const int vtxMarkerRadius = (int)std::round(vtxMarkerRadius_ * magToDisp);
 	int sxMin = vertexes.front().x;
 	int syMin = vertexes.front().y;
 	int exMax = vertexes.front().x;
@@ -90,15 +93,30 @@ void ImagingCanvas::cleanup()
 }
 
 /// キャンバスを90°回転する。(座標系は左手系前提)
-void ImagingCanvas::rotate(const int dir)
+void ImagingCanvas::rotate(const int dir, cv::Point& ofsAfterRot)
 {
 	if (dir == 0) {
+		ofsAfterRot = cv::Point(0, 0);
 		return;
 	}
 
 	// ソース画像回転
 	const auto dirFlag = (dir < 0) ? cv::ROTATE_90_COUNTERCLOCKWISE : cv::ROTATE_90_CLOCKWISE;
-	cv::rotate(*m_pSrcImage, *m_pSrcImage, dirFlag);
+	cv::Mat dstImg;
+	cv::rotate(*m_pSrcImage, dstImg, dirFlag);
+	*m_pSrcImage = dstImg;
+
+	// 回転結果を第1象限に平行移動するオフセットofsAfterRot
+	if (dir < 0) {
+		// (左手系で反時計回り)
+		// 第4象限から移動するオフセットを設定
+		ofsAfterRot = cv::Point(0, m_pSrcImage->rows);
+	}
+	else {
+		// (左手系で時計回り)
+		// 第2象限から移動するオフセットを設定
+		ofsAfterRot = cv::Point(m_pSrcImage->cols, 0);
+	}
 
 	// キャンバス再設定
 	setSrcImage(m_pSrcImage);

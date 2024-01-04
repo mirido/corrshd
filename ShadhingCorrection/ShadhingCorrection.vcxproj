@@ -161,7 +161,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ClickedPointList.cpp" />
-    <ClCompile Include="geometry2futil.cpp" />
     <ClCompile Include="ImagingCanvas.cpp" />
     <ClCompile Include="ImagingContext.cpp" />
     <ClCompile Include="imaging_op.cpp" />
@@ -185,7 +184,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClickedPointList.h" />
-    <ClInclude Include="geometry2futil.h" />
     <ClInclude Include="ImagingCanvas.h" />
     <ClInclude Include="ImagingContext.h" />
     <ClInclude Include="imaging_op.h" />

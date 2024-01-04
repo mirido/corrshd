@@ -13,13 +13,13 @@ public:
 	bool setSrcImage(cv::Ptr<cv::Mat> pSrcImage);
 
 	/// キャンバスに多角形を描画する。
-	void drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int thickness);
+	void drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const double magToDisp);
 
 	/// キャンバスへの描画を消去する。
 	void cleanup();
 
 	/// キャンバスを90°回転する。(座標系は左手系前提)
-	void rotate(const int dir);
+	void rotate(const int dir, cv::Point& ofsAfterRot);
 
 	/// ソース画像を参照する。
 	cv::Ptr<cv::Mat> getSrcImagePtr();

@@ -207,6 +207,13 @@ int main(const int argc, char* argv[])
 		show_image(IMAGE_WND_NAME, ctx.refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
 		ctx.setDispGeometry(srcArea, dispWidth);
 		ctx.refreshCanvas();
+
+		// PolyLine描画結果の画面表示
+		// 現状のインターフェース仕様ではPolyLine描画までに
+		// show_image()→ImagingContext::setDispGeometry()→ImagingContext::refreshCanvas()
+		// という依存関係があるため、PolyLine描画結果の表示のためにもう一回
+		// show_image()を呼ぶ必要がある。
+		show_image(IMAGE_WND_NAME, ctx.refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
 	}
 
 	return 0;

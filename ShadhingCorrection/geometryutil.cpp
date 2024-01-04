@@ -41,7 +41,7 @@ cv::Rect rotate_rect(const cv::Rect& rect, const int dir)
 	const cv::Point spt2 = rotate_point(spt, dir);
 	const cv::Point ept2 = rotate_point(ept, dir);
 
-	return cv::Rect(spt.x, spt.y, ept.x - spt.x, ept.y - spt.x);
+	return cv::Rect(spt2.x, spt2.y, ept2.x - spt2.x, ept2.y - spt2.x);
 }
 
 /// 矩形のクリッピングを行う。
