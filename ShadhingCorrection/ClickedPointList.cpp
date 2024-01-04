@@ -36,7 +36,7 @@ int ClickedPointList::selectFromExisting(const int x, const int y, int& nearestD
 	int nearestIdx = -1;
 	for (int i = 0; i < sz; i++) {
 		const cv::Point& pt = m_points[i];		// Alias
-		const int dist = std::min(std::abs(x - pt.x), std::abs(y - pt.y));
+		const int dist = std::abs(x - pt.x) + std::abs(y - pt.y);
 		if (nearestIdx < 0 || dist < nearestDist) {
 			nearestDist = dist;
 			nearestIdx = i;
@@ -192,10 +192,9 @@ int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::ve
 
 		if (neigborIdx < 0 || ipr < 0.0) {
 			// (p2はp1と異なる最初の座標、またはp2はp1から見てcur_nvecが規定する平面の反時計回り側)
-
 			// cur_nvec更新
 			// ベクトルrelVecの左手系の座標系における時計回り90度回転(平面(直線)p1-p2の法線ベクトル)
-			cur_nvec = cv::Point2d(-evec.y, evec.y);
+			cur_nvec = rotate_point(evec, 1);
 
 			// p2のindexを記憶
 			neigborIdx = i;
