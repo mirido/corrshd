@@ -92,7 +92,7 @@ void ImagingCanvas::cleanup()
 	}
 }
 
-/// キャンバスを90°回転する。(座標系は左手系前提)
+/// キャンバスを90°回転する。(座標系は左上原点前提)
 void ImagingCanvas::rotate(const int dir, cv::Point& ofsAfterRot)
 {
 	if (dir == 0) {
@@ -108,15 +108,29 @@ void ImagingCanvas::rotate(const int dir, cv::Point& ofsAfterRot)
 
 	// 回転結果を第1象限に平行移動するオフセットofsAfterRot
 	if (dir < 0) {
-		// (左手系で反時計回り)
+		// (左上原点で反時計回り)
 		// 第4象限から移動するオフセットを設定
 		ofsAfterRot = cv::Point(0, m_pSrcImage->rows);
 	}
 	else {
-		// (左手系で時計回り)
+		// (左上原点で時計回り)
 		// 第2象限から移動するオフセットを設定
 		ofsAfterRot = cv::Point(m_pSrcImage->cols, 0);
 	}
+	/*
+		(NOTE)
+		OpenCVを含め、画像上の座標系は一般に左上原点である。
+		このため、原点を共有する領域
+			O --- A
+			|     |
+			C --- B
+		を画像とともに90°回転させた場合、
+		反時計回りなら回転後のAを原点(0, 0)に移す平行移動、
+		時計回りなら回転後のCを原点(0, 0)に移す平行移動
+		を回転後にそれぞれ行なう必要がある。
+		(さもないと、回転結果の左上が原点にならない。)
+		上のオフセットofsAfterRotはこの平行移動を表す。
+	*/
 
 	// キャンバス再設定
 	setSrcImage(m_pSrcImage);

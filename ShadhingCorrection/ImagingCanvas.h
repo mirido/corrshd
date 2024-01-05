@@ -18,7 +18,7 @@ public:
 	/// キャンバスへの描画を消去する。
 	void cleanup();
 
-	/// キャンバスを90°回転する。(座標系は左手系前提)
+	/// キャンバスを90°回転する。(座標系は左上原点前提)
 	void rotate(const int dir, cv::Point& ofsAfterRot);
 
 	/// ソース画像を参照する。

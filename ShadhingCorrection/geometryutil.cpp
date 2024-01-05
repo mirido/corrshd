@@ -13,7 +13,7 @@ bool is_empty_rect(const cv::Rect& rect)
 	return (rect.width <= 0 || rect.height <= 0);
 }
 
-/// À•W‚ð90‹‰ñ“]‚·‚éB(À•WŒn‚Í¶ŽèŒn‘O’ñ)
+/// À•W‚ð90‹‰ñ“]‚·‚éB(À•WŒn‚Í¶ãŒ´“_‘O’ñ)
 cv::Point rotate_point(const cv::Point& pt, const int dir)
 {
 	cv::Point pt2;
@@ -32,7 +32,7 @@ cv::Point rotate_point(const cv::Point& pt, const int dir)
 	return pt2;
 }
 
-/// ‹éŒ`‚ð90‹‰ñ“]‚·‚éB(À•WŒn‚Í¶ŽèŒn‘O’ñ)
+/// ‹éŒ`‚ð90‹‰ñ“]‚·‚éB(À•WŒn‚Í¶ãŒ´“_‘O’ñ)
 cv::Rect rotate_rect(const cv::Rect& rect, const int dir)
 {
 	const cv::Point spt(rect.x, rect.y);

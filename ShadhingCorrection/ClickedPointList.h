@@ -23,7 +23,7 @@ struct ClickedPointList
 	/// 座標列の外接矩形を取得する。
 	bool getOutRect(cv::Rect& rect) const;
 
-	/// キャンバスを90°回転する。(座標系は左手系前提)
+	/// キャンバスを90°回転する。(座標系は左上原点前提)
 	void rotate(const int dir, const cv::Point& ofsAfterRot);
 
 private:

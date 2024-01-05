@@ -128,7 +128,7 @@ bool ClickedPointList::getOutRect(cv::Rect& rect) const
 	return true;
 }
 
-/// キャンバスを90°回転する。(座標系は左手系前提)
+/// キャンバスを90°回転する。(座標系は左上原点ｌｌｌｌｌ前提)
 void ClickedPointList::rotate(const int dir, const cv::Point& ofsAfterRot)
 {
 	for (auto it = m_points.begin(); it != m_points.end(); it++) {
@@ -186,7 +186,7 @@ int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::ve
 		if (neigborIdx < 0 || ipr < 0.0) {
 			// (p2はp1と異なる最初の座標、またはp2はp1から見てcur_nvecが規定する平面の反時計回り側)
 			// cur_nvec更新
-			// ベクトルrelVecの左手系の座標系における時計回り90度回転(平面(直線)p1-p2の法線ベクトル)
+			// ベクトルrelVecの左上原点の座標系における時計回り90度回転(平面(直線)p1-p2の法線ベクトル)
 			cur_nvec = rotate_point(evec, 1);
 
 			// p2のindexを記憶
