@@ -24,6 +24,9 @@ public:
 	/// 座標追加
 	void selectOrAdd(const int x, const int y);
 
+	/// CurPos移動
+	void moveCurPos(const int dx, const int dy);
+
 	/// キャンバス再描画
 	void refreshCanvas();
 

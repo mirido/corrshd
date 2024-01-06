@@ -14,6 +14,9 @@ struct ClickedPointList
 	/// 座標を選択または追加する。
 	void selectOrAdd(const int x, const int y);
 
+	/// CurPos移動
+	void moveCurPos(const int dx, const int dy);
+
 	/// 最も左上から時計回りの順のリストを取得する。
 	std::vector<cv::Point> getClockwizeLlist() const;
 

@@ -48,7 +48,9 @@ void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const 
 	npts[0] = (int)vertexes.size();
 	const cv::Point* ppts[1];
 	ppts[0] = &(vertexes[0]);
-	cv::polylines(m_canvas, ppts, npts, 1, true, GUIDE_COLOR, thickness);
+	if (npts[0] >= 2) {
+		cv::polylines(m_canvas, ppts, npts, 1, true, GUIDE_COLOR, thickness);
+	}
 
 	// 頂点マーカー描画
 	const int vtxMarkerRadius = (int)std::round(vtxMarkerRadius_ * magToDisp);

@@ -1,9 +1,12 @@
 ﻿#include "stdafx.h"
 
+#include <opencv2/highgui/highgui_c.h>	/* cvGetWindowHandle()導入目的 */
+
 #include "ImagingCanvas.h"
 #include "ClickedPointList.h"
 #include "ImagingContext.h"
 
+#include "cv_keycode.h"
 #include "geometryutil.h"
 #include "osal.h"
 
@@ -34,8 +37,6 @@ namespace
 	}
 
 	/// 画像を画面に収まるように表示する。
-	/// 戻り値は縮小率。
-	/// (表示画像上で拾ったマウスクリック座標に対し、戻り値を掛けた値がソース画像上の座標となる。)
 	void show_image(
 		const cv::String& winname,
 		cv::Mat mat,
@@ -162,13 +163,64 @@ int main(const int argc, char* argv[])
 	cv::setMouseCallback(IMAGE_WND_NAME, mouse_callback, (void*)&ctx);
 
 	int prevKeyIn = '\0';
+	int keyWait = 0;
+	const int KEY_WAIT_TIMEOUT = 20;
 	for (;;) {
 		// 終了判定
 		// "#<CR>" で終了
-		const int c = cv::waitKey(0);
-		if (c < 0) {
-			// (画像ウィンドウが閉じられた)
+		const int c = cv::waitKeyEx(keyWait);
+		cout << "Key code=0x" << std::setbase(16) << std::setfill('0') << std::setw(8) << c << endl;
+
+		// カーソルキー押下の処理
+		switch (c) {
+		case (int)CVKEY::CURSOR_LEFT:
+			ctx.moveCurPos(-1, 0);
+			keyWait = KEY_WAIT_TIMEOUT;
 			break;
+		case (int)CVKEY::CURSOR_UP:
+			ctx.moveCurPos(0, -1);
+			keyWait = KEY_WAIT_TIMEOUT;
+			break;
+		case (int)CVKEY::CURSOR_RIGHT:
+			ctx.moveCurPos(1, 0);
+			keyWait = KEY_WAIT_TIMEOUT;
+			break;
+		case (int)CVKEY::CURSOR_DOWN:
+			ctx.moveCurPos(0, 1);
+			keyWait = KEY_WAIT_TIMEOUT;
+			break;
+		default:
+			keyWait = 0;
+			break;
+		}
+		if (keyWait > 0) {
+			// カーソルキー押下中は画像のリフレッシュを行わないこととする。
+			continue;
+		}
+
+		// 終了判定
+		if (c < 0) {
+			// (キー入力待ちがタイムアウトしたか、画像ウィンドウが閉じられた)
+			void* wndHandle = NULL;
+			try {
+				wndHandle = cvGetWindowHandle(IMAGE_WND_NAME);
+			}
+			catch (cv::Exception& e) {
+				const char* const err_msg = e.what();
+				cerr << err_msg << endl;
+				wndHandle = NULL;
+			}
+			if (wndHandle == NULL) {
+				// (画像ウィンドウが閉じられた)
+				break;
+			}
+			/*
+				(NOTE)
+				画像ウィンドウが閉じられたか否かを判定するにあたり、
+				C言語インターフェースであるcvGetWindowHandle()が将来廃止になった場合は
+				cv::waitKeyEx()が-1を返したのが即座だったか否かをもって
+				判定する方法を検討する。
+			*/
 		}
 		if (strchr("\r\n", c) == NULL) {
 			prevKeyIn = c;
@@ -182,7 +234,7 @@ int main(const int argc, char* argv[])
 			}
 		}
 
-		// キーボードコマンド処理
+		// カーソルキー以外のキーボードコマンド処理
 		switch (c) {
 		case 'r':
 			// 時計回りに90度回転
@@ -196,11 +248,11 @@ int main(const int argc, char* argv[])
 			g_bShowAsSameMag = !g_bShowAsSameMag;
 			break;
 		default:
-			/*pass*/
+			cout << "Unknown key code. (0x" << std::setbase(16) << std::setfill('0') << std::setw(8) << c << ")" << endl;
 			break;
 		}
 
-		// 再表示
+		// 表示のリフレッシュ
 		if (!ctx.getCurPt(centerPt)) {
 			g_bShowAsSameMag = false;
 		};

@@ -64,6 +64,16 @@ void ClickedPointList::selectOrAdd(const int x, const int y)
 	}
 }
 
+/// CurPos移動
+void ClickedPointList::moveCurPos(const int dx, const int dy)
+{
+	if (m_curIdx >= 0) {
+		assert(0 <= m_curIdx && (size_t)m_curIdx < m_points.size());
+		m_points[m_curIdx].x += dx;
+		m_points[m_curIdx].y += dy;
+	}
+}
+
 /// 最も左上から時計回りの順のリストを取得する。
 std::vector<cv::Point> ClickedPointList::getClockwizeLlist() const
 {
@@ -200,6 +210,11 @@ int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::ve
 std::vector<cv::Point> ClickedPointList::get_clockwize_list(std::vector<cv::Point>& points)
 {
 	std::vector<cv::Point> cwPtList;
+
+	// pointsが空なら空のリストを返す
+	if (points.empty()) {
+		return cwPtList;
+	}
 
 	// 最も左上の点取得
 	{

@@ -157,6 +157,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OPENCV_LIB_x64)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -184,6 +185,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClickedPointList.h" />
+    <ClInclude Include="cv_keycode.h" />
     <ClInclude Include="ImagingCanvas.h" />
     <ClInclude Include="ImagingContext.h" />
     <ClInclude Include="imaging_op.h" />

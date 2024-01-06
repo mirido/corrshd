@@ -47,6 +47,12 @@ void ImagingContext::selectOrAdd(const int x, const int y)
 	m_clickedPointList.selectOrAdd(srcX, srcY);
 }
 
+/// CurPos移動
+void ImagingContext::moveCurPos(const int dx, const int dy)
+{
+	m_clickedPointList.moveCurPos(dx, dy);
+}
+
 /// キャンバス更新
 void ImagingContext::refreshCanvas()
 {
