@@ -8,20 +8,23 @@ struct ClickedPointList
 
 	void clear();
 
-	/// (x, y)に最も近い既存要素を探す。
-	int selectFromExisting(const int x, const int y, int& nearestDist) const;
+	/// 指定座標に最も近い既存座標を選択する。
+	int selectFromExisting(const cv::Point& srcPt, int& nearestDist) const;
 
-	/// 座標を選択または追加する。
-	void selectOrAdd(const int x, const int y);
-
-	/// CurPos移動
-	void moveCurPos(const int dx, const int dy);
+	/// 座標を追加または移動する。
+	void addOrMovePoint(const cv::Point& srcPt);
 
 	/// 最も左上から時計回りの順のリストを取得する。
 	std::vector<cv::Point> getClockwizeLlist() const;
 
-	/// 現在選択中の座標を取得する。
-	cv::Point getCurPoint() const;
+	/// Cureent indexを設定する。
+	void setCurIdx(const int idx);
+
+	/// Current pointを移動する。
+	bool moveCurPoint(const int dx, const int dy);
+
+	/// Current pointを取得する。
+	bool getCurPoint(cv::Point& curPt) const;
 
 	/// 座標列の外接矩形を取得する。
 	bool getOutRect(cv::Rect& rect) const;

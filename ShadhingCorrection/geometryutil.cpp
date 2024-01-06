@@ -32,16 +32,27 @@ cv::Point rotate_point(const cv::Point& pt, const int dir)
 	return pt2;
 }
 
+/// 2点を含む矩形を作る。
+cv::Rect make_outrect(const cv::Point& p1, const cv::Point& p2)
+{
+	const int sx = std::min(p1.x, p2.x);
+	const int sy = std::min(p1.y, p2.y);
+	const int lx = std::max(p1.x, p2.x);
+	const int ly = std::max(p1.y, p2.y);
+	return cv::Rect(sx, sy, lx - sx + 1, ly - sy + 1);
+}
+
 /// 矩形を90°回転する。(座標系は左上原点前提)
 cv::Rect rotate_rect(const cv::Rect& rect, const int dir)
 {
-	const cv::Point spt(rect.x, rect.y);
-	const cv::Point ept(rect.x + rect.width, rect.y + rect.height);
+	const int sx = rect.x;
+	const int sy = rect.y;
+	const int lx = rect.x + rect.width - 1;
+	const int ly = rect.y + rect.height - 1;
 
-	const cv::Point spt2 = rotate_point(spt, dir);
-	const cv::Point ept2 = rotate_point(ept, dir);
-
-	return cv::Rect(spt2.x, spt2.y, ept2.x - spt2.x, ept2.y - spt2.x);
+	const cv::Point spt2 = rotate_point(cv::Point(sx, sy), dir);
+	const cv::Point lpt2 = rotate_point(cv::Point(lx, ly), dir);
+	return make_outrect(spt2, lpt2);
 }
 
 /// 矩形のクリッピングを行う。

@@ -36,14 +36,13 @@ namespace
 		cerr << "Usage: " << PROG_NAME << " <image-file> <target-relative-width> <target-relative-height> [ <output-width> ]" << endl;
 	}
 
-	/// 画像を画面に収まるように表示する。
-	void show_image(
-		const cv::String& winname,
-		cv::Mat mat,
+	/// 画面に収まるソース画像範囲と表示サイズを取得する。
+	void get_src_area_and_disp_size(
+		const cv::Size& srcImgSize,
 		const bool bAsSameMag,
 		const cv::Point& centerPt,
 		cv::Rect& srcArea,
-		int& dispWidth
+		cv::Size& dispSize
 	)
 	{
 		// プライマリモニターの実作業領域サイズ取得
@@ -57,38 +56,56 @@ namespace
 		workAreaWidth -= 2 * IMAGE_WND_MARGIN_HORZ;
 		workAreaHeight -= 2 * IMAGE_WND_MARGIN_VERT;
 
-		// 表示
+		// 表示範囲とサイズ決定
 		if (bAsSameMag) {
+			// (等倍表示モード)
 			// 画像ウィンドウが画面に治まるサイズを算出
 			const int sx = centerPt.x - workAreaWidth / 2;
 			const int sy = centerPt.y - workAreaHeight / 2;
 			const int ex = sx + workAreaWidth;
 			const int ey = sy + workAreaHeight;
 			srcArea = cv::Rect(sx, sy, ex - sx, ey - sy);
-			srcArea = clip_rect_into_image(srcArea, mat.cols, mat.rows);
+			srcArea = clip_rect_into_image(srcArea, srcImgSize.width, srcImgSize.height);
 
-			// 切り抜き
-			cv::Mat ROISrc = cv::Mat(mat, srcArea);
-			dispWidth = ROISrc.cols;
-
-			// 表示
-			cv::imshow(winname, ROISrc);
+			// 表示サイズ決定
+			dispSize = cv::Size(srcArea.width, srcArea.height);
 		}
 		else {
+			// (全体表示モード)
 			// 画像ウィンドウが画面に治まる倍率を算出
-			const double ratioHorz = (double)mat.cols / (double)workAreaWidth;
-			const double ratioVert = (double)mat.rows / (double)workAreaHeight;
+			const double ratioHorz = (double)srcImgSize.width / (double)workAreaWidth;
+			const double ratioVert = (double)srcImgSize.height / (double)workAreaHeight;
 			const double ratio = std::max(1.0, std::max(ratioHorz, ratioVert));
-			srcArea = cv::Rect(0, 0, mat.cols, mat.rows);
+			srcArea = cv::Rect(0, 0, srcImgSize.width, srcImgSize.height);
 
-			// リサイズ
-			cv::Mat resized;
-			cv::resize(mat, resized, cv::Size(), 1.0 / ratio, 1.0 / ratio);
-			dispWidth = resized.cols;
-
-			// 表示
-			cv::imshow(winname, resized);
+			// 表示サイズ決定
+			const double dispWidth = (double)srcArea.width / ratio;
+			const double dispHeight = (double)srcArea.height / ratio;
+			dispSize = cv::Size((int)dispWidth, (int)dispHeight);
 		}
+	}
+
+	/// 画像表示を更新する。
+	void refresh_disp(ImagingContext& ctx, bool& bShowAsSameMag)
+	{
+		// 最新のソース画像サイズ取得
+		// 90°回転等の操作で変化し得るため、改めて取得し直す必要がある。
+		cv::Ptr<cv::Mat> pSrcImage = ctx.refSrcImage();
+		const cv::Size srcImgSize = cv::Size(pSrcImage->cols, pSrcImage->rows);
+
+		// 再描画
+		cv::Point centerPt;
+		if (!ctx.getCurPoint(centerPt)) {
+			bShowAsSameMag = false;
+		};
+		cv::Rect srcArea;
+		cv::Size dispSize;
+		get_src_area_and_disp_size(srcImgSize, bShowAsSameMag, centerPt, srcArea, dispSize);
+		ctx.setupCanvas(srcArea, dispSize);
+		ctx.refreshCanvas();
+
+		// 再表示
+		cv::imshow(IMAGE_WND_NAME, ctx.refCanvas());
 	}
 
 }	// namespace
@@ -110,17 +127,12 @@ namespace
 
 		ImagingContext* const pCtx = static_cast<ImagingContext*>(userdata);
 
-		cv::Point centerPt;
-		pCtx->getCurPt(centerPt);
-
-		cv::Rect srcArea;
-		int dispWidth;
 		switch (event) {
 		case cv::EVENT_LBUTTONDOWN:
 			cout << "Left mouse button is pressed. (x=" << x << ", y=" << y << ")" << endl;
-			pCtx->selectOrAdd(x, y);
+			pCtx->addOrMovePoint(x, y);
 			pCtx->refreshCanvas();
-			show_image(IMAGE_WND_NAME, pCtx->refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
+			cv::imshow(IMAGE_WND_NAME, pCtx->refCanvas());
 			break;
 		default:
 			/*pass*/
@@ -146,17 +158,13 @@ int main(const int argc, char* argv[])
 	cv::Ptr<cv::Mat> pSrcImage(new cv::Mat());
 	*pSrcImage = cv::imread(imageFile);
 
-	// 表示
-	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
-	cv::Point centerPt;
-	cv::Rect srcArea;
-	int dispWidth;
-	show_image(IMAGE_WND_NAME, *pSrcImage, g_bShowAsSameMag, centerPt, srcArea, dispWidth);
-
 	// 画像操作準備
 	ImagingContext ctx;
 	ctx.setSrcImage(pSrcImage);
-	ctx.setDispGeometry(srcArea, dispWidth);
+
+	// 表示
+	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
+	refresh_disp(ctx, g_bShowAsSameMag);
 
 	// マウスイベントコールバック登録
 	g_mainThreadID = get_thread_id();	// チェック用
@@ -174,19 +182,19 @@ int main(const int argc, char* argv[])
 		// カーソルキー押下の処理
 		switch (c) {
 		case (int)CVKEY::CURSOR_LEFT:
-			ctx.moveCurPos(-1, 0);
+			ctx.moveCurPoint(-1, 0);
 			keyWait = KEY_WAIT_TIMEOUT;
 			break;
 		case (int)CVKEY::CURSOR_UP:
-			ctx.moveCurPos(0, -1);
+			ctx.moveCurPoint(0, -1);
 			keyWait = KEY_WAIT_TIMEOUT;
 			break;
 		case (int)CVKEY::CURSOR_RIGHT:
-			ctx.moveCurPos(1, 0);
+			ctx.moveCurPoint(1, 0);
 			keyWait = KEY_WAIT_TIMEOUT;
 			break;
 		case (int)CVKEY::CURSOR_DOWN:
-			ctx.moveCurPos(0, 1);
+			ctx.moveCurPoint(0, 1);
 			keyWait = KEY_WAIT_TIMEOUT;
 			break;
 		default:
@@ -194,7 +202,7 @@ int main(const int argc, char* argv[])
 			break;
 		}
 		if (keyWait > 0) {
-			// カーソルキー押下中は画像のリフレッシュを行わないこととする。
+			// カーソルキー押下中は画像表示を更新しないこととする。
 			continue;
 		}
 
@@ -252,20 +260,8 @@ int main(const int argc, char* argv[])
 			break;
 		}
 
-		// 表示のリフレッシュ
-		if (!ctx.getCurPt(centerPt)) {
-			g_bShowAsSameMag = false;
-		};
-		show_image(IMAGE_WND_NAME, ctx.refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
-		ctx.setDispGeometry(srcArea, dispWidth);
-		ctx.refreshCanvas();
-
-		// PolyLine描画結果の画面表示
-		// 現状のインターフェース仕様ではPolyLine描画までに
-		// show_image()→ImagingContext::setDispGeometry()→ImagingContext::refreshCanvas()
-		// という依存関係があるため、PolyLine描画結果の表示のためにもう一回
-		// show_image()を呼ぶ必要がある。
-		show_image(IMAGE_WND_NAME, ctx.refCanvas(), g_bShowAsSameMag, centerPt, srcArea, dispWidth);
+		// 画像表示更新
+		refresh_disp(ctx, g_bShowAsSameMag);
 	}
 
 	return 0;

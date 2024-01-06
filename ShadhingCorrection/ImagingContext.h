@@ -3,11 +3,9 @@
 struct ImagingContext
 {
 private:
+	cv::Ptr<cv::Mat> m_pSrcImage;
 	ImagingCanvas m_imagingCanvas;
 	ClickedPointList m_clickedPointList;
-
-	cv::Rect m_srcArea;
-	int m_dispWidth;
 
 public:
 	ImagingContext();
@@ -15,17 +13,29 @@ public:
 	/// ソース画像設定
 	void setSrcImage(cv::Ptr<cv::Mat> pSrcImage);
 
-	/// 表示仕様設定
-	void setDispGeometry(const cv::Rect& srcArea, const int dispWidth);
+	/// ソース画像参照
+	cv::Ptr<cv::Mat> refSrcImage();
+
+	/// キャンバス設定
+	bool setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSize);
+
+	/// キャンバス参照
+	cv::Mat& refCanvas();
 
 	/// 座標初期化
 	void clearPointList();
 
-	/// 座標追加
-	void selectOrAdd(const int x, const int y);
+	/// 既存座標選択
+	bool selectExistingPointIF(const int dispX, const int dispY);
 
-	/// CurPos移動
-	void moveCurPos(const int dx, const int dy);
+	/// 座標の追加または移動
+	void addOrMovePoint(const int dispX, const int dispY);
+
+	/// Current point取得
+	bool getCurPoint(cv::Point& curPt) const;
+
+	/// Current point移動
+	void moveCurPoint(const int dx, const int dy);
 
 	/// キャンバス再描画
 	void refreshCanvas();
@@ -44,11 +54,5 @@ public:
 
 	/// ヒストグラム均等化
 	bool equalizeHist();
-
-	/// キャンバスを参照する。
-	cv::Mat& refCanvas();
-
-	/// Current pointを取得する。
-	bool getCurPt(cv::Point& pt) const;
 
 };

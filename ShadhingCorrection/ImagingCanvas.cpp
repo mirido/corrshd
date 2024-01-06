@@ -12,21 +12,34 @@ ImagingCanvas::ImagingCanvas()
 }
 
 /// ソース画像を設定する。
-bool ImagingCanvas::setSrcImage(cv::Ptr<cv::Mat> pSrcImage)
+void ImagingCanvas::setSrcImage(cv::Ptr<cv::Mat> pSrcImage)
 {
-	// パラメータ記憶
 	m_pSrcImage = pSrcImage;
+}
+
+/// キャンバスを更新する。
+bool ImagingCanvas::setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSize)
+{
+	m_srcArea = srcArea;
+	m_dispSize = dispSize;
+
+	cv::Mat ROISrc = cv::Mat(*m_pSrcImage, m_srcArea);
+	cv::Mat resized;
+	cv::resize(ROISrc, resized, m_dispSize);
 
 	switch (m_pSrcImage->channels()) {
-	case 3:
-		m_pSrcImage->copyTo(m_canvas);
-		break;
 	case 1:
-		cv::cvtColor(*m_pSrcImage, m_canvas, cv::COLOR_GRAY2BGR);
+		// (ソース画像がgray scale画像)
+		cv::cvtColor(resized, m_canvas, cv::COLOR_GRAY2BGR);
+		break;
+	case 3:
+		// (ソース画像がBGR画像)
+		m_canvas = resized;
 		break;
 	default:
 		return false;
 	}
+	m_canvasMaster = m_canvas.clone();
 
 	// Dirty areaクリア
 	m_dirtyArea = cv::Rect();
@@ -34,36 +47,45 @@ bool ImagingCanvas::setSrcImage(cv::Ptr<cv::Mat> pSrcImage)
 	return true;
 }
 
-/// キャンバスに多角形を描画する。
-void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius_, const double magToDisp)
+/// マウスクリック位置をソース画像上の座標に変換する。
+cv::Point ImagingCanvas::convToSrcPoint(const int dispX, const int dispY)
 {
-	const int thickness = std::max(1, (int)std::round(magToDisp));
-		
+	const int srcX = m_srcArea.x + (dispX * m_srcArea.width) / m_dispSize.width;
+	const int srcY = m_srcArea.y + (dispY * m_srcArea.height) / m_dispSize.height;
+	return cv::Point(srcX, srcY);
+}
+
+/// キャンバスに多角形を描画する。
+void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int curIdx)
+{
 	if (vertexes.empty()) {
 		return;
 	}
 
-	// 多角形表示
+	// キャンバス上の座標に変換
+	const auto vtxs = convToCanvasPointInBulk(vertexes);
+
+	// 多角形描画
 	int npts[1];
-	npts[0] = (int)vertexes.size();
+	npts[0] = (int)vtxs.size();
 	const cv::Point* ppts[1];
-	ppts[0] = &(vertexes[0]);
+	ppts[0] = &(vtxs[0]);
 	if (npts[0] >= 2) {
-		cv::polylines(m_canvas, ppts, npts, 1, true, GUIDE_COLOR, thickness);
+		cv::polylines(m_canvas, ppts, npts, 1, true, GUIDE_COLOR, 1);
 	}
 
 	// 頂点マーカー描画
-	const int vtxMarkerRadius = (int)std::round(vtxMarkerRadius_ * magToDisp);
-	int sxMin = vertexes.front().x;
-	int syMin = vertexes.front().y;
-	int exMax = vertexes.front().x;
-	int eyMax = vertexes.front().y;
-	for (auto it = vertexes.begin(); it != vertexes.end(); it++) {
+	int sxMin = vtxs.front().x;
+	int syMin = vtxs.front().y;
+	int exMax = vtxs.front().x;
+	int eyMax = vtxs.front().y;
+	for (auto it = vtxs.begin(); it != vtxs.end(); it++) {
 		const int sx = it->x - vtxMarkerRadius;
 		const int ex = sx + 2 * vtxMarkerRadius;
 		const int sy = it->y - vtxMarkerRadius;
 		const int ey = sy + 2 * vtxMarkerRadius;
 
+		const int thickness = (it - vtxs.begin() == (ptrdiff_t)curIdx) ? 3 : 1;
 		cv::rectangle(m_canvas, cv::Point(sx, sy), cv::Point(ex, ey), GUIDE_COLOR, thickness);
 
 		sxMin = std::min(sxMin, sx - (vtxMarkerRadius + thickness));
@@ -87,9 +109,9 @@ void ImagingCanvas::cleanup()
 	const cv::Rect dirtyRect = m_dirtyArea;
 
 	if (!is_empty_rect(dirtyRect)) {
-		cv::Mat ROISrc = cv::Mat(*m_pSrcImage, dirtyRect);
+		cv::Mat ROISrc = cv::Mat(m_canvasMaster, dirtyRect);
 		cv::Mat ROIDst = cv::Mat(m_canvas, dirtyRect);
-		//scv::rectangle(ROISrc, cv::Point(0, 0), cv::Point(ROISrc.cols - 1, ROISrc.rows - 1), cv::Scalar(255, 0, 0), 5);		// DEBUG
+		//cv::rectangle(ROISrc, cv::Point(0, 0), cv::Point(ROISrc.cols - 1, ROISrc.rows - 1), cv::Scalar(255, 0, 0), 5);		// DEBUG
 		ROISrc.copyTo(ROIDst);
 	}
 }
@@ -112,12 +134,12 @@ void ImagingCanvas::rotate(const int dir, cv::Point& ofsAfterRot)
 	if (dir < 0) {
 		// (左上原点で反時計回り)
 		// 第4象限から移動するオフセットを設定
-		ofsAfterRot = cv::Point(0, m_pSrcImage->rows);
+		ofsAfterRot = cv::Point(0, m_pSrcImage->rows - 1);
 	}
 	else {
 		// (左上原点で時計回り)
 		// 第2象限から移動するオフセットを設定
-		ofsAfterRot = cv::Point(m_pSrcImage->cols, 0);
+		ofsAfterRot = cv::Point(m_pSrcImage->cols - 1, 0);
 	}
 	/*
 		(NOTE)
@@ -134,18 +156,52 @@ void ImagingCanvas::rotate(const int dir, cv::Point& ofsAfterRot)
 		上のオフセットofsAfterRotはこの平行移動を表す。
 	*/
 
-	// キャンバス再設定
-	setSrcImage(m_pSrcImage);
-}
+	// ソース領域90°回転
+	// 画像と同じく回転を経ても第1象限とする。
+	m_srcArea = rotate_rect(m_srcArea, dir);
+	m_srcArea.x += ofsAfterRot.x;
+	m_srcArea.y += ofsAfterRot.y;
 
-/// ソース画像を参照する。
-cv::Ptr<cv::Mat> ImagingCanvas::getSrcImagePtr()
-{
-	return m_pSrcImage;
+	// 表示サイズの縦横入れ替え
+	std::swap(m_dispSize.width, m_dispSize.height);
+
+	// キャンバス更新
+	setupCanvas(m_srcArea, m_dispSize);
 }
 
 /// キャンバスを参照する。
 cv::Mat& ImagingCanvas::refCanvas()
 {
 	return m_canvas;
+}
+
+//
+//	Private
+//
+
+/// ソース画像上の座標をキャンバス上の座標に変換
+cv::Point ImagingCanvas::convToCanvasPoint(const cv::Point& point) const
+{
+	cv::Point dstPt(point);
+
+	dstPt.x -= m_srcArea.x;
+	dstPt.y -= m_srcArea.y;
+
+	dstPt.x = (dstPt.x * m_dispSize.width) / m_srcArea.width;
+	dstPt.y = (dstPt.y * m_dispSize.height) / m_srcArea.height;
+
+	return dstPt;
+}
+
+/// ソース画像上の座標をキャンバス上の座標に一括変換
+std::vector<cv::Point> ImagingCanvas::convToCanvasPointInBulk(const std::vector<cv::Point>& points) const
+{
+	const size_t sz = points.size();
+
+	std::vector<cv::Point> dst(sz);
+	for (size_t i = 0; i < sz; i++) {
+		dst[i] = convToCanvasPoint(points[i]);
+	}
+
+	return dst;
 }

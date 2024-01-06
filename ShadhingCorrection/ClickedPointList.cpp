@@ -18,15 +18,15 @@ void ClickedPointList::clear()
 	m_curIdx = -1;
 }
 
-/// (x, y)に最も近い既存要素を探す。
-int ClickedPointList::selectFromExisting(const int x, const int y, int& nearestDist) const
+/// 指定座標に最も近い既存座標を選択する。
+int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDist) const
 {
 	const int sz = (int)m_points.size();
 	nearestDist = 0;
 	int nearestIdx = -1;
 	for (int i = 0; i < sz; i++) {
 		const cv::Point& pt = m_points[i];		// Alias
-		const int dist = std::abs(x - pt.x) + std::abs(y - pt.y);
+		const int dist = std::abs(srcPt.x - pt.x) + std::abs(srcPt.y - pt.y);
 		if (nearestIdx < 0 || dist < nearestDist) {
 			nearestDist = dist;
 			nearestIdx = i;
@@ -44,33 +44,23 @@ int ClickedPointList::selectFromExisting(const int x, const int y, int& nearestD
 	return nearestIdx;
 }
 
-/// 座標を選択または追加する。
-void ClickedPointList::selectOrAdd(const int x, const int y)
+/// 座標を追加または移動する。
+void ClickedPointList::addOrMovePoint(const cv::Point& srcPt)
 {
 	int nearestDist;
-	const int foundIdx = selectFromExisting(x, y, nearestDist);
+	const int foundIdx = selectFromExisting(srcPt, nearestDist);
 	if (foundIdx < 0 || (nearestDist > 0 && m_points.size() < NPOINTS_MAX)) {
 		// (既存要素が見つからなかったか、
 		//  既存のどれとも異なる座標が選択され、かつ座標の数が最大数に達していない)
 		// 追加
-		m_points.push_back(cv::Point(x, y));
+		m_points.push_back(srcPt);
 		m_curIdx = (int)(m_points.size() - 1);
 	}
 	else {
 		// 最も近い既存要素を選択
 		assert(0 <= foundIdx && (size_t)foundIdx < m_points.size());
-		m_points[foundIdx] = cv::Point(x, y);
+		m_points[foundIdx] = srcPt;
 		m_curIdx = foundIdx;
-	}
-}
-
-/// CurPos移動
-void ClickedPointList::moveCurPos(const int dx, const int dy)
-{
-	if (m_curIdx >= 0) {
-		assert(0 <= m_curIdx && (size_t)m_curIdx < m_points.size());
-		m_points[m_curIdx].x += dx;
-		m_points[m_curIdx].y += dy;
 	}
 }
 
@@ -81,15 +71,42 @@ std::vector<cv::Point> ClickedPointList::getClockwizeLlist() const
 	return get_clockwize_list(points);
 }
 
-/// 現在選択中の座標を取得する。
-cv::Point ClickedPointList::getCurPoint() const
+/// Cureent indexを設定する。
+void ClickedPointList::setCurIdx(const int idx)
 {
-	if (m_curIdx < 0) {
-		// (既存座標無し)
+	if (!(idx < 0 || (0 <= idx && (size_t)idx < m_points.size()))) {
 		throw std::logic_error("*** ERR ***");
 	}
-	assert(0 <= m_curIdx && m_curIdx < (size_t)m_points.size());
-	return m_points[m_curIdx];
+
+	m_curIdx = idx;
+}
+
+/// Current pointを移動する。
+bool ClickedPointList::moveCurPoint(const int dx, const int dy)
+{
+	if (m_curIdx >= 0) {
+		assert(0 <= m_curIdx && (size_t)m_curIdx < m_points.size());
+		m_points[m_curIdx].x += dx;
+		m_points[m_curIdx].y += dy;
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+/// Current pointを取得する。
+bool ClickedPointList::getCurPoint(cv::Point& curPt) const
+{
+	if (m_curIdx < 0 || m_points.empty()) {
+		curPt = cv::Point();
+		return false;
+	}
+	else {
+		assert(0 <= m_curIdx && m_curIdx < (size_t)m_points.size());
+		curPt = m_points[m_curIdx];
+		return true;
+	}
 }
 
 /// 座標列の外接矩形を取得する。
@@ -138,7 +155,7 @@ bool ClickedPointList::getOutRect(cv::Rect& rect) const
 	return true;
 }
 
-/// キャンバスを90°回転する。(座標系は左上原点ｌｌｌｌｌ前提)
+/// キャンバスを90°回転する。(座標系は左上原点前提)
 void ClickedPointList::rotate(const int dir, const cv::Point& ofsAfterRot)
 {
 	for (auto it = m_points.begin(); it != m_points.end(); it++) {

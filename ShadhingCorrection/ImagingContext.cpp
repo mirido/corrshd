@@ -11,24 +11,33 @@
 #define NEAR_DISTANCE_MAX			16
 
 ImagingContext::ImagingContext()
-	: m_dispWidth(0)
 {
 	/*pass*/
 }
 
-/// キャンバス設定
+/// ソース画像設定
 void ImagingContext::setSrcImage(cv::Ptr<cv::Mat> pSrcImage)
 {
 	m_imagingCanvas.setSrcImage(pSrcImage);
-	m_srcArea = cv::Rect(0, 0, pSrcImage->cols, pSrcImage->rows);
-	m_dispWidth = pSrcImage->cols;
+	m_pSrcImage = pSrcImage;
 }
 
-/// 表示仕様設定
-void ImagingContext::setDispGeometry(const cv::Rect& srcArea, const int dispWidth)
+/// ソース画像参照
+cv::Ptr<cv::Mat> ImagingContext::refSrcImage()
 {
-	m_srcArea = srcArea;
-	m_dispWidth = dispWidth;
+	return m_pSrcImage;
+}
+
+/// キャンバス更新
+bool ImagingContext::setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSize)
+{
+	return m_imagingCanvas.setupCanvas(srcArea, dispSize);
+}
+
+/// キャンバス参照
+cv::Mat& ImagingContext::refCanvas()
+{
+	return m_imagingCanvas.refCanvas();
 }
 
 /// 座標初期化
@@ -37,48 +46,72 @@ void ImagingContext::clearPointList()
 	m_clickedPointList.clear();
 }
 
-/// 座標追加
-void ImagingContext::selectOrAdd(const int x, const int y)
+/// Current point変更
+bool ImagingContext::selectExistingPointIF(const int dispX, const int dispY)
 {
-	const int srcWidth = m_srcArea.width;
-	const int srcX = m_srcArea.x + (x * srcWidth) / m_dispWidth;
-	const int srcY = m_srcArea.y + (y * srcWidth) / m_dispWidth;
+	const cv::Point srcPt = m_imagingCanvas.convToSrcPoint(dispX, dispY);
 
-	m_clickedPointList.selectOrAdd(srcX, srcY);
+	int nearestDist;
+	const int selIdx = m_clickedPointList.selectFromExisting(srcPt, nearestDist);
+	if (selIdx < 0 || nearestDist > NEAR_DISTANCE_MAX) {
+		return false;
+	}
+
+	m_clickedPointList.setCurIdx(selIdx);
+	return true;
 }
 
-/// CurPos移動
-void ImagingContext::moveCurPos(const int dx, const int dy)
+/// 座標の追加または移動
+void ImagingContext::addOrMovePoint(const int dispX, const int dispY)
 {
-	m_clickedPointList.moveCurPos(dx, dy);
+	const cv::Point srcPt = m_imagingCanvas.convToSrcPoint(dispX, dispY);
+	m_clickedPointList.addOrMovePoint(srcPt);
 }
 
-/// キャンバス更新
+/// Current point取得
+bool ImagingContext::getCurPoint(cv::Point& curPt) const
+{
+	return m_clickedPointList.getCurPoint(curPt);
+}
+
+/// Current point移動
+void ImagingContext::moveCurPoint(const int dx, const int dy)
+{
+	m_clickedPointList.moveCurPoint(dx, dy);
+}
+
+/// キャンバス再描画
 void ImagingContext::refreshCanvas()
 {
-	const double magToDisp = (double)m_srcArea.width / (double)m_dispWidth;
-
 	// 描画済みのガイド線消去
 	m_imagingCanvas.cleanup();
 
-	// ガイド線描画
+	// 描画順の頂点リストvertexes取得
 	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwizeLlist();
-	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, magToDisp);
+
+	// vertexesの中からcurrent point検索
+	int curIdx = -1;
+	cv::Point curPt;
+	if (m_clickedPointList.getCurPoint(curPt)) {
+		const int sz = (int)vertexes.size();
+		for (int i = 0; i < sz; i++) {
+			if (vertexes[i] == curPt) {
+				curIdx = i;
+				break;
+			}
+		}
+	}
+
+	// 描画
+	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, curIdx);
 }
 
 /// キャンバスとソース画像回転
 void ImagingContext::rotate(const int dir)
 {
 	// ソース画像90°回転
-	// 画像は回転を経ても第1象限にあり続ける。
 	cv::Point ofsAfterRot;
 	m_imagingCanvas.rotate(dir, ofsAfterRot);
-
-	// ソース領域90°回転
-	// 画像と同じく回転を経ても第1象限とする。
-	rotate_rect(m_srcArea, dir);
-	m_srcArea.x += ofsAfterRot.x;
-	m_srcArea.y += ofsAfterRot.y;
 
 	// 既存座標リスト内容90°回転
 	m_clickedPointList.rotate(dir, ofsAfterRot);
@@ -100,8 +133,8 @@ bool ImagingContext::correctDistortion(const double relWidth, const double relHe
 	}
 
 	cv::Mat dstImg;
-	warp_image(*(m_imagingCanvas.getSrcImagePtr()), dstImg, srcPts2f, nptsExp, relWidth, relHeight, outputWidth);
-	*(m_imagingCanvas.getSrcImagePtr()) = dstImg;
+	warp_image(*m_pSrcImage, dstImg, srcPts2f, nptsExp, relWidth, relHeight, outputWidth);
+	*m_pSrcImage = dstImg;
 	return true;
 }
 
@@ -121,26 +154,4 @@ bool ImagingContext::shadingCorrection()
 bool ImagingContext::equalizeHist()
 {
 	return false;
-}
-
-/// キャンバスを参照する。
-cv::Mat& ImagingContext::refCanvas()
-{
-	return m_imagingCanvas.refCanvas();
-}
-
-/// Current pointを取得する。
-bool ImagingContext::getCurPt(cv::Point& pt) const
-{
-	const int curIdx = m_clickedPointList.m_curIdx;
-
-	if (curIdx < 0) {
-		pt = cv::Point();
-		return false;
-	}
-	else {
-		assert(0 <= curIdx && (size_t)curIdx < m_clickedPointList.m_points.size());
-		pt = m_clickedPointList.m_points[curIdx];
-		return true;
-	}
 }
