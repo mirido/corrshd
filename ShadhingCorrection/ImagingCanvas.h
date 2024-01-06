@@ -22,6 +22,9 @@ public:
 	/// マウスクリック位置をソース画像上の座標に変換する。
 	cv::Point convToSrcPoint(const int dispX, const int dispY);
 
+	/// ソース画像上の座標をマウスクリック位置に変換する。
+	void convToDispPoint(const cv::Point& srcPt, int& dispX, int& dispY);
+
 	/// キャンバスに多角形を描画する。
 	void drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int curIdx);
 

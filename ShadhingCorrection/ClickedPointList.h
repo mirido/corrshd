@@ -9,7 +9,7 @@ struct ClickedPointList
 	void clear();
 
 	/// 指定座標に最も近い既存座標を選択する。
-	int selectFromExisting(const cv::Point& srcPt, int& nearestDist) const;
+	int selectFromExisting(const cv::Point& srcPt, int& nearestDist, cv::Point& foundPt) const;
 
 	/// 座標を追加または移動する。
 	void addOrMovePoint(const cv::Point& srcPt);
@@ -22,6 +22,9 @@ struct ClickedPointList
 
 	/// Current pointを移動する。
 	bool moveCurPoint(const int dx, const int dy);
+
+	/// Current pointを巡回的に切り替える。
+	void changeCurrentPointToNext();
 
 	/// Current pointを取得する。
 	bool getCurPoint(cv::Point& curPt) const;

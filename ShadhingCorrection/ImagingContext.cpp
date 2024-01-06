@@ -28,7 +28,7 @@ cv::Ptr<cv::Mat> ImagingContext::refSrcImage()
 	return m_pSrcImage;
 }
 
-/// キャンバス更新
+/// キャンバス設定
 bool ImagingContext::setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSize)
 {
 	return m_imagingCanvas.setupCanvas(srcArea, dispSize);
@@ -46,14 +46,24 @@ void ImagingContext::clearPointList()
 	m_clickedPointList.clear();
 }
 
-/// Current point変更
+/// 既存座標選択
 bool ImagingContext::selectExistingPointIF(const int dispX, const int dispY)
 {
+	// 座標(dispX, dispY)をソース画像上の座標srcPtに変換
 	const cv::Point srcPt = m_imagingCanvas.convToSrcPoint(dispX, dispY);
 
+	// srcPtに最も近い頂点を検索
 	int nearestDist;
-	const int selIdx = m_clickedPointList.selectFromExisting(srcPt, nearestDist);
-	if (selIdx < 0 || nearestDist > NEAR_DISTANCE_MAX) {
+	cv::Point foundPt;
+	const int selIdx = m_clickedPointList.selectFromExisting(srcPt, nearestDist, foundPt);
+	if (selIdx < 0) {
+		return false;
+	}
+
+	// 表示画像上でNEAR_DISTANCE_MAX画素以内か判定
+	int dispPtX, dispPtY;
+	m_imagingCanvas.convToDispPoint(foundPt, dispPtX, dispPtY);
+	if (!(std::abs(dispX - dispPtX) <= NEAR_DISTANCE_MAX && std::abs(dispY - dispPtY) <= NEAR_DISTANCE_MAX)) {
 		return false;
 	}
 
@@ -78,6 +88,12 @@ bool ImagingContext::getCurPoint(cv::Point& curPt) const
 void ImagingContext::moveCurPoint(const int dx, const int dy)
 {
 	m_clickedPointList.moveCurPoint(dx, dy);
+}
+
+/// Current point切り替え
+void ImagingContext::changeCurrentPointToNext()
+{
+	m_clickedPointList.changeCurrentPointToNext();
 }
 
 /// キャンバス再描画

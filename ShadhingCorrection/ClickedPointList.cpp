@@ -19,8 +19,10 @@ void ClickedPointList::clear()
 }
 
 /// 指定座標に最も近い既存座標を選択する。
-int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDist) const
+int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDist, cv::Point& foundPt) const
 {
+	foundPt = cv::Point();
+
 	const int sz = (int)m_points.size();
 	nearestDist = 0;
 	int nearestIdx = -1;
@@ -28,6 +30,7 @@ int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDis
 		const cv::Point& pt = m_points[i];		// Alias
 		const int dist = std::abs(srcPt.x - pt.x) + std::abs(srcPt.y - pt.y);
 		if (nearestIdx < 0 || dist < nearestDist) {
+			foundPt = pt;
 			nearestDist = dist;
 			nearestIdx = i;
 		}
@@ -48,7 +51,8 @@ int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDis
 void ClickedPointList::addOrMovePoint(const cv::Point& srcPt)
 {
 	int nearestDist;
-	const int foundIdx = selectFromExisting(srcPt, nearestDist);
+	cv::Point foundPt;
+	const int foundIdx = selectFromExisting(srcPt, nearestDist, foundPt);
 	if (foundIdx < 0 || (nearestDist > 0 && m_points.size() < NPOINTS_MAX)) {
 		// (既存要素が見つからなかったか、
 		//  既存のどれとも異なる座標が選択され、かつ座標の数が最大数に達していない)
@@ -106,6 +110,19 @@ bool ClickedPointList::getCurPoint(cv::Point& curPt) const
 		assert(0 <= m_curIdx && m_curIdx < (size_t)m_points.size());
 		curPt = m_points[m_curIdx];
 		return true;
+	}
+}
+
+/// Current pointを巡回的に切り替える。
+void ClickedPointList::changeCurrentPointToNext()
+{
+	if (m_curIdx >= 0) {
+		assert(0 <= m_curIdx && (size_t)m_curIdx < m_points.size());
+		const int sz = (int)m_points.size();
+		m_curIdx++;
+		if (m_curIdx >= sz) {
+			m_curIdx = 0;
+		}
 	}
 }
 

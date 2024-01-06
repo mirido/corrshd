@@ -55,6 +55,13 @@ cv::Point ImagingCanvas::convToSrcPoint(const int dispX, const int dispY)
 	return cv::Point(srcX, srcY);
 }
 
+/// ソース画像上の座標をマウスクリック位置に変換する。
+void ImagingCanvas::convToDispPoint(const cv::Point& srcPt, int& dispX, int& dispY)
+{
+	dispX = (srcPt.x * m_dispSize.width) / m_srcArea.width - m_srcArea.x;
+	dispY = (srcPt.y * m_dispSize.height) / m_srcArea.height - m_srcArea.y;
+}
+
 /// キャンバスに多角形を描画する。
 void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int curIdx)
 {

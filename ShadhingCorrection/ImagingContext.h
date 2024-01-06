@@ -37,6 +37,9 @@ public:
 	/// Current pointˆÚ“®
 	void moveCurPoint(const int dx, const int dy);
 
+	/// Current pointØ‚è‘Ö‚¦
+	void changeCurrentPointToNext();
+
 	/// ƒLƒƒƒ“ƒoƒXÄ•`‰æ
 	void refreshCanvas();
 

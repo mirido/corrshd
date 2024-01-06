@@ -29,6 +29,17 @@
 #define IMAGE_WND_MARGIN_HORZ		16
 #define IMAGE_WND_MARGIN_VERT		32
 
+// [CONF] 画像ウィンドウクローズ判定にcvGetWindowHandle()使用
+//#define USE_CVGETWINDOWHANDLE
+/*
+	(NOTE)
+	OpenCV 4.8.0のReleaseビルド版DLLにおいて、画像ウィンドウが閉じられた後に
+	cvGetWindowHandle()を呼ぶとハンドルされない例外が発生し、
+	正しく画像ウィンドウクローズ判定ができない。
+	この問題の対策として、上記マクロを未定儀にする。
+	(上記マクロが未定儀のとき、cvGetWindowHandle()は使わず、[ESC]キーで終了する仕様とする。)
+*/
+
 namespace
 {
 	void show_usage()
@@ -129,10 +140,24 @@ namespace
 
 		switch (event) {
 		case cv::EVENT_LBUTTONDOWN:
+#ifndef NDEBUG
 			cout << "Left mouse button is pressed. (x=" << x << ", y=" << y << ")" << endl;
-			pCtx->addOrMovePoint(x, y);
-			pCtx->refreshCanvas();
-			cv::imshow(IMAGE_WND_NAME, pCtx->refCanvas());
+#endif
+			if ((flags & flags & cv::EVENT_FLAG_SHIFTKEY) == 0) {
+				// (SHIFTキー押下無し)
+				// 任意の箇所を頂点として選択する
+				pCtx->addOrMovePoint(x, y);
+				pCtx->refreshCanvas();
+				cv::imshow(IMAGE_WND_NAME, pCtx->refCanvas());
+			}
+			else {
+				// (SHIFTキー押下有り)
+				// 近傍の頂点をcurrent pointと選択
+				if (pCtx->selectExistingPointIF(x, y)) {
+					pCtx->refreshCanvas();
+					cv::imshow(IMAGE_WND_NAME, pCtx->refCanvas());
+				}
+			}
 			break;
 		default:
 			/*pass*/
@@ -177,7 +202,9 @@ int main(const int argc, char* argv[])
 		// 終了判定
 		// "#<CR>" で終了
 		const int c = cv::waitKeyEx(keyWait);
+#ifndef NDEBUG
 		cout << "Key code=0x" << std::setbase(16) << std::setfill('0') << std::setw(8) << c << endl;
+#endif
 
 		// カーソルキー押下の処理
 		switch (c) {
@@ -207,6 +234,7 @@ int main(const int argc, char* argv[])
 		}
 
 		// 終了判定
+#ifdef USE_CVGETWINDOWHANDLE
 		if (c < 0) {
 			// (キー入力待ちがタイムアウトしたか、画像ウィンドウが閉じられた)
 			void* wndHandle = NULL;
@@ -220,6 +248,7 @@ int main(const int argc, char* argv[])
 			}
 			if (wndHandle == NULL) {
 				// (画像ウィンドウが閉じられた)
+				// 終了
 				break;
 			}
 			/*
@@ -230,6 +259,13 @@ int main(const int argc, char* argv[])
 				判定する方法を検討する。
 			*/
 		}
+#else
+		if (c == '\x1b') {
+			// (ESC押下)
+			// 終了
+			break;
+		}
+#endif
 		if (strchr("\r\n", c) == NULL) {
 			prevKeyIn = c;
 		}
@@ -244,6 +280,10 @@ int main(const int argc, char* argv[])
 
 		// カーソルキー以外のキーボードコマンド処理
 		switch (c) {
+		case '\t':
+			// Current point切り替え
+			ctx.changeCurrentPointToNext();
+			break;
 		case 'r':
 			// 時計回りに90度回転
 			ctx.rotate(1);
@@ -256,7 +296,9 @@ int main(const int argc, char* argv[])
 			g_bShowAsSameMag = !g_bShowAsSameMag;
 			break;
 		default:
+#ifndef NDEBUG
 			cout << "Unknown key code. (0x" << std::setbase(16) << std::setfill('0') << std::setw(8) << c << ")" << endl;
+#endif
 			break;
 		}
 
