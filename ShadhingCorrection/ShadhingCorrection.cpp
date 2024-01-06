@@ -11,9 +11,9 @@
 #include "osal.h"
 
 #ifdef NDEBUG
-#pragma comment(lib, "opencv_world480.lib")
+#pragma comment(lib, "opencv_world460.lib")
 #else
-#pragma comment(lib, "opencv_world480d.lib")
+#pragma comment(lib, "opencv_world460d.lib")
 #endif
 
 // [CONF] コマンド名
@@ -21,6 +21,7 @@
 
 // [CONF] 画像ウィンドウ名
 #define IMAGE_WND_NAME				"Input image"
+#define OUTPUT_WND_NAME				"Result image"
 
 // [CONF] デフォルトの画像出力幅
 #define DEFAULT_OUTPUT_WIDTH		800
@@ -119,6 +120,21 @@ namespace
 		cv::imshow(IMAGE_WND_NAME, ctx.refCanvas());
 	}
 
+	/// 処理結果画像を表示する。
+	void show_output_image(const cv::Mat& outputImg)
+	{
+		const cv::Size outputImgSz = cv::Size(outputImg.cols, outputImg.rows);
+
+		cv::Rect srcArea2;
+		cv::Size dispSize2;
+		get_src_area_and_disp_size(outputImgSz, false, cv::Point(), srcArea2, dispSize2);
+
+		cv::Mat outDispImg;
+		cv::resize(outputImg, outDispImg, dispSize2);
+
+		cv::imshow(OUTPUT_WND_NAME, outDispImg);
+	}
+
 }	// namespace
 
 namespace
@@ -176,8 +192,12 @@ int main(const int argc, char* argv[])
 	const char* const imageFile = argv[1];
 	const double tgRelWidth = atof(argv[2]);
 	const double tgRelHeight = atof(argv[3]);
-	const int outputWidth = (argc >= 5) ? atoi(argv[4]) : 0;
+	const double outputWidth = (argc >= 5) ? atof(argv[4]) : tgRelWidth;
 	cout << "Speciied argument: \"" << imageFile << "\" " << tgRelWidth << " " << tgRelHeight << " " << outputWidth << endl;
+
+	// 出力画像サイズ決定
+	const double outputHeight = (outputWidth * tgRelHeight) / tgRelWidth;
+	const cv::Size outputImgSz = cv::Size((int)std::round(outputWidth), (int)std::round(outputHeight));
 
 	// 画像読み込み
 	cv::Ptr<cv::Mat> pSrcImage(new cv::Mat());
@@ -186,6 +206,9 @@ int main(const int argc, char* argv[])
 	// 画像操作準備
 	ImagingContext ctx;
 	ctx.setSrcImage(pSrcImage);
+
+	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
+	cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
 
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
@@ -279,6 +302,7 @@ int main(const int argc, char* argv[])
 		}
 
 		// カーソルキー以外のキーボードコマンド処理
+		cv::Mat outputImg;
 		switch (c) {
 		case '\t':
 			// Current point切り替え
@@ -293,7 +317,17 @@ int main(const int argc, char* argv[])
 			ctx.rotate(-1);
 			break;
 		case 'z':
+			// 等倍表示 <--> 全体表示 トグル
 			g_bShowAsSameMag = !g_bShowAsSameMag;
+			break;
+		case 's':
+			// シェーディング補正
+			if (ctx.doShadingCorrection(outputImgSz, outputImg)) {
+				show_output_image(outputImg);
+			}
+			else {
+				cout << "Info: Shading correction failed." << endl;
+			}
 			break;
 		default:
 #ifndef NDEBUG

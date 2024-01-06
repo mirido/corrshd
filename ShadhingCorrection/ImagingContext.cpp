@@ -134,40 +134,32 @@ void ImagingContext::rotate(const int dir)
 }
 
 /// 歪み補正
-bool ImagingContext::correctDistortion(const double relWidth, const double relHeight, const int outputWidth)
+bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
 {
 	const int nptsExp = 4;
 
+	// 既存座標(パースペクティブ歪みがある矩形領域の4頂点)を時計回りの順でリスト化
 	const std::vector<cv::Point> srcPts = m_clickedPointList.getClockwizeLlist();
 	if (srcPts.size() != nptsExp) {
 		return false;
 	}
 
+	// cv::Point2fのリストに変換
 	cv::Point2f srcPts2f[nptsExp];
 	for (int i = 0; i < nptsExp; i++) {
 		srcPts2f[i] = cv::Point2f((float)srcPts[i].x, (float)srcPts[i].y);
 	}
 
-	cv::Mat dstImg;
-	warp_image(*m_pSrcImage, dstImg, srcPts2f, nptsExp, relWidth, relHeight, outputWidth);
-	*m_pSrcImage = dstImg;
+	// 変換実行
+	warp_image(*m_pSrcImage, dstImg, srcPts2f, nptsExp, dstSz);
 	return true;
 }
 
-/// 切り抜き
-bool ImagingContext::cutOff()
-{
-	return false;
-}
-
 /// シェーディング補正
-bool ImagingContext::shadingCorrection()
+bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 {
-	return false;
-}
-
-/// ヒストグラム均等化
-bool ImagingContext::equalizeHist()
-{
-	return false;
+	if (!correctDistortion(dstSz, dstImg)) {
+		return false;
+	}
+	return true;
 }

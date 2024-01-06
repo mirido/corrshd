@@ -47,15 +47,9 @@ public:
 	void rotate(const int dir);
 
 	/// 歪み補正
-	bool correctDistortion(const double relWidth, const double relHeight, const int outputWidth);
-
-	/// 切り抜き
-	bool cutOff();
+	bool correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg);
 
 	/// シェーディング補正
-	bool shadingCorrection();
-
-	/// ヒストグラム均等化
-	bool equalizeHist();
+	bool doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg);
 
 };
