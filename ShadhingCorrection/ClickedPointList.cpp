@@ -195,7 +195,7 @@ int ClickedPointList::get_most_topleft(const std::vector<cv::Point>& points)
 	int topLeftIdx = -1;
 	for (int i = 0; i < sz; i++) {
 		const cv::Point& pt = points[i];		// Alias
-		const int distFromOrg = std::min(pt.x, pt.y);
+		const int distFromOrg = pt.x + pt.y;
 		if (topLeftIdx < 0 || distFromOrg < distMin) {
 			distMin = distFromOrg;
 			topLeftIdx = i;
