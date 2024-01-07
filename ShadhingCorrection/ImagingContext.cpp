@@ -138,20 +138,21 @@ bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
 {
 	const int nptsExp = 4;
 
-	// 既存座標(パースペクティブ歪みがある矩形領域の4頂点)を時計回りの順でリスト化
-	const std::vector<cv::Point> srcPts = m_clickedPointList.getClockwizeLlist();
-	if (srcPts.size() != nptsExp) {
+	// 既存座標(歪んだROIの4頂点)を時計回りの順でリスト化
+	const std::vector<cv::Point> srcROICorners = m_clickedPointList.getClockwizeLlist();
+	if (srcROICorners.size() != nptsExp) {
 		return false;
 	}
 
 	// cv::Point2fのリストに変換
-	cv::Point2f srcPts2f[nptsExp];
+	cv::Point2f srcROICorners2f[nptsExp];
 	for (int i = 0; i < nptsExp; i++) {
-		srcPts2f[i] = cv::Point2f((float)srcPts[i].x, (float)srcPts[i].y);
+		srcROICorners2f[i] = cv::Point2f((float)srcROICorners[i].x, (float)srcROICorners[i].y);
 	}
 
 	// 変換実行
-	warp_image(*m_pSrcImage, dstImg, srcPts2f, nptsExp, dstSz);
+	warp_image(*m_pSrcImage, dstImg, srcROICorners2f, nptsExp, dstSz);
+
 	return true;
 }
 

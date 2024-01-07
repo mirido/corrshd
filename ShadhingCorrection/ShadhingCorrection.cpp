@@ -98,7 +98,7 @@ namespace
 	}
 
 	/// 画像表示を更新する。
-	void refresh_disp(ImagingContext& ctx, bool& bShowAsSameMag)
+	void refresh_input_image_disp(ImagingContext& ctx, bool& bShowAsSameMag)
 	{
 		// 最新のソース画像サイズ取得
 		// 90°回転等の操作で変化し得るため、改めて取得し直す必要がある。
@@ -207,15 +207,13 @@ int main(const int argc, char* argv[])
 	ImagingContext ctx;
 	ctx.setSrcImage(pSrcImage);
 
-	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
-	cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
-
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
-	refresh_disp(ctx, g_bShowAsSameMag);
+	refresh_input_image_disp(ctx, g_bShowAsSameMag);
 
 	// マウスイベントコールバック登録
 	g_mainThreadID = get_thread_id();	// チェック用
+	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback(IMAGE_WND_NAME, mouse_callback, (void*)&ctx);
 
 	int prevKeyIn = '\0';
@@ -323,6 +321,7 @@ int main(const int argc, char* argv[])
 		case 's':
 			// シェーディング補正
 			if (ctx.doShadingCorrection(outputImgSz, outputImg)) {
+				cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
 				show_output_image(outputImg);
 			}
 			else {
@@ -337,7 +336,7 @@ int main(const int argc, char* argv[])
 		}
 
 		// 画像表示更新
-		refresh_disp(ctx, g_bShowAsSameMag);
+		refresh_input_image_disp(ctx, g_bShowAsSameMag);
 	}
 
 	return 0;
