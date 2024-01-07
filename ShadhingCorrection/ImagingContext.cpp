@@ -189,6 +189,10 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 {
 	cv::Mat tmp;
 
+#ifndef NDEBUG
+	cout << std::setbase(10);
+#endif
+
 	// パースペクティブ補正
 	cv::Mat gray1;
 	if (!correctDistortion(dstSz, gray1)) {
@@ -280,6 +284,27 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 	cv::imshow("04_threshold_by_th3", gray2);
 #ifdef DBG_IMG_DIR
 	cv::imwrite(DBG_IMG_DIR "04_threshold_by_th3.jpg", gray2);
+#endif
+#endif
+
+	// gray2の最大輝度が255になるように調整(gray2)
+	double img_minv, img_maxv;
+	gray2 = stretch_to_white(gray2, img_minv, img_maxv);
+	cout << "img_minv=" << img_minv << endl;
+	cout << "img_maxv=" << img_maxv << endl;
+#ifndef NDEBUG
+	cv::imshow("05_stretch_to_white", gray2);
+#ifdef DBG_IMG_DIR
+	cv::imwrite(DBG_IMG_DIR "05_stretch_to_white.jpg", gray2);
+#endif
+#endif
+
+	// gray2をガンマ補正(gray2)
+	gray2 = gamma_correction(gray2, 3.0);
+#ifndef NDEBUG
+	cv::imshow("06_gumma_correction", gray2);
+#ifdef DBG_IMG_DIR
+	cv::imwrite(DBG_IMG_DIR "06_gumma_correction.jpg", gray2);
 #endif
 #endif
 

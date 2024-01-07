@@ -90,3 +90,36 @@ std::vector<uchar> get_unmasked_data(const cv::Mat_<uchar>& image, const cv::Mat
 
 	return data;
 }
+
+/// 画像の最大輝度が255になるように画素の値をスカラー倍する。
+cv::Mat_<uchar> stretch_to_white(const cv::Mat_<uchar>& image, double& minv, double& maxv)
+{
+	cv::minMaxLoc(image, &minv, &maxv);
+	minv = (int)minv;
+	maxv = (int)maxv;
+
+	return image * (255.0 / maxv);
+}
+
+/// ガンマ補正を行う。。
+cv::Mat_<uchar> gamma_correction(const cv::Mat_<uchar>& image, double gamma)
+{
+	cv::Mat gammaLUT = cv::Mat(1, 256, CV_8U);
+
+	const double inv_gamma = 1.0 / gamma;
+	for (int i = 0; i < 256; i++) {
+		gammaLUT.at<uchar>(0, i) = (uchar)(255 * std::pow(((double)i / 255.0), inv_gamma));
+	}
+#ifndef NDEBUG
+	cout << "Gamma LUT" << endl;
+	for (int i = 0; i < 256; i++) {
+		cout << i << "," << (int)gammaLUT.at<uchar>(0, i) << endl;
+	}
+#endif
+
+	// 読込画像をガンマ変換
+	cv::Mat result;
+	cv::LUT(image, gammaLUT, result);
+
+	return result;
+}
