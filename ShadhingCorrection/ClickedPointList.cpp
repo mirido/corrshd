@@ -18,6 +18,25 @@ void ClickedPointList::clear()
 	m_curIdx = -1;
 }
 
+/// 既存座標列が空か否かを返す。
+bool ClickedPointList::empty() const
+{
+	return m_points.empty();
+}
+
+/// 既存座標の個数を取得する。
+int ClickedPointList::size() const
+{
+	return (int)m_points.size();
+}
+
+/// 既存座標列を取得する。
+int ClickedPointList::getPointList(std::vector<cv::Point>& points) const
+{
+	points = m_points;
+	return m_curIdx;
+}
+
 /// 指定座標に最も近い既存座標を選択する。
 int ClickedPointList::selectFromExisting(const cv::Point& srcPt, int& nearestDist, cv::Point& foundPt) const
 {

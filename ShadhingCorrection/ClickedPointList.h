@@ -1,12 +1,22 @@
 #pragma once
-struct ClickedPointList
+class ClickedPointList
 {
 	std::vector<cv::Point> m_points;
 	int m_curIdx;
 
+public:
 	ClickedPointList();
 
 	void clear();
+
+	/// 既存座標列が空か否かを返す。
+	bool empty() const;
+
+	/// 既存座標の個数を取得する。
+	int size() const;
+
+	/// 既存座標列を取得する。
+	int getPointList(std::vector<cv::Point>& points) const;
 
 	/// 指定座標に最も近い既存座標を選択する。
 	int selectFromExisting(const cv::Point& srcPt, int& nearestDist, cv::Point& foundPt) const;

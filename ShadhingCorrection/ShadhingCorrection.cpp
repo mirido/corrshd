@@ -35,6 +35,41 @@ namespace
 		cerr << "Usage: " << PROG_NAME << " <image-file> <target-relative-width> <target-relative-height> [ <output-width> ]" << endl;
 	}
 
+	/// ファイル名をディレクトリおよび拡張子の前後に分解する。
+	void parse_file_name(const char* const fpath, std::string& dir, std::string& fnameMajor, std::string& ext)
+	{
+		const size_t len = strlen(fpath);
+
+		// ファイル名の先頭位置取得
+		size_t k1 = len;
+		while (k1 > 0 && strchr("\\/", fpath[k1 - 1]) == NULL) {
+			k1--;
+		}
+
+		// 拡張子の先頭位置取得
+		size_t k2 = len;
+		while (k2 > k1 && fpath[k2 - 1] != '.') {
+			k2--;
+		}
+		if (k2 <= k1) {
+			// (ファイル名部分に '.' 無し = 拡張子無し)
+			k2 = len;
+		}
+
+		dir = fpath;
+		dir = (k1 > 0) ? dir.substr(0, k1) : "";
+
+		fnameMajor = &(fpath[k1]);
+		fnameMajor = (k2 - k1 > 0) ? fnameMajor.substr(0, k2 - k1) : "";
+
+		ext = &(fpath[k2]);
+
+		if (fnameMajor.length() > 0 && fnameMajor.back() == '.') {
+			fnameMajor.pop_back();
+			ext = std::string(".") + ext;
+		}
+	}
+
 	/// 画面に収まるソース画像範囲と表示サイズを取得する。
 	void get_src_area_and_disp_size(
 		const cv::Size& srcImgSize,
@@ -182,6 +217,10 @@ int main(const int argc, char* argv[])
 	const double outputWidth = (argc >= 5) ? atof(argv[4]) : tgRelWidth;
 	cout << "Speciied argument: \"" << imageFile << "\" " << tgRelWidth << " " << tgRelHeight << " " << outputWidth << endl;
 
+	// 出力ファイル名のメジャー名と拡張子決定
+	std::string dir, fnameMajor, ext;
+	parse_file_name(imageFile, dir, fnameMajor, ext);
+
 	// 出力画像サイズ決定
 	const double outputHeight = (outputWidth * tgRelHeight) / tgRelWidth;
 	const cv::Size outputImgSz = cv::Size((int)std::round(outputWidth), (int)std::round(outputHeight));
@@ -189,6 +228,10 @@ int main(const int argc, char* argv[])
 	// 画像読み込み
 	cv::Ptr<cv::Mat> pSrcImage(new cv::Mat());
 	*pSrcImage = cv::imread(imageFile);
+	if (pSrcImage->data == NULL) {
+		cout << "ERROR: cv::imread() failed. (file name=\"" << imageFile << "\")" << endl;
+		return 1;
+	}
 
 	// 画像操作準備
 	ImagingContext ctx;
@@ -305,10 +348,26 @@ int main(const int argc, char* argv[])
 			g_bShowAsSameMag = !g_bShowAsSameMag;
 			break;
 		case 's':
+			// 頂点自動登録
+			// デバッグ時のiteration効率を上げるため、頂点が全く未設定の場合は
+			// 画像の4隅を自動的に設定する。
+			if (ctx.isPointListEmpty()) {
+				cv::Mat& canvas = ctx.refCanvas();		// Alias
+				ctx.addOrMovePoint(0, 0);
+				ctx.addOrMovePoint(canvas.cols - 1, 0);
+				ctx.addOrMovePoint(canvas.cols - 1, canvas.rows - 1);
+				ctx.addOrMovePoint(0, canvas.rows - 1);
+			}
 			// シェーディング補正
 			if (ctx.doShadingCorrection(outputImgSz, outputImg)) {
 				cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
 				show_output_image(outputImg);
+
+				// 結果画像保存
+				std::string dstFileName = dir + fnameMajor + "_mod" + ext;
+				if (!cv::imwrite(dstFileName, outputImg)) {
+					cout << "ERROR: cv::imwrite() failed. (file name=\"" << dstFileName << "\")" << endl;
+				}
 			}
 			else {
 				cout << "Info: Shading correction failed." << endl;

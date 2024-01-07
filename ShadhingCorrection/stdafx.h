@@ -4,7 +4,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>

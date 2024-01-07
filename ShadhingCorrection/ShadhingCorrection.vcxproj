@@ -165,6 +165,7 @@
     <ClCompile Include="ImagingCanvas.cpp" />
     <ClCompile Include="ImagingContext.cpp" />
     <ClCompile Include="imaging_op.cpp" />
+    <ClCompile Include="numericutil.cpp" />
     <ClCompile Include="osal.cpp" />
     <ClCompile Include="geometryutil.cpp" />
     <ClCompile Include="ShadhingCorrection.cpp" />
@@ -189,6 +190,7 @@
     <ClInclude Include="ImagingCanvas.h" />
     <ClInclude Include="ImagingContext.h" />
     <ClInclude Include="imaging_op.h" />
+    <ClInclude Include="numericutil.h" />
     <ClInclude Include="osal.h" />
     <ClInclude Include="geometryutil.h" />
     <ClInclude Include="stdafx.h" />

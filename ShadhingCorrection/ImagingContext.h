@@ -1,8 +1,7 @@
 #pragma once
 
-struct ImagingContext
+class ImagingContext
 {
-private:
 	cv::Ptr<cv::Mat> m_pSrcImage;
 	ImagingCanvas m_imagingCanvas;
 	ClickedPointList m_clickedPointList;
@@ -24,6 +23,15 @@ public:
 
 	/// 座標初期化
 	void clearPointList();
+
+	/// 既存座標列が空か否かを返す。
+	bool isPointListEmpty() const;
+
+	/// 既存座標の個数を取得する。
+	int pointListSize() const;
+
+	/// 既存座標列を取得する。
+	int getPointList(std::vector<cv::Point>& points) const;
 
 	/// 既存座標選択
 	bool selectExistingPointIF(const int dispX, const int dispY);

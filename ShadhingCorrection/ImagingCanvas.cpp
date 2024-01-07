@@ -2,6 +2,7 @@
 #include "ImagingCanvas.h"
 
 #include "geometryutil.h"
+#include "imaging_op.h"
 
 // [CONF] ガイド線の描画色
 #define GUIDE_COLOR		cv::Scalar(0, 0, 255)
@@ -23,22 +24,17 @@ bool ImagingCanvas::setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSiz
 	m_srcArea = srcArea;
 	m_dispSize = dispSize;
 
+	// ソース画像のm_srcArea内のみ切り抜き
 	cv::Mat ROISrc = cv::Mat(*m_pSrcImage, m_srcArea);
 	cv::Mat resized;
 	cv::resize(ROISrc, resized, m_dispSize);
 
-	switch (m_pSrcImage->channels()) {
-	case 1:
-		// (ソース画像がgray scale画像)
-		cv::cvtColor(resized, m_canvas, cv::COLOR_GRAY2BGR);
-		break;
-	case 3:
-		// (ソース画像がBGR画像)
-		m_canvas = resized;
-		break;
-	default:
+	// BGR画像に変換
+	if (!conv_color_to_BGR(resized, m_canvas)) {
 		return false;
 	}
+
+	// できたキャンバスをPolyLine消去用に記憶
 	m_canvasMaster = m_canvas.clone();
 
 	// Dirty areaクリア
