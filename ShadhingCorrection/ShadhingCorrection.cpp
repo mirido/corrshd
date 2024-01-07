@@ -1,7 +1,5 @@
 ﻿#include "stdafx.h"
 
-#include <opencv2/highgui/highgui_c.h>	/* cvGetWindowHandle()導入目的 */
-
 #include "ImagingCanvas.h"
 #include "ClickedPointList.h"
 #include "ImagingContext.h"
@@ -29,17 +27,6 @@
 // [CONF] 画像表示のマージン
 #define IMAGE_WND_MARGIN_HORZ		16
 #define IMAGE_WND_MARGIN_VERT		32
-
-// [CONF] 画像ウィンドウクローズ判定にcvGetWindowHandle()使用
-//#define USE_CVGETWINDOWHANDLE
-/*
-	(NOTE)
-	OpenCV 4.8.0のReleaseビルド版DLLにおいて、画像ウィンドウが閉じられた後に
-	cvGetWindowHandle()を呼ぶとハンドルされない例外が発生し、
-	正しく画像ウィンドウクローズ判定ができない。
-	この問題の対策として、上記マクロを未定儀にする。
-	(上記マクロが未定儀のとき、cvGetWindowHandle()は使わず、[ESC]キーで終了する仕様とする。)
-*/
 
 namespace
 {
@@ -255,38 +242,37 @@ int main(const int argc, char* argv[])
 		}
 
 		// 終了判定
-#ifdef USE_CVGETWINDOWHANDLE
 		if (c < 0) {
 			// (キー入力待ちがタイムアウトしたか、画像ウィンドウが閉じられた)
-			void* wndHandle = NULL;
+			double prop_val = -1;
 			try {
-				wndHandle = cvGetWindowHandle(IMAGE_WND_NAME);
+				prop_val = cv::getWindowProperty(IMAGE_WND_NAME, cv::WND_PROP_ASPECT_RATIO);
 			}
 			catch (cv::Exception& e) {
-				const char* const err_msg = e.what();
-				cerr << err_msg << endl;
-				wndHandle = NULL;
+				const char* const msg = e.what();
+				cout << "Warning: " << msg << endl;
+				prop_val = -1;
 			}
-			if (wndHandle == NULL) {
-				// (画像ウィンドウが閉じられた)
+			if (prop_val < 0) {
+				// (入力画像ウィンドウが閉じられた)
 				// 終了
 				break;
 			}
 			/*
 				(NOTE)
-				画像ウィンドウが閉じられたか否かを判定するにあたり、
-				C言語インターフェースであるcvGetWindowHandle()が将来廃止になった場合は
-				cv::waitKeyEx()が-1を返したのが即座だったか否かをもって
-				判定する方法を検討する。
+				ここでウィンドウ存在判定をcv::getWindowProperty()ではなく
+				C言語インターフェースであるcvGetWindowHandle()で行おうとすると
+				ハンドルされない例外が発生し、クラッシュする。
+				(おそらくtry { } catch (...) { } で捕捉できない構造化例外を生じている。)
+				C++インターフェースであるcv::imgshow()で表示した画像ウィンドウは、あくまで
+				C++インターフェースの関数で取り扱わねばならない模様。
 			*/
 		}
-#else
 		if (c == '\x1b') {
 			// (ESC押下)
 			// 終了
 			break;
 		}
-#endif
 		if (strchr("\r\n", c) == NULL) {
 			prevKeyIn = c;
 		}
