@@ -193,7 +193,11 @@
     <ClInclude Include="numericutil.h" />
     <ClInclude Include="osal.h" />
     <ClInclude Include="geometryutil.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ShadhingCorrection.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
