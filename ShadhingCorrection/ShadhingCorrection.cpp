@@ -81,7 +81,7 @@ namespace
 	{
 		// プライマリモニターの実作業領域サイズ取得
 		int workAreaWidth, workAreaHeight;
-		get_primary_monitor_work_area_size(workAreaWidth, workAreaHeight);
+		osal_get_primary_monitor_work_area_size(workAreaWidth, workAreaHeight);
 		if (!(workAreaWidth > 0 && workAreaHeight > 0)) {
 			throw std::logic_error("*** ERR ***");
 		}
@@ -170,7 +170,7 @@ namespace
 		(void)(flags);
 
 		// main()と同じスレッドコンテキストで呼ばれるはず
-		if (!(get_thread_id() == g_mainThreadID)) {
+		if (!(osal_get_thread_id() == g_mainThreadID)) {
 			throw std::logic_error("*** ERR ***");
 		}
 
@@ -207,6 +207,8 @@ namespace
 
 int main(const int argc, char* argv[])
 {
+	osal_setup_locale();
+
 	if (argc < 4) {
 		show_usage();
 		return 1;
@@ -242,7 +244,7 @@ int main(const int argc, char* argv[])
 	refresh_input_image_disp(ctx, g_bShowAsSameMag);
 
 	// マウスイベントコールバック登録
-	g_mainThreadID = get_thread_id();	// チェック用
+	g_mainThreadID = osal_get_thread_id();	// チェック用
 	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback(IMAGE_WND_NAME, mouse_callback, (void*)&ctx);
 
