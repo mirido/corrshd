@@ -168,6 +168,7 @@
     <ClCompile Include="numericutil.cpp" />
     <ClCompile Include="osal.cpp" />
     <ClCompile Include="geometryutil.cpp" />
+    <ClCompile Include="PhysicalSize.cpp" />
     <ClCompile Include="ShadhingCorrection.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -193,6 +194,7 @@
     <ClInclude Include="numericutil.h" />
     <ClInclude Include="osal.h" />
     <ClInclude Include="geometryutil.h" />
+    <ClInclude Include="PhysicalSize.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

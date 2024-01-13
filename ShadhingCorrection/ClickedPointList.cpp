@@ -88,10 +88,10 @@ void ClickedPointList::addOrMovePoint(const cv::Point& srcPt)
 }
 
 /// 最も左上から時計回りの順のリストを取得する。
-std::vector<cv::Point> ClickedPointList::getClockwizeLlist() const
+std::vector<cv::Point> ClickedPointList::getClockwiseLlist() const
 {
 	std::vector<cv::Point> points(m_points);
-	return get_clockwize_list(points);
+	return get_clockwise_list(points);
 }
 
 /// Cureent indexを設定する。
@@ -260,7 +260,7 @@ int ClickedPointList::get_clockwise_neighbor(const cv::Point& pt1, const std::ve
 }
 
 /// 最も左上から時計回りの順のリストを取得する。
-std::vector<cv::Point> ClickedPointList::get_clockwize_list(std::vector<cv::Point>& points)
+std::vector<cv::Point> ClickedPointList::get_clockwise_list(std::vector<cv::Point>& points)
 {
 	std::vector<cv::Point> cwPtList;
 

@@ -33,6 +33,9 @@ public:
 	/// 既存座標列を取得する。
 	int getPointList(std::vector<cv::Point>& points) const;
 
+	/// 最も左上から時計回りの順のリストを取得する。
+	std::vector<cv::Point> getClockwiseList() const;
+
 	/// 既存座標選択
 	bool selectExistingPointIF(const int dispX, const int dispY);
 

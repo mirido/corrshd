@@ -68,6 +68,12 @@ int ImagingContext::getPointList(std::vector<cv::Point>& points) const
 	return m_clickedPointList.getPointList(points);
 }
 
+/// 最も左上から時計回りの順のリストを取得する。
+std::vector<cv::Point> ImagingContext::getClockwiseList() const
+{
+	return m_clickedPointList.getClockwiseLlist();
+}
+
 /// 既存座標選択
 bool ImagingContext::selectExistingPointIF(const int dispX, const int dispY)
 {
@@ -125,7 +131,7 @@ void ImagingContext::refreshCanvas()
 	m_imagingCanvas.cleanup();
 
 	// 描画順の頂点リストvertexes取得
-	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwizeLlist();
+	const std::vector<cv::Point> vertexes = m_clickedPointList.getClockwiseLlist();
 
 	// vertexesの中からcurrent point検索
 	int curIdx = -1;
@@ -167,7 +173,7 @@ bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
 	}
 
 	// 既存座標(歪んだROIの4頂点)を時計回りの順でリスト化
-	const std::vector<cv::Point> srcROICorners = m_clickedPointList.getClockwizeLlist();
+	const std::vector<cv::Point> srcROICorners = m_clickedPointList.getClockwiseLlist();
 	if (srcROICorners.size() != nptsExp) {
 		return false;
 	}

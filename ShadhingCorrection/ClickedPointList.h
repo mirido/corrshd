@@ -25,7 +25,7 @@ public:
 	void addOrMovePoint(const cv::Point& srcPt);
 
 	/// 最も左上から時計回りの順のリストを取得する。
-	std::vector<cv::Point> getClockwizeLlist() const;
+	std::vector<cv::Point> getClockwiseLlist() const;
 
 	/// Cureent indexを設定する。
 	void setCurIdx(const int idx);
@@ -53,6 +53,6 @@ private:
 	static int get_clockwise_neighbor(const cv::Point& pt1, const std::vector<cv::Point>& points);
 
 	/// 最も左上から時計回りの順のリストを取得する。
-	static std::vector<cv::Point> get_clockwize_list(std::vector<cv::Point>& points);
+	static std::vector<cv::Point> get_clockwise_list(std::vector<cv::Point>& points);
 
 };

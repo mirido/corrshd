@@ -7,34 +7,39 @@
 #include "cv_keycode.h"
 #include "geometryutil.h"
 #include "osal.h"
+#include "PhysicalSize.h"
 
 #ifdef NDEBUG
-#pragma comment(lib, "opencv_world460.lib")
+#pragma comment(lib, "opencv_world480.lib")
 #else
-#pragma comment(lib, "opencv_world460d.lib")
+#pragma comment(lib, "opencv_world480d.lib")
 #endif
 
-// [CONF] コマンド名
-#define PROG_NAME					"corrshd"
+// Program name (Automatically acquired from argv[0].)
+std::string PROG_NAME;
+
+// [CONF] Program summary
+#define SUMMARY		"image capture and correct program suitable for hand-drawn line drawings"
+
+// [CONF] Copyright
+#define COPYRIGHT	"Copyright 2024 mirido"
+
+// [CONF] OpenCV distributer URL
+#define OPENCV_URL	"https://opencv.org/"
 
 // [CONF] 画像ウィンドウ名
 #define IMAGE_WND_NAME				"Input image"
 #define OUTPUT_WND_NAME				"Result image"
 
-// [CONF] デフォルトの画像出力幅
-#define DEFAULT_OUTPUT_WIDTH		800
-
 // [CONF] 画像表示のマージン
 #define IMAGE_WND_MARGIN_HORZ		16
 #define IMAGE_WND_MARGIN_VERT		32
 
+// Factor to convert 1 inch to mm
+const double mm_per_inch = 25.4;
+
 namespace
 {
-	void show_usage()
-	{
-		cerr << "Usage: " << PROG_NAME << " <image-file> <target-relative-width> <target-relative-height> [ <output-width> ]" << endl;
-	}
-
 	/// ファイル名をディレクトリおよび拡張子の前後に分解する。
 	void parse_file_name(const char* const fpath, std::string& dir, std::string& fnameMajor, std::string& ext)
 	{
@@ -68,6 +73,48 @@ namespace
 			fnameMajor.pop_back();
 			ext = std::string(".") + ext;
 		}
+	}
+
+	/// Get command name from argv[0].
+	std::string get_prog_name(const char* const argv0)
+	{
+		std::string dir, fileMajor, ext;
+		parse_file_name(argv0, dir, fileMajor, ext);
+		return fileMajor;
+	}
+
+	/// parse string as cv::Size2d
+	bool parse_as_Size2d(const char* const str, cv::Size2d& size)
+	{
+		size = cv::Size2d();
+
+		std::istringstream is(str);
+		PhysicalSize psz;
+		is >> psz;
+		if (!is) {
+			return false;
+		}
+		size = cv::Size2d(psz.width(), psz.height());
+		return true;
+	}
+
+	/// Get the approximate size of the ROI.
+	cv::Size get_approximate_size(const std::vector<cv::Point>& roi_corners)
+	{
+		if (roi_corners.size() != 4) {
+			throw std::logic_error("*** ERR ***");
+		}
+
+		cv::Point midpoints[4];
+		midpoints[0] = (roi_corners[0] + roi_corners[1]) / 2;
+		midpoints[1] = (roi_corners[1] + roi_corners[2]) / 2;
+		midpoints[2] = (roi_corners[2] + roi_corners[3]) / 2;
+		midpoints[3] = (roi_corners[3] + roi_corners[0]) / 2;
+
+		const int width = (int)std::round(cv::norm(midpoints[1] - midpoints[3]));
+		const int height = (int)std::round(cv::norm(midpoints[2] - midpoints[0]));
+
+		return cv::Size(width, height);
 	}
 
 	/// 画面に収まるソース画像範囲と表示サイズを取得する。
@@ -203,35 +250,174 @@ namespace
 		}
 	}
 
+	/// Generate about message.
+	cv::String gen_about_msg()
+	{
+		std::ostringstream os;
+		os
+			<< PROG_NAME << " -- " << SUMMARY << endl
+			<< COPYRIGHT << endl
+			<< "Using OpenCV version: " << CV_VERSION << endl
+			<< endl
+			<< "Description:" << endl
+			<< "This program captures a specified input-image ROI (region of interest)" << endl
+			<< "and corrects for perspective distortion, uneven brightness, and line shading." << endl
+			<< "The correcting algorithm is particularly suitable to capturing hand-drawn line drawings." << endl;
+		return os.str().c_str();
+	}
+
+	/// Print usage.
+	void print_usage(const cv::CommandLineParser& parser)
+	{
+		parser.printMessage();
+		cout << endl
+			<< "Hot keys:" << endl
+			<< "\tESC          - quit the program" << endl
+			<< "\tr            - rotate input-image 90 degrees clockwise" << endl
+			<< "\tR            - rotate input-image 90 degrees counterclockwise" << endl
+			<< "\tz            - zoom in or out the input-image (toggled)" << endl
+			<< "\t(cursor key) - move the current corner point of ROI (range of interest) in pixel-wise" << endl
+			<< "\tTAB          - switch the current corner point of ROI to neighbor" << endl
+			<< "\ts            - correct the input-image ROI and save result" << endl;
+		cout << endl
+			<< "Use your mouse to click the 4 corner points of ROI (range of interest) on the image." << endl
+			<< "Then you press the hotkey \"s\" will output the corrected image within the ROI." << endl
+			<< "(If pressing the hot key \"s\" without clicking any corner points," << endl
+			<< " the entire image will be corrected.)" << endl;
+	}
+
+	// Definition of command line arguments.
+	const cv::String keys =
+		"{ h ?              |       | print this message }"
+		"{ @image-file      |       | image file to be corrected }"
+		"{ @roi-size        | B5    | physical size of ROI }"
+		"{ dpi              | 96.0  | output resolution in dot per inch }"
+		"{ outfile          |       | output image file name }"
+		"{ cutoffonly       |       | do nothing other than perspective correction }";
+
+	struct AppParam
+	{
+		std::string m_imageFile;		// Input image file path
+		cv::Size2d m_ROISize;			// ROI physical size in mm
+		double m_dpi;					// Resolution in dpi
+		std::string m_outfile;			// Output image file path
+		bool m_bCutoffOnly;				// Cut off only or not flag
+
+		cv::Size m_outputImgSz;			// Output image size (calculated based on m_ROISize and m_dpi)
+
+		AppParam() : m_dpi(0.0), m_bCutoffOnly(false) { }
+
+		/// Parse command arguments.
+		int parse(int argc, char* argv[]) {
+			cv::String tmp;
+
+			// Prepare CommandlineParser
+			cv::CommandLineParser parser(argc, argv, keys);
+			parser.about(gen_about_msg());
+
+			// Print usage if help specified.
+			if (parser.has("h")) {
+				print_usage(parser);
+				return -1;
+			}
+
+			// Parse step 1: get and check with parse object.
+			// (image file name)
+			tmp = parser.get<cv::String>("@image-file");
+			m_imageFile = static_cast<std::string>(tmp);
+			// (ROI size)
+			const cv::String ROISizeStr = parser.get<cv::String>("@roi-size");
+			// -dpi=<x>
+			m_dpi = parser.get<double>("dpi");
+			// -outfile=<output-file>
+			std::string dir, fnameMajor, ext;
+			parse_file_name(m_imageFile.c_str(), dir, fnameMajor, ext);
+			if (parser.has("outfile")) {
+				// If outfile specified, output with that file name.
+				// In this case, if the output file name does not have a directory,
+				// it will be output to the same directory as the input file name.
+				tmp = parser.get<cv::String>("outfile");
+				if (parser.check()) {
+					const std::string tmp2 = static_cast<std::string>(tmp);
+					std::string dir2, fnameMajor2, ext2;
+					parse_file_name(tmp2.c_str(), dir2, fnameMajor2, ext2);
+					if (dir2.empty()) {
+						m_outfile = dir + tmp2;
+					}
+					else {
+						m_outfile = tmp2;
+					}
+				}
+			}
+			else {
+				// If no outfile specified, output with modified image-file name. 
+				m_outfile = dir + fnameMajor + "_mod" + ext;
+			}
+			// -cutoffonly
+			m_bCutoffOnly = parser.has("cutoffonly");
+			// Error check
+			if (!parser.check()) {
+				parser.printErrors();
+				return 1;
+			}
+
+			// Parse step 2: Do detailed conversion.
+			if (m_dpi <= 0.0) {
+				cerr << "ERROR: Illegal dpi value. (-dpi=" << m_dpi << ")" << endl;
+				return 1;
+			}
+			cv::Size2d size2d;
+			if (!parse_as_Size2d(ROISizeStr.c_str(), size2d)) {
+				cerr << "ERROR: Illegal ROI size. (roi-size=" << ROISizeStr << ")" << endl;
+				return 1;
+			}
+			const int widthInPx = (int)std::round((m_dpi * size2d.width) / mm_per_inch);
+			const int heightInPx = (int)std::round((m_dpi * size2d.height) / mm_per_inch);
+			m_ROISize = size2d;
+			m_outputImgSz = cv::Size(widthInPx, heightInPx);
+
+			return 0;
+		}
+	};
+
 }	// namespace
 
 int main(const int argc, char* argv[])
 {
 	osal_setup_locale();
 
-	if (argc < 4) {
-		show_usage();
+	// Get program name.
+	PROG_NAME = get_prog_name(argv[0]);
+
+	// Parse commandline arguments.
+	AppParam param;
+	const int parseResult = param.parse(argc, argv);
+	if (parseResult < 0) {
+		// (Usage printed.)
+		return 0;
+	}
+	if (parseResult != 0) {
+		// (Error occured.)
 		return 1;
 	}
-	const char* const imageFile = argv[1];
-	const double tgRelWidth = atof(argv[2]);
-	const double tgRelHeight = atof(argv[3]);
-	const double outputWidth = (argc >= 5) ? atof(argv[4]) : tgRelWidth;
-	cout << "Speciied argument: \"" << imageFile << "\" " << tgRelWidth << " " << tgRelHeight << " " << outputWidth << endl;
 
-	// 出力ファイル名のメジャー名と拡張子決定
-	std::string dir, fnameMajor, ext;
-	parse_file_name(imageFile, dir, fnameMajor, ext);
-
-	// 出力画像サイズ決定
-	const double outputHeight = (outputWidth * tgRelHeight) / tgRelWidth;
-	const cv::Size outputImgSz = cv::Size((int)std::round(outputWidth), (int)std::round(outputHeight));
+	// Print specified arguments for check.
+	cout
+		<< "Speciied argument: \"" << param.m_imageFile << "\" "
+		<< param.m_ROISize.width << "x" << param.m_ROISize.height << " "
+		<< "-dpi " << param.m_dpi << " "
+		<< "\"" << param.m_outfile << "\"";
+	if (param.m_bCutoffOnly) {
+		cout << "-cutoffonly";
+	}
+	cout << endl;
+	cout << "Output image size=" << param.m_outputImgSz << " (in pixel)" << endl;
 
 	// 画像読み込み
 	cv::Ptr<cv::Mat> pSrcImage(new cv::Mat());
-	*pSrcImage = cv::imread(imageFile);
+	*pSrcImage = cv::imread(static_cast<cv::String>(param.m_imageFile));
 	if (pSrcImage->data == NULL) {
-		cout << "ERROR: cv::imread() failed. (file name=\"" << imageFile << "\")" << endl;
+		cout << "ERROR: cv::imread() failed. (file name=\"" << param.m_imageFile << "\")" << endl;
 		return 1;
 	}
 
@@ -257,6 +443,7 @@ int main(const int argc, char* argv[])
 		const int c = cv::waitKeyEx(keyWait);
 #ifndef NDEBUG
 		cout << "Key code=0x" << std::setbase(16) << std::setfill('0') << std::setw(8) << c << endl;
+		cout << std::setbase(10);
 #endif
 
 		// カーソルキー押下の処理
@@ -360,19 +547,48 @@ int main(const int argc, char* argv[])
 				ctx.addOrMovePoint(canvas.cols - 1, canvas.rows - 1);
 				ctx.addOrMovePoint(0, canvas.rows - 1);
 			}
-			// シェーディング補正
-			if (ctx.doShadingCorrection(outputImgSz, outputImg)) {
-				cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
-				show_output_image(outputImg);
-
-				// 結果画像保存
-				std::string dstFileName = dir + fnameMajor + "_mod" + ext;
-				if (!cv::imwrite(dstFileName, outputImg)) {
-					cout << "ERROR: cv::imwrite() failed. (file name=\"" << dstFileName << "\")" << endl;
+			// シェーディング補正 (or cutoff only)
+			{
+				// Check that 4 corners are specified.
+				const std::vector<cv::Point> corners = ctx.getClockwiseList();
+				if (corners.size() != 4) {
+					cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
+					break;
 				}
-			}
-			else {
-				cout << "Info: Shading correction failed." << endl;
+
+				// Print the size before and after conversion.
+				cv::Size appxROISize = get_approximate_size(corners);
+				if (!(appxROISize.width > 0 && appxROISize.height > 0)) {
+					cout << "ERROR: Illegal corner selection. (width=" << appxROISize.width << ", height=" << appxROISize.height << ")" << endl;
+					break;
+				}
+				cout << "Convert about " << appxROISize << " image to " << param.m_outputImgSz << " image. (in pixel)" << endl;
+				cout << "horizontal ratio=" << (100.0 * (double)param.m_outputImgSz.width) / (double)appxROISize.width << "%" << endl;
+				cout << "  vertical ratio=" << (100.0 * (double)param.m_outputImgSz.height) / (double)appxROISize.height << "%" << endl;
+
+				// Do correction.
+				bool bSuc;
+				const char* caption;
+				if (param.m_bCutoffOnly) {
+					bSuc = ctx.correctDistortion(param.m_outputImgSz, outputImg);
+					caption = "Distortion correction";
+				}
+				else {
+					bSuc = ctx.doShadingCorrection(param.m_outputImgSz, outputImg);
+					caption = " Shading correction";
+				}
+				if (bSuc) {
+					cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
+						show_output_image(outputImg);
+
+						// 結果画像保存
+						if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
+							cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
+						}
+				}
+				else {
+					cout << "Info: " << caption << " failed." << endl;
+				}
 			}
 			break;
 		default:
