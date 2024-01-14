@@ -349,7 +349,7 @@ namespace
 			parser.about(gen_about_msg());
 
 			// Print usage if help specified.
-			if (parser.has("h")) {
+			if (argc <= 1 || parser.has("h")) {
 				print_usage(parser);
 				return -1;
 			}
