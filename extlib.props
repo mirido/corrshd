@@ -2,9 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <OPENCV_DIR>C:\opencv\build\</OPENCV_DIR>
+    <OPENCV_DIR>$(SolutionDir)opencv\install\</OPENCV_DIR>
     <OPENCV_INCLUDE>$(OPENCV_DIR)include\</OPENCV_INCLUDE>
-    <OPENCV_LIB_x64>$(OPENCV_DIR)x64\vc16\lib\</OPENCV_LIB_x64>
+    <OPENCV_LIB_x64>$(OPENCV_DIR)x64\vc16\staticlib\</OPENCV_LIB_x64>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>

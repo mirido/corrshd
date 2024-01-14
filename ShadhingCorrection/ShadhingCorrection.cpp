@@ -9,11 +9,44 @@
 #include "osal.h"
 #include "PhysicalSize.h"
 
+#ifdef USE_OPENCV_WORDL_DLL
 #ifdef NDEBUG
 #pragma comment(lib, "opencv_world480.lib")
 #else
 #pragma comment(lib, "opencv_world480d.lib")
 #endif
+#else
+#pragma comment(lib, "ippicvmt.lib")
+#ifdef NDEBUG
+#pragma comment(lib, "IlmImf.lib")
+#pragma comment(lib, "ippiw.lib")
+#pragma comment(lib, "ittnotify.lib")
+#pragma comment(lib, "libjpeg-turbo.lib")
+#pragma comment(lib, "libopenjp2.lib")
+#pragma comment(lib, "libpng.lib")
+#pragma comment(lib, "libtiff.lib")
+#pragma comment(lib, "libwebp.lib")
+#pragma comment(lib, "opencv_core480.lib")
+#pragma comment(lib, "opencv_highgui480.lib")
+#pragma comment(lib, "opencv_imgcodecs480.lib")
+#pragma comment(lib, "opencv_imgproc480.lib")
+#pragma comment(lib, "zlib.lib")
+#else
+#pragma comment(lib, "IlmImfd.lib")
+#pragma comment(lib, "ippiwd.lib")
+#pragma comment(lib, "ittnotifyd.lib")
+#pragma comment(lib, "libjpeg-turbod.lib")
+#pragma comment(lib, "libopenjp2d.lib")
+#pragma comment(lib, "libpngd.lib")
+#pragma comment(lib, "libtiffd.lib")
+#pragma comment(lib, "libwebpd.lib")
+#pragma comment(lib, "opencv_core480d.lib")
+#pragma comment(lib, "opencv_highgui480d.lib")
+#pragma comment(lib, "opencv_imgcodecs480d.lib")
+#pragma comment(lib, "opencv_imgproc480d.lib")
+#pragma comment(lib, "zlibd.lib")
+#endif
+#endif	/*OPENCV_BY_DLL*/
 
 // Program name (Automatically acquired from argv[0].)
 std::string PROG_NAME;
