@@ -82,8 +82,6 @@ If you want to more fine-tune the corners of the target drawing, you can adjust 
 <img src="https://raw.githubusercontent.com/mirido/corrshd/images/images/advanced_topics_fine_tuning_while_zoom_in.jpg" width="800" alt="Fine-tuining while zoom in"><BR>
  Press the "z" key again to return to full view.
 
-1. Double click the file `index.html` in workspace.<br>(Or open the html with Live Server on VSCode.)
-
 ### Precautions when shooting
 #### Lighting first!
 Lighting first! Avoid casting shadows on target drawing. If you are too particular to shot the target drawing from directly in front, you will end up as shown in following NG example.<BR>
