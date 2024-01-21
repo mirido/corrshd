@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "imaging_op.h"
 
-#include "numericutil.h"
+#include "../libnumeric/numericutil.h"
 
 /// グレースケール画像に変換する。
 bool conv_color_to_gray(const cv::Mat& srcImage, cv::Mat& grayImage)

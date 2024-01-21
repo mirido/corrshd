@@ -1,12 +1,15 @@
 ﻿#include "stdafx.h"
 
-#include "ImagingCanvas.h"
 #include "ClickedPointList.h"
+#include "ImagingCanvas.h"
+
+#include "IImgFunc.h"
 #include "ImagingContext.h"
 
 #include "cv_keycode.h"
 #include "geometryutil.h"
 #include "osal.h"
+#include "pathutil.h"
 #include "PhysicalSize.h"
 
 #ifdef USE_OPENCV_WORDL_DLL
@@ -73,49 +76,6 @@ const double mm_per_inch = 25.4;
 
 namespace
 {
-	/// ファイル名をディレクトリおよび拡張子の前後に分解する。
-	void parse_file_name(const char* const fpath, std::string& dir, std::string& fnameMajor, std::string& ext)
-	{
-		const size_t len = strlen(fpath);
-
-		// ファイル名の先頭位置取得
-		size_t k1 = len;
-		while (k1 > 0 && strchr("\\/", fpath[k1 - 1]) == NULL) {
-			k1--;
-		}
-
-		// 拡張子の先頭位置取得
-		size_t k2 = len;
-		while (k2 > k1 && fpath[k2 - 1] != '.') {
-			k2--;
-		}
-		if (k2 <= k1) {
-			// (ファイル名部分に '.' 無し = 拡張子無し)
-			k2 = len;
-		}
-
-		dir = fpath;
-		dir = (k1 > 0) ? dir.substr(0, k1) : "";
-
-		fnameMajor = &(fpath[k1]);
-		fnameMajor = (k2 - k1 > 0) ? fnameMajor.substr(0, k2 - k1) : "";
-
-		ext = &(fpath[k2]);
-
-		if (fnameMajor.length() > 0 && fnameMajor.back() == '.') {
-			fnameMajor.pop_back();
-			ext = std::string(".") + ext;
-		}
-	}
-
-	/// Get command name from argv[0].
-	std::string get_prog_name(const char* const argv0)
-	{
-		std::string dir, fileMajor, ext;
-		parse_file_name(argv0, dir, fileMajor, ext);
-		return fileMajor;
-	}
-
 	/// parse string as cv::Size2d
 	bool parse_as_Size2d(const char* const str, cv::Size2d& size)
 	{

@@ -6,6 +6,9 @@ class ImagingContext
 	ImagingCanvas m_imagingCanvas;
 	ClickedPointList m_clickedPointList;
 
+	// Image processing algorithm after perspective correction
+	std::unique_ptr<IImgFunc> m_pImgFunc;
+
 public:
 	ImagingContext();
 
