@@ -6,6 +6,7 @@
 
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
+#include "ImgFunc_shdc02.h"
 
 #include "imaging_op.h"
 
@@ -15,7 +16,10 @@
 
 ImagingContext::ImagingContext()
 {
-	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
+	// Select algorithm.
+	// TODO: Make it variable by command line arguments.
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
+	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc02);
 }
 
 /// É\Å[ÉXâÊëúê›íË

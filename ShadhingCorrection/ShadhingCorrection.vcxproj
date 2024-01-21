@@ -171,6 +171,7 @@
     <ClCompile Include="imaging_op.cpp" />
     <ClCompile Include="ImgFuncBase.cpp" />
     <ClCompile Include="ImgFunc_shdc01.cpp" />
+    <ClCompile Include="ImgFunc_shdc02.cpp" />
     <ClCompile Include="osal.cpp" />
     <ClCompile Include="geometryutil.cpp" />
     <ClCompile Include="pathutil.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="imaging_op.h" />
     <ClInclude Include="ImgFuncBase.h" />
     <ClInclude Include="ImgFunc_shdc01.h" />
+    <ClInclude Include="ImgFunc_shdc02.h" />
     <ClInclude Include="osal.h" />
     <ClInclude Include="geometryutil.h" />
     <ClInclude Include="pathutil.h" />
