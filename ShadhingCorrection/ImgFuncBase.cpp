@@ -26,7 +26,9 @@ void ImgFuncBase::resetImgDumpCnt()
 /// Dump intermediate image. (For DEBUG.)
 void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const char* const dstDir)
 {
-#ifndef NDEBUG
+#ifdef NDEBUG
+	(void)(image, caption, dstDir);
+#else
 	m_imgDumpCnt++;
 
 	cv::String numStr = std::to_string(m_imgDumpCnt);
