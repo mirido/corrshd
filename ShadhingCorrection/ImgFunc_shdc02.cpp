@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
+#include "imaging_op.h"
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc02.h"
 
 #include "../libnumeric/numericutil.h"
-#include "imaging_op.h"
 
 // [CONF] ROI size for determine binarization threshold (%)
 #define BIN_ROI_RATIO		0.8
@@ -30,44 +30,35 @@ namespace
 
 bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
+#ifndef NDEBUG
+	cout << std::setbase(10);
+#endif
+
+	const size_t nsamples = 100;
+
+	cv::Mat mask;
+	if (!makeMaskImage(srcImg, mask)) {
+		return false;
+	}
+
+	cv::Mat median3x3;
+	cv::medianBlur(srcImg, median3x3, 3);
+	dumpImg(median3x3, "median3x3", DBG_IMG_DIR);
+
+	// Sample pixels on line.
+	auto samplesOnLine = sampleImage(median3x3, mask, nsamples);
+
+	// Sample pixels on background.
+	cv::bitwise_not(mask, mask);
+	auto samplesOnBackground = sampleImage(median3x3, mask, nsamples);
+	dstImg = mask;
+
+#if 0
 	cv::Mat tmp;
 
 	cv::Mat gray1 = srcImg;
 	cv::Size dstSz = cv::Size(srcImg.cols, srcImg.rows);
 
-#ifndef NDEBUG
-	cout << std::setbase(10);
-#endif
-
-	// 明るさのむらを均一化(ブラックハット演算、gray2)
-	// クロージング結果 - 原画像、という演算なので、均一化とともに背景と線の輝度が反転する。
-	// 以下の行末コメントは、dstSz.width == 800 の下でカーネルサイズを変えて実験した結果。
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));		// 線がかすれる
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(10, 10));
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));		// 良好
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// 遅い
-	const int knsz = (int)std::round(std::max(dstSz.width, dstSz.height) * 0.025);
-	const cv::Size kernelSz = cv::Size(knsz, knsz);
-	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
-	cv::Mat gray2;
-	cv::morphologyEx(gray1, gray2, cv::MORPH_BLACKHAT, kernel);
-	dumpImg(gray2, "image_after_black_hat", DBG_IMG_DIR);
-
-	// 以下、gray2を均一化画像と呼ぶ。
-
-	// 均一化画像gray2平滑化(gray1)
-	cv::blur(gray2, gray1, cv::Size(3, 3));
-
-	// Get binarization threshold from ROI of gray1 image. (th1)
-	const cv::Rect binROI = get_bin_ROI(gray1);
-	const double th1 = getTh1FromBluredBlackHatResult(gray1, binROI);
-
-	// マスク作成
-	// 平滑化画像gray1の輝度th1以下を黒(0)、超過を白(255)にする(mask)
-	cv::Mat mask;
-	cv::threshold(gray1, mask, th1, 255.0, cv::THRESH_BINARY);
-	dumpImg(mask, "mask", DBG_IMG_DIR);
 
 	// 均一化画像のgray1のマスクされない画素データを抽出(data)
 	std::vector<uchar> data = get_unmasked_data(gray1, mask);
@@ -103,6 +94,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	// gray2を白黒反転(dstImg)
 	cv::bitwise_not(gray2, dstImg);
+#endif
 
 	return true;
 }
@@ -136,4 +128,64 @@ double ImgFunc_shdc02::getTh1FromBluredBlackHatResult(
 #endif
 
 	return th1;
+}
+
+bool ImgFunc_shdc02::makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask)
+{
+	cv::Size dstSz = cv::Size(srcImg.cols, srcImg.rows);
+	if (dstSz.empty()) {
+		return false;
+	}
+
+	// 明るさのむらを均一化(ブラックハット演算、gray2)
+	// クロージング結果 - 原画像、という演算なので、均一化とともに背景と線の輝度が反転する。
+	// 以下の行末コメントは、dstSz.width == 800 の下でカーネルサイズを変えて実験した結果。
+	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));		// 線がかすれる
+	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(10, 10));
+	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));		// 良好
+	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// 遅い
+	const int knsz = (int)std::round(std::max(dstSz.width, dstSz.height) * 0.025);
+	const cv::Size kernelSz = cv::Size(knsz, knsz);
+	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
+	cv::Mat gray2;
+	cv::morphologyEx(srcImg, gray2, cv::MORPH_BLACKHAT, kernel);
+	dumpImg(gray2, "image_after_black_hat", DBG_IMG_DIR);
+
+	// 以下、gray2を均一化画像と呼ぶ。
+
+	// 均一化画像gray2平滑化(gray1)
+	cv::Mat gray1;
+	cv::blur(gray2, gray1, cv::Size(3, 3));
+
+	// Get binarization threshold from ROI of gray1 image. (th1)
+	const cv::Rect binROI = get_bin_ROI(gray1);
+	const double th1 = getTh1FromBluredBlackHatResult(gray1, binROI);
+
+	// マスク作成
+	// 平滑化画像gray1の輝度th1以下を黒(0)、超過を白(255)にする(maskImg)
+	cv::threshold(gray1, mask, th1, 255.0, cv::THRESH_BINARY);
+	dumpImg(mask, "mask", DBG_IMG_DIR);
+
+	return true;
+}
+
+/// Sample unmasked pixels.
+std::vector<LumSample> ImgFunc_shdc02::sampleImage(
+	const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask, const size_t nsamples)
+{
+	auto data = get_unmasked_point_and_lum(image, mask);
+
+	const size_t dataSz = data.size();
+	if (dataSz <= nsamples) {
+		return data;
+	}
+
+	std::vector<LumSample> samples(nsamples);
+	for (size_t i = 0; i < nsamples; i++) {
+		const size_t ii = (i * dataSz) / nsamples;
+		samples[i] = data[ii];
+	}
+
+	return samples;
 }

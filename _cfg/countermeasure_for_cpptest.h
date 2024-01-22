@@ -18,6 +18,12 @@
 #endif
 
 #ifdef __cplusplus
+#define C_UCHAR(x)				(static_cast<unsigned char>(x))
+#else
+#define C_UCHAR(x)				((unsigned char)(x))
+#endif
+
+#ifdef __cplusplus
 #define C_ULONG(x)				(static_cast<unsigned long>(x))
 #else
 #define C_ULONG(x)				((unsigned long)(x))

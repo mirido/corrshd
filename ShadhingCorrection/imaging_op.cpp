@@ -91,6 +91,30 @@ std::vector<uchar> get_unmasked_data(const cv::Mat_<uchar>& image, const cv::Mat
 	return data;
 }
 
+/// マスクされていない画像の座標と輝度を取得する。
+std::vector<LumSample> get_unmasked_point_and_lum(const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask)
+{
+	const int width = image.cols;
+	const int height = image.rows;
+	if (!(mask.cols == width && mask.rows == height)) {
+		throw std::logic_error("*** ERR ***");
+	}
+
+	std::vector<LumSample> data;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			if (mask(y, x) > 0) {
+				LumSample val;
+				val.m_point = cv::Point(x, y);
+				val.m_lum = image(y, x);
+				data.push_back(val);
+			}
+		}
+	}
+
+	return data;
+}
+
 /// 画像の最大輝度が255になるように画素の値をスカラー倍する。
 cv::Mat_<uchar> stretch_to_white(const cv::Mat_<uchar>& image, double& minv, double& maxv)
 {

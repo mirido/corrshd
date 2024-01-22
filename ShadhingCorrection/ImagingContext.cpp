@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ClickedPointList.h"
+#include "imaging_op.h"
 #include "ImagingCanvas.h"
 #include "IImgFunc.h"
 #include "ImagingContext.h"
@@ -7,8 +8,6 @@
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
 #include "ImgFunc_shdc02.h"
-
-#include "imaging_op.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
