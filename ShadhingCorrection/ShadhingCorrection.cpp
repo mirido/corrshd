@@ -12,7 +12,7 @@
 #include "pathutil.h"
 #include "PhysicalSize.h"
 
-#ifdef USE_OPENCV_WORDL_DLL
+#ifdef USE_OPENCV_WORLD_DLL
 #ifdef NDEBUG
 #pragma comment(lib, "opencv_world480.lib")
 #else
@@ -49,7 +49,7 @@
 #pragma comment(lib, "opencv_imgproc480d.lib")
 #pragma comment(lib, "zlibd.lib")
 #endif
-#endif	/*OPENCV_BY_DLL*/
+#endif	/*USE_OPENCV_WORLD_DLL*/
 
 // Program name (Automatically acquired from argv[0].)
 std::string PROG_NAME;
