@@ -38,7 +38,7 @@ Those command's arguments are file path to the input image file and physical dim
 corrshd.exe C:\usr2\document\163_0114\IMGP0101.JPG B5
 ```
 
-5. The photo will be displaied on the screen, so use your mouse to click on the four corners of the target drawing to select it.
+5. The photo will be displayed on the screen, so use your mouse to click on the four corners of the target drawing to select it.
 
 ![Click ROI corners](https://raw.githubusercontent.com/mirido/corrshd/images/images/how_to_use_02_click_ROI_corners.png)<BR>
 You can fine-tune the corner position using the cursor keys.
@@ -49,7 +49,7 @@ Also, if you press the TAB key, the thick red marker will be switched to the nex
 
 ![Rotate ROI image](https://raw.githubusercontent.com/mirido/corrshd/images/images/how_to_use_03_rotate_ROI_image.png)
 
-6. Press "s" key. Press the "s" key. Then, the target line drawing (the area enclosed by clicking the corner above) will be automatically corrected.
+6. Press "s" key. Then, the target line drawing (the area enclosed by clicking the corner above) will be automatically corrected.
 
 <img src="https://raw.githubusercontent.com/mirido/corrshd/images/images/screnshot.png" width="800" alt="Screen during automatic correction"><BR>
 
