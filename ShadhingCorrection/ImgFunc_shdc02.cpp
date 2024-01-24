@@ -5,6 +5,7 @@
 #include "ImgFunc_shdc02.h"
 
 #include "../libnumeric/numericutil.h"
+#include "shdcutil.h"
 
 // [CONF] ROI size for determine binarization threshold (%)
 #define BIN_ROI_RATIO		0.8
@@ -36,65 +37,44 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	const size_t nsamples = 100;
 
-	cv::Mat mask;
-	if (!makeMaskImage(srcImg, mask)) {
+	cv::Mat maskForLineChg;
+	if (!makeMaskImage(srcImg, maskForLineChg)) {
 		return false;
 	}
+	//maskForLineChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
 
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 3);
 	dumpImg(median3x3, "median3x3", DBG_IMG_DIR);
 
 	// Sample pixels on line.
-	auto samplesOnLine = sampleImage(median3x3, mask, nsamples);
+	auto samplesOnLine = sampleImage(median3x3, maskForLineChg, nsamples);
+	//for (auto it = samplesOnLine.begin(); it != samplesOnLine.end(); it++) { it->m_lum = C_UCHAR(64); }		// Test.
 
 	// Sample pixels on background.
-	cv::bitwise_not(mask, mask);
-	auto samplesOnBackground = sampleImage(median3x3, mask, nsamples);
-	dstImg = mask;
+	cv::Mat maskForBgChg;
+	cv::bitwise_not(maskForLineChg, maskForBgChg);
+	auto samplesOnBg = sampleImage(median3x3, maskForBgChg, nsamples);
+	//for (auto it = samplesOnBg.begin(); it != samplesOnBg.end(); it++) { it->m_lum = C_UCHAR(64 * 3); }		// Test.
 
-#if 0
-	cv::Mat tmp;
-
-	cv::Mat gray1 = srcImg;
-	cv::Size dstSz = cv::Size(srcImg.cols, srcImg.rows);
-
-
-	// 均一化画像のgray1のマスクされない画素データを抽出(data)
-	std::vector<uchar> data = get_unmasked_data(gray1, mask);
-	if (data.size() < 2) {
+	// Approximate lighting tilt on background.
+	std::vector<double> cflistOnBg;
+	if (!approximate_lighting_tilt_by_cubic_poly(samplesOnBg, cflistOnBg)) {
 		return false;
 	}
 
-	// dataに対し大津の方法で判別分析を実施
-	const int th2 = discriminant_analysis_by_otsu(data);
-	cout << "th2=" << th2 << endl;
+	// Approximate lighting tilt on line.
+	std::vector<double> cflistOnLine;
+	if (!approximate_lighting_tilt_by_cubic_poly(samplesOnLine, cflistOnLine)) {
+		return false;
+	}
 
-	// dataの最小値を取得
-	const int minv = *std::min_element(data.begin(), data.end());
-	cout << "minv=" << minv << endl;
-
-	const int th3 = minv + (int)((double)(th2 - minv) * 0.2);
-	cout << "th3=" << th3 << endl;
-
-	// 均一化画像gray2の閾値th3以下を黒(0)、超える画素を原画像のままとする(gray2)
-	cv::threshold(gray2, gray2, th3, 255.0, cv::THRESH_TOZERO);
-	dumpImg(gray2, "threshold_by_th3", DBG_IMG_DIR);
-
-	// gray2の最大輝度が255になるように調整(gray2)
-	double img_minv, img_maxv;
-	gray2 = stretch_to_white(gray2, img_minv, img_maxv);
-	cout << "img_minv=" << img_minv << endl;
-	cout << "img_maxv=" << img_maxv << endl;
-	dumpImg(gray2, "stretch_to_white", DBG_IMG_DIR);
-
-	// gray2をガンマ補正(gray2)
-	gray2 = gamma_correction(gray2, 3.0);
-	dumpImg(gray2, "gumma_correction", DBG_IMG_DIR);
-
-	// gray2を白黒反転(dstImg)
-	cv::bitwise_not(gray2, dstImg);
+#ifndef NDEBUG
+	dumpAppxImg(srcImg.size(), cflistOnBg, "appx shade on bg", DBG_IMG_DIR);
+	dumpAppxImg(srcImg.size(), cflistOnLine, "appx shade on line", DBG_IMG_DIR);
 #endif
+
+	dstImg = maskForBgChg;
 
 	return true;
 }
@@ -188,4 +168,30 @@ std::vector<LumSample> ImgFunc_shdc02::sampleImage(
 	}
 
 	return samples;
+}
+
+/// Method for debug. Dump approximation result visually.
+void ImgFunc_shdc02::dumpAppxImg(
+	const cv::Size imgSz,
+	const std::vector<double>& cflist,
+	const char* const caption,
+	const char* const dstDir
+)
+{
+	const int m = imgSz.height;
+	const int n = imgSz.width;
+	cv::Mat appxImg(m, n, CV_8UC1);
+	for (size_t y = ZT(0); y < ZT(m); y++) {
+		for (size_t x = ZT(0); x < ZT(n); x++) {
+			double val = predict_by_qubic_poly(cflist, C_DBL(x), C_DBL(y));
+			if (val < 0.0) {
+				val = 0.0;
+			}
+			else if (val > 255.0) {
+				val = 255.0;
+			}
+			appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)val;
+		}
+	}
+	dumpImg(appxImg, caption, dstDir);
 }
