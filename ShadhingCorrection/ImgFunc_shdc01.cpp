@@ -4,8 +4,8 @@
 #include "ImgFunc_shdc01.h"
 
 #include "../libnumeric/numericutil.h"
-#include "geometryutil.h"
-#include "imaging_op.h"
+#include "../libimaging/geometryutil.h"
+#include "../libimaging/imaging_op.h"
 
 const char* ImgFunc_shdc01::getName() const
 {

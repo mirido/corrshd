@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ClickedPointList.h"
-#include "imaging_op.h"
+#include "../libimaging/imaging_op.h"
 #include "ImagingCanvas.h"
 #include "IImgFunc.h"
 #include "ImagingContext.h"

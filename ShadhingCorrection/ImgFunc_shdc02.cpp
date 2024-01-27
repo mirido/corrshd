@@ -1,12 +1,12 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
-#include "imaging_op.h"
+#include "../libimaging/imaging_op.h"
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc02.h"
 
 #include "../libnumeric/numericutil.h"
-#include "geometryutil.h"
-#include "shdcutil.h"
+#include "../libimaging/geometryutil.h"
+#include "../libimaging/shdcutil.h"
 
 // [CONF] ROI size for determine binarization threshold (ratio)
 #define BIN_ROI_RATIO		0.8

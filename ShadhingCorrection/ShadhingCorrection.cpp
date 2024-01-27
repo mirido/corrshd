@@ -7,7 +7,7 @@
 #include "ImagingContext.h"
 
 #include "cv_keycode.h"
-#include "geometryutil.h"
+#include "../libimaging/geometryutil.h"
 #include "osal.h"
 #include "pathutil.h"
 #include "PhysicalSize.h"

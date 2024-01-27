@@ -153,6 +153,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="..\libimaging\libimaging.vcxproj">
+      <Project>{6129a3d7-d2bf-4f09-b2ea-9b3da2b2696f}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\libnumeric\libnumeric.vcxproj">
       <Project>{3d56258b-c101-447a-a5f1-d92eef8148d0}</Project>
     </ProjectReference>
