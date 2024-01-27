@@ -2,13 +2,45 @@
 #include "imaging_op.h"
 #include "shdcutil.h"
 
+#include "../libnumeric/numericutil.h"
 #include "../libnumeric/regression.h"
+#include "geometryutil.h"
 
 // [CONF] Add combination product term.
 //#define ADD_CMB_PRODUCT
+// Don't define the above macro ADD_CMB_PRODUCT.
+// If defined, shading correction will fail because the luminance is
+// fitted to the product of x and y instead of the coordinate (x, y).
+
+// [CONF] Luminance convertion type on drawing line.
+//#define LINEAR_CONV
+#define SQUARE_CONV
+
+/// Sample pixels in image.
+std::vector<LumSample> sample_pixels(
+	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const int cyc_x, const int cyc_y)
+{
+	const int cntx = get_num_grid_points(smpROI.width, cyc_x);
+	const int cnty = get_num_grid_points(smpROI.height, cyc_y);
+	const size_t expSz = ZT(cntx) * ZT(cnty);
+	std::vector<LumSample> samples;
+	samples.reserve(ZT(expSz));
+
+	int sx, sy, ex, ey;
+	decompose_rect(smpROI, sx, sy, ex, ey);
+	for (int y = sy; y < ey; y += cyc_y) {
+		for (int x = sx; x < ex; x += cyc_x) {
+			const uchar lum = image.at<uchar>(y, x);
+			samples.push_back(LumSample(x, y, lum));
+		}
+	}
+	assert(samples.size() == expSz);
+
+	return samples;
+}
 
 /// Approximate lighting tilt by cubic polynomial.
-bool approximate_lighting_tilt_by_cubic_poly(std::vector<LumSample>& samples, std::vector<double>& cflist)
+bool approximate_lighting_tilt_by_cubic_poly(const std::vector<LumSample>& samples, std::vector<double>& cflist)
 {
 	double pd;
 
@@ -63,9 +95,9 @@ bool approximate_lighting_tilt_by_cubic_poly(std::vector<LumSample>& samples, st
 	}
 
 	// Solve.
-	regress_poly_core(G, lum, cflist);
-
-	return true;
+	//cout << "G=" << G << endl;
+	//cout << "lum=" << lum << endl;
+	return regress_poly_core(G, lum, cflist);
 }
 
 /// Predict by cubic polynomial.
@@ -83,20 +115,20 @@ double predict_by_qubic_poly(const std::vector<double>& cflist, const double x, 
 	// Constant
 	double val = cflist[0];
 
-	// x, x^2, x^3
-	pd = x;
-	val += (cflist[ZT(1 + 0)] * pd);
-	pd *= x;
-	val += (cflist[ZT(1 + 1)] * pd);
-	pd *= x;
-	val += (cflist[ZT(1 + 2)] * pd);
-
 	// y, y^2, y^3
 	pd = y;
+	val += (cflist[ZT(1 + 0)] * pd);
+	pd *= y;
+	val += (cflist[ZT(1 + 1)] * pd);
+	pd *= y;
+	val += (cflist[ZT(1 + 2)] * pd);
+
+	// x, x^2, x^3
+	pd = x;
 	val += (cflist[ZT(1 + degree + 0)] * pd);
-	pd *= y;
+	pd *= x;
 	val += (cflist[ZT(1 + degree + 1)] * pd);
-	pd *= y;
+	pd *= x;
 	val += (cflist[ZT(1 + degree + 2)] * pd);
 
 #ifdef ADD_CMB_PRODUCT
@@ -112,62 +144,62 @@ double predict_by_qubic_poly(const std::vector<double>& cflist, const double x, 
 	return val;
 }
 
-namespace
-{
-	void clip_as_lum(double& val)
-	{
-		if (val < 0.0) {
-			val = 0.0;
-		}
-		else if (val > 255.0) {
-			val = 255.0;
-		}
-		else {
-			/*pass*/
-		}
-	}
-
-}	// namespace
-
 /// Stretch luminance.
-void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<double>& cflistOnBg/*, std::vector<double>& cflistOnDL*/)
+void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<double>& cflistOnBg, const cv::Mat& blacknessMap)
 {
 	const int m = image.rows;
 	const int n = image.cols;
-	for (size_t y = ZT(0); y < ZT(m); y++) {
-		for (size_t x = ZT(0); x < ZT(n); x++) {
-			uchar& lum = image.at<uchar>(C_INT(y), C_INT(x));		// Alias
+	if (!(maskForDLChg.rows == m && maskForDLChg.cols == n)) {
+		throw std::logic_error("*** ERR ***");
+	}
+	if (!(blacknessMap.rows == m && blacknessMap.cols == n)) {
+		throw std::logic_error("*** ERR ***");
+	}
 
-			// Masking
-			if (maskForDLChg.at<uchar>(C_INT(y), C_INT(x)) == C_UCHAR(0)) {
-				//lum = (uchar)255;
-				//continue;
+	for (int y = 0; y < m; y++) {
+		for (int x = 0; x < n; x++) {
+			uchar& lum = image.at<uchar>(y, x);		// Alias
+			double fLum = static_cast<double>(lum);
+
+			const double whiteLumEnd = predict_by_qubic_poly(cflistOnBg, C_DBL(x), C_DBL(y));
+			const double ofsToWhite = 255.0 - whiteLumEnd;
+
+			// Cancel background. (Whitening)
+			fLum += ofsToWhite;
+
+			if (maskForDLChg.at<uchar>(y, x) == C_UCHAR(0)) {
+				// (Point on background)
+				fLum = 255.0;
 			}
 
-			const double fLum = static_cast<double>(lum);
+			if (maskForDLChg.at<uchar>(y, x) != C_UCHAR(0)) {
+				// (Point near drawing line)
+				const double blackLumEnd = C_DBL(blacknessMap.at<uchar>(y, x)) + ofsToWhite;
+				//fLum = blackLumEnd;		// Test.
+				//fLum = 254.0;				// Test.
+				//fLum = 255.0;				// Test.
+				if (blackLumEnd < 255.0) {
+#if defined(LINEAR_CONV)
+					double mag = 255.0 / (255.0 - blackLumEnd);
+					//mag *= 0.8;
+					fLum = 255.0 - (255.0 - fLum) * mag;
+#elif defined(SQUARE_CONV)
+					const double invBlackEnd = 255.0 - blackLumEnd;
+					const double invLum = 255.0 - fLum;
+					double mag = 255.0 / (invBlackEnd * invBlackEnd);
+					//mag *= 0.8;
+					fLum = 255.0 - invLum * invLum * mag;
+#else
+					/*pass*/
+#endif
+				}
+				else {
+					fLum = 255.0;
+				}
+			}
 
-			double whiteLumEnd = predict_by_qubic_poly(cflistOnBg, C_DBL(x), C_DBL(y));
-			//double blackLumEnd = predict_by_qubic_poly(cflistOnDL, C_DBL(x), C_DBL(y));
-
-			//if (std::abs(fLum - whiteLumEnd) < std::abs(fLum - blackLumEnd)) {
-			//	lum = (uchar)128;
-			//	continue;
-			//}
-
-			//whiteLumEnd = 255.0 - (255.0 - whiteLumEnd) * 0.8;
-			//blackLumEnd *= 0.8;
-
-			//if (fLum >= whiteLumEnd) {
-			//	lum = (uchar)255;
-			//	continue;
-			//}
-
-			//double fNewLum = (255.0 * (fLum - blackLumEnd)) / (whiteLumEnd - blackLumEnd);
-			//(void)(blackLumEnd, whiteLumEnd);
-			double fNewLum = fLum + (255.0 - whiteLumEnd);
-			//double fNewLum = blackLumEnd;
-			clip_as_lum(fNewLum);
-			lum = static_cast<uchar>(fNewLum);
+			clip_as_lum255(fLum);
+			lum = static_cast<uchar>(fLum);
 		}
 	}
 }

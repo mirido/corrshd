@@ -12,6 +12,11 @@ const char* ImgFunc_shdc01::getName() const
 	return "shd01";
 }
 
+const char* ImgFunc_shdc01::getSummary() const
+{
+	return "Tiny shading correction with Black Top Hat algorithm.";
+}
+
 bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
 	cv::Mat tmp;

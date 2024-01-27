@@ -2,6 +2,10 @@
 #include "../libnumeric/regression.h"
 
 TEST(regressionTest, least_squares_method) {
+	bool bRet;
+
+	SCOPED_TRACE(__FUNCTION__);
+
 	std::vector<cv::Point2d> points{
 		{ 116.5, 21.3 },
 		{ 125.5, 22.0 },
@@ -12,7 +16,8 @@ TEST(regressionTest, least_squares_method) {
 	};
 
 	std::vector<double> cflist;
-	regress_poly(points, 1, cflist);
+	bRet = regress_poly(points, 1, cflist);
+	ASSERT_TRUE(bRet);
 	ASSERT_EQ((size_t)2, cflist.size());
 
 	std::ostringstream ost;

@@ -75,7 +75,7 @@ void warp_image(
 std::vector<uchar> get_unmasked_data(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& samplingROI
+	const cv::Rect& smpROI
 )
 {
 	const int width = image.cols;
@@ -84,7 +84,7 @@ std::vector<uchar> get_unmasked_data(
 		throw std::logic_error("*** ERR ***");
 	}
 
-	const cv::Rect ROI = clip_rect_into_image(samplingROI, width, height);
+	const cv::Rect ROI = clip_rect_into_image(smpROI, width, height);
 	int sx, sy, ex, ey;
 	decompose_rect(ROI, sx, sy, ex, ey);
 
@@ -104,7 +104,7 @@ std::vector<uchar> get_unmasked_data(
 std::vector<LumSample> get_unmasked_point_and_lum(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& samplingROI
+	const cv::Rect& smpROI
 )
 {
 	const int width = image.cols;
@@ -113,7 +113,7 @@ std::vector<LumSample> get_unmasked_point_and_lum(
 		throw std::logic_error("*** ERR ***");
 	}
 
-	const cv::Rect ROI = clip_rect_into_image(samplingROI, width, height);
+	const cv::Rect ROI = clip_rect_into_image(smpROI, width, height);
 	int sx, sy, ex, ey;
 	decompose_rect(ROI, sx, sy, ex, ey);
 

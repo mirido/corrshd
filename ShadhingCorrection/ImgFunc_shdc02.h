@@ -4,6 +4,7 @@ class ImgFunc_shdc02 : public ImgFuncBase
 {
 public:
 	const char* getName() const;
+	const char* getSummary() const;
 
 	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
 
@@ -17,9 +18,8 @@ private:
 	/// Make a mask to separate lines and background.
 	bool makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask);
 
-	/// Sample unmasked pixels.
-	std::vector<LumSample> sampleImage(
-		const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask);
+	/// Sample pixels.
+	std::vector<LumSample> sampleImage(const cv::Mat_<uchar>& image);
 
 	//
 	//	For DEBUG

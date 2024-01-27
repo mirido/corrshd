@@ -8,6 +8,9 @@ public:
 	/// Get algorithm name.
 	virtual const char* getName() const = 0;
 
+	/// Get algorithm summary.
+	virtual const char* getSummary() const = 0;
+
 	/// Run image processing.
 	virtual bool run(const cv::Mat& SrcImg, cv::Mat& dstImg) = 0;
 

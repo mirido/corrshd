@@ -2,7 +2,7 @@
 #include "regression.h"
 
 /// Do polynomial regression.
-void regress_poly_core(
+bool regress_poly_core(
 	const cv::Mat& G,
 	const cv::Mat& y,
 	cv::Mat& cflist
@@ -51,12 +51,16 @@ void regress_poly_core(
 	// Solve
 	assert(GTG.rows == n && GTG.cols == n);
 	assert(GTy.rows == n && GTy.cols == 1);
-	cv::solve(GTG, GTy, cflist, cv::DECOMP_LU);
+	if (!cv::solve(GTG, GTy, cflist, cv::DECOMP_LU)) {
+		return false;
+	}
 	assert(cflist.cols == 1);
+
+	return true;
 }
 
 /// Do polynomial regression. (Output to std::vector<double>)
-void regress_poly_core(
+bool regress_poly_core(
 	const cv::Mat& G,
 	const cv::Mat& y,
 	std::vector<double>& cflist
@@ -64,7 +68,9 @@ void regress_poly_core(
 {
 	// Get parameter vector cfs.
 	cv::Mat cfs;
-	regress_poly_core(G, y, cfs);
+	if (!regress_poly_core(G, y, cfs)) {
+		return false;
+	}
 	assert(cfs.cols == 1);
 
 	// Expand cfs to std::vector<double> cflist.
@@ -73,10 +79,12 @@ void regress_poly_core(
 	for (size_t i = 0; i < sz; i++) {
 		cflist[i] = cfs.at<double>(C_INT(i), 0);
 	}
+
+	return true;
 }
 
 /// Do polynomial regression. (cv::Point interface)
-void regress_poly(const std::vector<cv::Point2d>& points, const int degree, std::vector<double>& cflist)
+bool regress_poly(const std::vector<cv::Point2d>& points, const int degree, std::vector<double>& cflist)
 {
 	const int m = C_INT(points.size());
 	const int n = degree + 1;
@@ -98,5 +106,5 @@ void regress_poly(const std::vector<cv::Point2d>& points, const int degree, std:
 	}
 
 	// Get parameter vector cflist.
-	regress_poly_core(G, y, cflist);
+	return regress_poly_core(G, y, cflist);
 }
