@@ -63,13 +63,6 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 #ifndef NDEBUG
 	cout << std::setbase(10);
 #endif
-	// Make mask for drawing line change.
-	cv::Mat maskForDLChg;
-	if (!makeMaskImage(srcImg, maskForDLChg)) {
-		return false;
-	}
-	//maskForDLChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
-
 	// Prepare source image for sampling.
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 5);
@@ -93,17 +86,41 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 		return false;
 	}
 
-	// Make blackness map on drawing line.
-	cv::erode(median3x3, morphoTmpImg, kernel);
+	// Whitening.
+	cv::Mat stdWhiteImg;
+	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
+	cv::Mat invSrcImg = stdWhiteImg - srcImg;
+	dumpImg(invSrcImg, "shading corrected image", DBG_IMG_DIR);
+	stdWhiteImg.release();
+
+	// Make mask for drawing line change.
+	cv::Mat maskForDLChg;
+	if (!makeMaskImage(srcImg, maskForDLChg)) {
+		return false;
+	}
+	//maskForDLChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
+
+	// Sample pixels on drawing line.
+	cv::dilate(invSrcImg, morphoTmpImg, kernel);
+	auto samplesOnDL = sampleDrawLine(morphoTmpImg, maskForDLChg, samplesOnBg.size());
 #ifndef NDEBUG
-	dumpImg(morphoTmpImg, "blackness map", DBG_IMG_DIR);
+	cout << "samplesOnDL: size=" << samplesOnDL.size() << endl;
+	plotSamples(morphoTmpImg, samplesOnDL, "samples on drawing line", DBG_IMG_DIR);
 #endif
+	morphoTmpImg.release();
 
-	median3x3.release();
+	// Approximage blackness tilt on drawing line.
+	std::vector<double> cflistOnDL;
+	if (!approximate_lighting_tilt_by_cubic_poly(samplesOnDL, cflistOnDL)) {
+		return false;
+	}
 
-	// Shadiing correction.
-	dstImg = srcImg.clone();
-	stretch_luminance(dstImg, maskForDLChg, cflistOnBg, morphoTmpImg);
+	// Enhance drawing line.
+	cv::Mat invBlacknessTiltImg;
+	predict_image(invSrcImg.size(), cflistOnDL, invBlacknessTiltImg);
+	dumpImg(invBlacknessTiltImg, "blackness tilt image", DBG_IMG_DIR);
+	dstImg = invSrcImg;
+	stretch_luminance(dstImg, maskForDLChg, invBlacknessTiltImg);
 
 	return true;
 }
@@ -186,6 +203,30 @@ std::vector<LumSample> ImgFunc_shdc02::sampleImage(const cv::Mat_<uchar>& image)
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
 	const cv::Rect smpROI = get_bin_ROI(image.size());
 	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height);
+}
+
+/// Sample pixels on drawing line. 
+std::vector<LumSample> ImgFunc_shdc02::sampleDrawLine(
+	const cv::Mat_<uchar>& invImage, const cv::Mat_<uchar>& maskForDLChg, const size_t nsamples)
+{
+	const cv::Rect smpROI = get_bin_ROI(invImage.size());
+	auto samplesOnDL = get_unmasked_point_and_lum(invImage, maskForDLChg, smpROI);
+
+	const size_t sz = samplesOnDL.size();
+	if (sz <= nsamples) {
+		return samplesOnDL;
+	}
+
+	const size_t cyc = (sz + (nsamples - ZT(1))) / nsamples;
+	const size_t expSz = (sz + (cyc - ZT(1))) / cyc;
+	std::vector<LumSample> smpDL;
+	smpDL.reserve(expSz);
+	for (size_t i = 0; i < sz; i += cyc) {
+		smpDL.push_back(samplesOnDL[i]);
+	}
+	assert(smpDL.size() == expSz);
+
+	return smpDL;
 }
 
 //

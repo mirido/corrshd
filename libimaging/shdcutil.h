@@ -10,5 +10,8 @@ bool approximate_lighting_tilt_by_cubic_poly(const std::vector<LumSample>& sampl
 /// Predict by cubic polynomial.
 double predict_by_qubic_poly(const std::vector<double>& cflist, const double x, const double y);
 
+/// Predict while image.
+void predict_image(const cv::Size& imgSz, const std::vector<double>& cflist, cv::Mat& dstImg);
+
 /// Stretch luminance.
-void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<double>& cflistOnBg, const cv::Mat& blacknessMap);
+void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Mat& invBlacknessMap);

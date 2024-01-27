@@ -21,6 +21,10 @@ private:
 	/// Sample pixels.
 	std::vector<LumSample> sampleImage(const cv::Mat_<uchar>& image);
 
+	/// Sample pixels on drawing line. 
+	std::vector<LumSample> sampleDrawLine(
+		const cv::Mat_<uchar>& invImage, const cv::Mat_<uchar>& maskForDLChg, const size_t nsamples);
+
 	//
 	//	For DEBUG
 	//

@@ -12,10 +12,6 @@
 // If defined, shading correction will fail because the luminance is
 // fitted to the product of x and y instead of the coordinate (x, y).
 
-// [CONF] Luminance convertion type on drawing line.
-//#define LINEAR_CONV
-#define SQUARE_CONV
-
 /// Sample pixels in image.
 std::vector<LumSample> sample_pixels(
 	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const int cyc_x, const int cyc_y)
@@ -144,15 +140,31 @@ double predict_by_qubic_poly(const std::vector<double>& cflist, const double x, 
 	return val;
 }
 
+/// Predict while image.
+void predict_image(const cv::Size& imgSz, const std::vector<double>& cflist, cv::Mat& dstImg)
+{
+	const int m = imgSz.height;
+	const int n = imgSz.width;
+
+	dstImg = cv::Mat(m, n, CV_8UC1);
+	for (int y = 0; y < m; y++) {
+		for (int x = 0; x < n; x++) {
+			double fLum = predict_by_qubic_poly(cflist, C_DBL(x), C_DBL(y));
+			clip_as_lum255(fLum);
+			dstImg.at<uchar>(y, x) = static_cast<uchar>(fLum);
+		}
+	}
+}
+
 /// Stretch luminance.
-void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<double>& cflistOnBg, const cv::Mat& blacknessMap)
+void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Mat& invBlacknessMap)
 {
 	const int m = image.rows;
 	const int n = image.cols;
 	if (!(maskForDLChg.rows == m && maskForDLChg.cols == n)) {
 		throw std::logic_error("*** ERR ***");
 	}
-	if (!(blacknessMap.rows == m && blacknessMap.cols == n)) {
+	if (!(invBlacknessMap.rows == m && invBlacknessMap.cols == n)) {
 		throw std::logic_error("*** ERR ***");
 	}
 
@@ -161,37 +173,18 @@ void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<
 			uchar& lum = image.at<uchar>(y, x);		// Alias
 			double fLum = static_cast<double>(lum);
 
-			const double whiteLumEnd = predict_by_qubic_poly(cflistOnBg, C_DBL(x), C_DBL(y));
-			const double ofsToWhite = 255.0 - whiteLumEnd;
-
-			// Cancel background. (Whitening)
-			fLum += ofsToWhite;
-
 			if (maskForDLChg.at<uchar>(y, x) == C_UCHAR(0)) {
 				// (Point on background)
 				fLum = 255.0;
 			}
-
-			if (maskForDLChg.at<uchar>(y, x) != C_UCHAR(0)) {
+			else {
 				// (Point near drawing line)
-				const double blackLumEnd = C_DBL(blacknessMap.at<uchar>(y, x)) + ofsToWhite;
-				//fLum = blackLumEnd;		// Test.
-				//fLum = 254.0;				// Test.
-				//fLum = 255.0;				// Test.
-				if (blackLumEnd < 255.0) {
-#if defined(LINEAR_CONV)
-					double mag = 255.0 / (255.0 - blackLumEnd);
-					//mag *= 0.8;
-					fLum = 255.0 - (255.0 - fLum) * mag;
-#elif defined(SQUARE_CONV)
-					const double invBlackEnd = 255.0 - blackLumEnd;
-					const double invLum = 255.0 - fLum;
-					double mag = 255.0 / (invBlackEnd * invBlackEnd);
-					//mag *= 0.8;
-					fLum = 255.0 - invLum * invLum * mag;
-#else
-					/*pass*/
-#endif
+				const double invBlackLumEnd = C_DBL(invBlacknessMap.at<uchar>(y, x));
+				//fLum = invBlackLumEnd;		// Test.
+				//fLum = 1.0;				// Test.
+				//fLum = 0.0;				// Test.
+				if (invBlackLumEnd > 0.0) {
+					fLum = 255.0 * (1.0 - fLum / invBlackLumEnd);
 				}
 				else {
 					fLum = 255.0;
