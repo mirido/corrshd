@@ -5,10 +5,14 @@
 #include "ImgFunc_shdc02.h"
 
 #include "../libnumeric/numericutil.h"
+#include "geometryutil.h"
 #include "shdcutil.h"
 
-// [CONF] ROI size for determine binarization threshold (%)
+// [CONF] ROI size for determine binarization threshold (ratio)
 #define BIN_ROI_RATIO		0.8
+
+// [CONF] Kernel size for determine binarization threshold (ratio)
+#define BIN_KERNEL_RATIO	0.025
 
 const char* ImgFunc_shdc02::getName() const
 {
@@ -19,43 +23,79 @@ namespace
 {
 	cv::Rect get_bin_ROI(const cv::Mat& image)
 	{
-		const int width = image.cols;
-		const int height = image.rows;
-		const int newWidth = (int)std::round(width * BIN_ROI_RATIO);
-		const int newHeight = (int)std::round(height * BIN_ROI_RATIO);
+		return get_scaled_rect_from_size(image.size(), BIN_ROI_RATIO);
+	}
 
-		return cv::Rect((width - newWidth) / 2, (height - newHeight) / 2, newWidth, newHeight);
+	cv::Size get_bin_kernel_size(const cv::Size& imgSz)
+	{
+		const int aveSz = std::max(imgSz.width, imgSz.height);
+		const int knsz0 = (int)std::round(C_DBL(aveSz) * 0.025);
+		const int knszOdd = 2 * ((knsz0 + 1) / 2) + 1;
+		return cv::Size(knszOdd, knszOdd);
+	}
+
+	cv::Mat get_bin_kernel(const cv::Mat& image)
+	{
+		const cv::Size imgSz = image.size();
+		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
+		return cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
+	}
+
+	size_t get_exp_nsamples(const cv::Rect& smpROI)
+	{
+		const cv::Size imgSz = cv::Size(smpROI.width, smpROI.height);
+		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
+		const int hcnt = (imgSz.width + (kernelSz.width - 1)) / kernelSz.width;
+		const int vcnt = (imgSz.height + (kernelSz.height - 1)) / kernelSz.height;
+		return ZT(4) * ZT(hcnt) * ZT(vcnt);
 	}
 
 }	// namespace
 
 bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
+	cv::Mat tmpImg;
+
 #ifndef NDEBUG
 	cout << std::setbase(10);
 #endif
 
-	const size_t nsamples = 100;
-
-	cv::Mat maskForLineChg;
-	if (!makeMaskImage(srcImg, maskForLineChg)) {
+	// Make mask for drawing line change.
+	cv::Mat maskForDLChg;
+	if (!makeMaskImage(srcImg, maskForDLChg)) {
 		return false;
 	}
-	//maskForLineChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
+	//maskForDLChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
 
+	// Prepare source image for sampling.
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 3);
 	dumpImg(median3x3, "median3x3", DBG_IMG_DIR);
 
-	// Sample pixels on line.
-	auto samplesOnLine = sampleImage(median3x3, maskForLineChg, nsamples);
-	//for (auto it = samplesOnLine.begin(); it != samplesOnLine.end(); it++) { it->m_lum = C_UCHAR(64); }		// Test.
+	// Prepare kernel for dirate or erode.
+	const cv::Mat kernel = get_bin_kernel(median3x3);
+
+#if 0
+	// Sample pixels on drawing line.
+	cv::erode(median3x3, tmpImg, kernel);
+	auto samplesOnDL = sampleImage(tmpImg, maskForDLChg);
+#ifndef NDEBUG
+	cout << "samplesOnDL: size=" << samplesOnDL.size() << endl;
+	plotSamples(tmpImg, samplesOnDL, "samples on drawing line", DBG_IMG_DIR);
+#endif
+	tmpImg.release();
+#endif
 
 	// Sample pixels on background.
+	cv::dilate(median3x3, tmpImg, kernel);
 	cv::Mat maskForBgChg;
-	cv::bitwise_not(maskForLineChg, maskForBgChg);
-	auto samplesOnBg = sampleImage(median3x3, maskForBgChg, nsamples);
-	//for (auto it = samplesOnBg.begin(); it != samplesOnBg.end(); it++) { it->m_lum = C_UCHAR(64 * 3); }		// Test.
+	cv::bitwise_not(maskForDLChg, maskForBgChg);
+	auto samplesOnBg = sampleImage(tmpImg, maskForBgChg);
+#ifndef NDEBUG
+	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
+	plotSamples(tmpImg, samplesOnBg, "samples on background", DBG_IMG_DIR);
+#endif
+	tmpImg.release();
 
 	// Approximate lighting tilt on background.
 	std::vector<double> cflistOnBg;
@@ -63,18 +103,16 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 		return false;
 	}
 
-	// Approximate lighting tilt on line.
-	std::vector<double> cflistOnLine;
-	if (!approximate_lighting_tilt_by_cubic_poly(samplesOnLine, cflistOnLine)) {
+#if 0
+	// Approximate lighting tilt on drawing line.
+	std::vector<double> cflistOnDL;
+	if (!approximate_lighting_tilt_by_cubic_poly(samplesOnDL, cflistOnDL)) {
 		return false;
 	}
-
-#ifndef NDEBUG
-	dumpAppxImg(srcImg.size(), cflistOnBg, "appx shade on bg", DBG_IMG_DIR);
-	dumpAppxImg(srcImg.size(), cflistOnLine, "appx shade on line", DBG_IMG_DIR);
 #endif
 
-	dstImg = maskForBgChg;
+	dstImg = srcImg.clone();
+	stretch_luminance(dstImg, maskForDLChg, cflistOnBg/*, cflistOnDL*/);
 
 	return true;
 }
@@ -98,7 +136,8 @@ double ImgFunc_shdc02::getTh1FromBluredBlackHatResult(
 	// get_unmasked_data()‚ÌƒeƒXƒg
 	{
 		cv::Mat nonmask = cv::Mat::ones(binROIImg.rows, binROIImg.cols, CV_8UC1);
-		const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, nonmask);
+		const cv::Rect r(0, 0, binROIImg.cols, binROIImg.rows);
+		const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, nonmask, r);
 		const int dbg_th1 = discriminant_analysis_by_otsu(dbg_data);
 		cout << "dbg_th1=" << dbg_th1 << endl;
 		if (dbg_th1 != (int)std::round(th1)) {
@@ -152,11 +191,15 @@ bool ImgFunc_shdc02::makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask)
 
 /// Sample unmasked pixels.
 std::vector<LumSample> ImgFunc_shdc02::sampleImage(
-	const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask, const size_t nsamples)
+	const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask)
 {
-	auto data = get_unmasked_point_and_lum(image, mask);
+	const cv::Rect smpROI = get_bin_ROI(image);
+#if 0
+	auto data = get_unmasked_point_and_lum(image, mask, smpROI);
 
 	const size_t dataSz = data.size();
+	const int vtImgSz = (int)std::round(std::sqrt(dataSz));
+	const size_t nsamples = get_exp_nsamples(cv::Rect(0, 0, vtImgSz, vtImgSz));
 	if (dataSz <= nsamples) {
 		return data;
 	}
@@ -166,32 +209,88 @@ std::vector<LumSample> ImgFunc_shdc02::sampleImage(
 		const size_t ii = (i * dataSz) / nsamples;
 		samples[i] = data[ii];
 	}
+#else
+	(void)(mask);
+	std::vector<LumSample> samples;
+	const cv::Size kernelSz = get_bin_kernel_size(image.size());
+	const int knw = kernelSz.width;
+	const int knh = kernelSz.height;
+	samples.reserve((ZT(smpROI.width) / ZT(knw)) * ((ZT(smpROI.height) / ZT(knh))));
+	int sx, sy, ex, ey;
+	decompose_rect(smpROI, sx, sy, ex, ey);
+	for (int y = sy; y < ey; y += knh) {
+		for (int x = sx; x < ex; x += knw) {
+			const uchar lum = image.at<uchar>(y, x);
+			samples.push_back(LumSample(x, y, lum));
+		}
+	}
+#endif
 
 	return samples;
 }
 
-/// Method for debug. Dump approximation result visually.
+//
+//	For DEBUG
+//
+
+/// Dump approximation result visually. (For DEBUG.)
 void ImgFunc_shdc02::dumpAppxImg(
-	const cv::Size imgSz,
+	const cv::Mat srcImg,
 	const std::vector<double>& cflist,
 	const char* const caption,
 	const char* const dstDir
 )
 {
-	const int m = imgSz.height;
-	const int n = imgSz.width;
+	const int m = srcImg.rows;
+	const int n = srcImg.cols;
 	cv::Mat appxImg(m, n, CV_8UC1);
 	for (size_t y = ZT(0); y < ZT(m); y++) {
 		for (size_t x = ZT(0); x < ZT(n); x++) {
-			double val = predict_by_qubic_poly(cflist, C_DBL(x), C_DBL(y));
-			if (val < 0.0) {
-				val = 0.0;
+			double apxVal = predict_by_qubic_poly(cflist, C_DBL(x), C_DBL(y));
+			if (apxVal < 0.0) {
+				apxVal = 0.0;
 			}
-			else if (val > 255.0) {
-				val = 255.0;
+			else if (apxVal > 255.0) {
+				apxVal = 255.0;
 			}
-			appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)val;
+			const uchar srcVal = srcImg.at<uchar>(C_INT(y), C_INT(x));
+			//appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)(128.0 + 4 * (srcVal - apxVal));
+			appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)(255.0 - 2 * std::abs(srcVal - apxVal));
 		}
 	}
 	dumpImg(appxImg, caption, dstDir);
+}
+
+/// Plot sample points. (For DEBUG.)
+void ImgFunc_shdc02::plotSamples(
+	const cv::Mat_<uchar>& srcImg,
+	const std::vector<LumSample>& samples,
+	const char* const caption,
+	const char* const dstDir
+)
+{
+	const cv::Vec3b RED{ C_UCHAR(0), C_UCHAR(0), C_UCHAR(255) };
+
+	cv::Mat kernel = get_bin_kernel(srcImg);
+	cout << "srcImgSz=" << srcImg.size() << ", kernelSz=" << kernel.size() << endl;
+
+	cv::Mat canvas;
+	cv::cvtColor(srcImg, canvas, cv::COLOR_GRAY2BGR);
+	//cv::rectangle(canvas, cv::Point(0, 0), cv::Point(canvas.cols - 1, canvas.rows - 1), RED, cv::FILLED);
+	{
+		cv::Mat thickerImgROI = canvas(cv::Rect(0, 0, kernel.cols, kernel.rows));
+		cv::Mat kernelImg = (kernel.clone() * 10 + 128.0);
+		cv::Mat kernelImgBGR;
+		cv::cvtColor(kernelImg, kernelImgBGR, cv::COLOR_GRAY2BGR);
+		kernelImgBGR.copyTo(thickerImgROI);
+	}
+
+	const cv::Vec3b markerColor = RED;
+	for (auto it = samples.begin(); it != samples.end(); it++) {
+		const int x = it->m_point.x;
+		const int y = it->m_point.y;
+		canvas.at<cv::Vec3b>(y, x) = markerColor;
+	}
+
+	dumpImg(canvas, caption, dstDir);
 }

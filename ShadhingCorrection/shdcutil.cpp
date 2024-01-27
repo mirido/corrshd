@@ -112,6 +112,62 @@ double predict_by_qubic_poly(const std::vector<double>& cflist, const double x, 
 	return val;
 }
 
+namespace
+{
+	void clip_as_lum(double& val)
+	{
+		if (val < 0.0) {
+			val = 0.0;
+		}
+		else if (val > 255.0) {
+			val = 255.0;
+		}
+		else {
+			/*pass*/
+		}
+	}
+
+}	// namespace
 
 /// Stretch luminance.
-//void stretch_luminance(std::vector<LumSample>& samples, std::vector<double>& cflist)
+void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, std::vector<double>& cflistOnBg/*, std::vector<double>& cflistOnDL*/)
+{
+	const int m = image.rows;
+	const int n = image.cols;
+	for (size_t y = ZT(0); y < ZT(m); y++) {
+		for (size_t x = ZT(0); x < ZT(n); x++) {
+			uchar& lum = image.at<uchar>(C_INT(y), C_INT(x));		// Alias
+
+			// Masking
+			if (maskForDLChg.at<uchar>(C_INT(y), C_INT(x)) == C_UCHAR(0)) {
+				//lum = (uchar)255;
+				//continue;
+			}
+
+			const double fLum = static_cast<double>(lum);
+
+			double whiteLumEnd = predict_by_qubic_poly(cflistOnBg, C_DBL(x), C_DBL(y));
+			//double blackLumEnd = predict_by_qubic_poly(cflistOnDL, C_DBL(x), C_DBL(y));
+
+			//if (std::abs(fLum - whiteLumEnd) < std::abs(fLum - blackLumEnd)) {
+			//	lum = (uchar)128;
+			//	continue;
+			//}
+
+			//whiteLumEnd = 255.0 - (255.0 - whiteLumEnd) * 0.8;
+			//blackLumEnd *= 0.8;
+
+			//if (fLum >= whiteLumEnd) {
+			//	lum = (uchar)255;
+			//	continue;
+			//}
+
+			//double fNewLum = (255.0 * (fLum - blackLumEnd)) / (whiteLumEnd - blackLumEnd);
+			//(void)(blackLumEnd, whiteLumEnd);
+			double fNewLum = fLum + (255.0 - whiteLumEnd);
+			//double fNewLum = blackLumEnd;
+			clip_as_lum(fNewLum);
+			lum = static_cast<uchar>(fNewLum);
+		}
+	}
+}

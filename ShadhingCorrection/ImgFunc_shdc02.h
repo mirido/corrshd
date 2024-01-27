@@ -19,14 +19,25 @@ private:
 
 	/// Sample unmasked pixels.
 	std::vector<LumSample> sampleImage(
-		const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask, const size_t nsamples);
+		const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask);
 
-	/// Method for debug. Dump approximation result visually.
+	//
+	//	For DEBUG
+	//
+
+	/// Dump approximation result visually. (For DEBUG.)
 	void dumpAppxImg(
-		const cv::Size imgSz,
+		const cv::Mat srcImg,
 		const std::vector<double>& cflist,
 		const char* const caption,
 		const char* const dstDir
 	);
 
+	/// Plot sample points. (For DEBUG.)
+	void plotSamples(
+		const cv::Mat_<uchar>& srcImg,
+		const std::vector<LumSample>& samples,
+		const char* const caption,
+		const char* const dstDir
+	);
 };

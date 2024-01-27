@@ -4,6 +4,7 @@
 #include "ImgFunc_shdc01.h"
 
 #include "../libnumeric/numericutil.h"
+#include "geometryutil.h"
 #include "imaging_op.h"
 
 const char* ImgFunc_shdc01::getName() const
@@ -51,7 +52,8 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// get_unmasked_data()のテスト
 	{
 		cv::Mat nonmask = cv::Mat::ones(gray1.rows, gray1.cols, CV_8UC1);
-		const std::vector<uchar> dbg_data = get_unmasked_data(gray1, nonmask);
+		const cv::Rect r = get_scaled_rect_from_size(gray1.size(), 1.0);
+		const std::vector<uchar> dbg_data = get_unmasked_data(gray1, nonmask, r);
 		const int dbg_th1 = discriminant_analysis_by_otsu(dbg_data);
 		cout << "dbg_th1=" << dbg_th1 << endl;
 		if (dbg_th1 != (int)std::round(th1)) {
@@ -67,7 +69,8 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(mask, "mask", DBG_IMG_DIR);
 
 	// 均一化画像gray2のマスクされない画素データを抽出(data)
-	std::vector<uchar> data = get_unmasked_data(gray1, mask);
+	const cv::Rect smpROI = get_scaled_rect_from_size(gray1.size(), 1.0);
+	std::vector<uchar> data = get_unmasked_data(gray1, mask, smpROI);
 	if (data.size() < 2) {
 		return false;
 	}
