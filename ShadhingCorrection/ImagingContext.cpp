@@ -14,6 +14,7 @@
 #define NEAR_DISTANCE_MAX			16
 
 ImagingContext::ImagingContext()
+	: m_nImgRotAngle(0)
 {
 	// Select algorithm.
 	// TODO: Make it variable by command line arguments.
@@ -50,6 +51,31 @@ cv::Mat& ImagingContext::refCanvas()
 void ImagingContext::clearPointList()
 {
 	m_clickedPointList.clear();
+}
+
+/// Set state at once.
+void ImagingContext::setState(const int nImgRotAngle, const std::vector<cv::Point>& points)
+{
+	// Rotate image.
+	if (nImgRotAngle < 0) {
+		for (int n = -nImgRotAngle; n > 0; n--) {
+			rotate(-1);
+		}
+	}
+	else if (nImgRotAngle > 0) {
+		for (int n = nImgRotAngle; n > 0; n--) {
+			rotate(1);
+		}
+	}
+	assert(m_nImgRotAngle == nImgRotAngle);
+
+	// Set corners.
+	clearPointList();
+	const size_t sz = points.size();
+	for (size_t i = 0; i < sz; i++) {
+		const cv::Point srcPt = points[i];
+		m_clickedPointList.addOrMovePoint(srcPt);
+	}
 }
 
 /// 既存座標列が空か否かを返す。
@@ -161,6 +187,21 @@ void ImagingContext::rotate(const int dir)
 
 	// 既存座標リスト内容90°回転
 	m_clickedPointList.rotate(dir, ofsAfterRot);
+
+	if (dir < 0) {
+		m_nImgRotAngle--;
+	}
+	else if (dir > 0) {
+		m_nImgRotAngle++;
+	}
+	else {
+		/*pass*/
+	}
+}
+
+int ImagingContext::getImgRotAngle() const
+{
+	return m_nImgRotAngle;
 }
 
 /// 歪み補正

@@ -373,6 +373,44 @@ namespace
 		}
 	};
 
+	/// Setup imaging context for reproduce.
+	void setup_imaging_context_for_debug(ImagingContext& ctx)
+	{
+#if 1
+		const int nImgRotAngle = -1;
+		const std::vector<cv::Point> corners{
+			cv::Point(418, 3948),
+			cv::Point(2949, 4047),
+			cv::Point(2672, 428),
+			cv::Point(454, 721)
+		};
+		ctx.setState(nImgRotAngle, corners);
+#else
+		(void)(ctx);
+#endif
+	}
+
+	/// Print corners as C++ program code for reproduce.
+	void dump_imaging_context_for_debug(const ImagingContext& ctx)
+	{
+		const int nImgRotAngle = ctx.getImgRotAngle();
+		std::vector<cv::Point> corners;
+		ctx.getPointList(corners);
+
+		cout << "const int nImgRotAngle = " << nImgRotAngle << ";" << endl;
+		cout << "const std::vector<cv::Point> corners{" << endl;
+		const size_t sz = corners.size();
+		for (size_t i = 0; i < sz; i++) {
+			const cv::Point& pt = corners[i];		// Alias
+			cout << "\tcv::Point(" << pt.x << ", " << pt.y << ")";
+			if (i < sz - 1) {
+				cout << ",";
+			}
+			cout << endl;
+		}
+		cout << "};" << endl;
+	}
+
 }	// namespace
 
 int main(const int argc, char* argv[])
@@ -426,6 +464,9 @@ int main(const int argc, char* argv[])
 	g_mainThreadID = osal_get_thread_id();	// チェック用
 	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback(IMAGE_WND_NAME, mouse_callback, (void*)&ctx);
+
+	setup_imaging_context_for_debug(ctx);	// For DEBUG.
+	refresh_input_image_disp(ctx, g_bShowAsSameMag);
 
 	int prevKeyIn = '\0';
 	int keyWait = 0;
@@ -548,6 +589,7 @@ int main(const int argc, char* argv[])
 					cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
 					break;
 				}
+				dump_imaging_context_for_debug(ctx);
 
 				// Print the size before and after conversion.
 				cv::Size appxROISize = get_approximate_size(corners);
@@ -572,12 +614,12 @@ int main(const int argc, char* argv[])
 				}
 				if (bSuc) {
 					cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
-						show_output_image(outputImg);
+					show_output_image(outputImg);
 
-						// 結果画像保存
-						if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
-							cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
-						}
+					// 結果画像保存
+					if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
+						cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
+					}
 				}
 				else {
 					cout << "Info: " << caption << " failed." << endl;
