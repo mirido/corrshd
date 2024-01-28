@@ -1,0 +1,26 @@
+# Change Log
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
+and this project adheres to [Semantic Versioning](http://semver.org/).
+
+## [Unreleased]
+### Fixed
+- Slightly modified README.md and remove unused .bat file.
+
+## [1.0.1.1] - 2024-01-16
+### Changed
+- Changed the command line argument specifications to be more intuitive.
+  (It is now possible to specify the physical dimensions of Target drawing even in standard sizes.)
+- Opencv changed to 4.8.0.
+- Changed OpenCV link method to static link. 
+
+## [1.0.0.1] - 2024-01-16
+### Added
+- Implemented all automatic correction functions to capture target drawing.
+- OpenCV 4.6.0 was used.
+- OpenCV link method is dynamic link.
+
+[Unreleased]: https://github.com/mirido/corrshd
+[1.0.1.1]: https://github.com/mirido/corrshd/tree/corrshd_1.0.1.1
+[1.0.0.1]: https://github.com/mirido/corrshd/tree/corrshd_1.0.0.1
