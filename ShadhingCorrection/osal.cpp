@@ -10,15 +10,17 @@
 /// ロケールを設定する。
 void osal_setup_locale()
 {
-	setlocale(LC_ALL, "");
-	_wsetlocale(LC_ALL, L"");
+	setlocale(LC_ALL, "C");
+	_wsetlocale(LC_ALL, L"C");
 
-	cin.imbue(std::locale(""));
-	cout.imbue(std::locale(""));
-	cerr.imbue(std::locale(""));
+	//cin.imbue(std::locale("C"));
+	//cout.imbue(std::locale("C"));
+	//cerr.imbue(std::locale("C"));
 
-	std::wcin.imbue(std::locale(""));
-	std::wcout.imbue(std::locale(""));
+	//std::wcin.imbue(std::locale("C"));
+	//std::wcout.imbue(std::locale("C"));
+
+	std::locale::global(std::locale("C", std::locale::all));
 }
 
 /// 画面の実作業領域サイズを取得する。
