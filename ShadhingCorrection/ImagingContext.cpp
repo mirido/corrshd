@@ -1,21 +1,25 @@
 #include "stdafx.h"
 #include "ClickedPointList.h"
+#include "../libimaging/imaging_op.h"
 #include "ImagingCanvas.h"
 #include "IImgFunc.h"
 #include "ImagingContext.h"
 
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
-
-#include "imaging_op.h"
+#include "ImgFunc_shdc02.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
 #define NEAR_DISTANCE_MAX			16
 
 ImagingContext::ImagingContext()
+	: m_nImgRotAngle(0)
 {
-	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
+	// Select algorithm.
+	// TODO: Make it variable by command line arguments.
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
+	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc02);
 }
 
 /// ソース画像設定
@@ -47,6 +51,31 @@ cv::Mat& ImagingContext::refCanvas()
 void ImagingContext::clearPointList()
 {
 	m_clickedPointList.clear();
+}
+
+/// Set state at once.
+void ImagingContext::setState(const int nImgRotAngle, const std::vector<cv::Point>& points)
+{
+	// Rotate image.
+	if (nImgRotAngle < 0) {
+		for (int n = -nImgRotAngle; n > 0; n--) {
+			rotate(-1);
+		}
+	}
+	else if (nImgRotAngle > 0) {
+		for (int n = nImgRotAngle; n > 0; n--) {
+			rotate(1);
+		}
+	}
+	assert(m_nImgRotAngle == nImgRotAngle);
+
+	// Set corners.
+	clearPointList();
+	const size_t sz = points.size();
+	for (size_t i = 0; i < sz; i++) {
+		const cv::Point srcPt = points[i];
+		m_clickedPointList.addOrMovePoint(srcPt);
+	}
 }
 
 /// 既存座標列が空か否かを返す。
@@ -158,6 +187,21 @@ void ImagingContext::rotate(const int dir)
 
 	// 既存座標リスト内容90°回転
 	m_clickedPointList.rotate(dir, ofsAfterRot);
+
+	if (dir < 0) {
+		m_nImgRotAngle--;
+	}
+	else if (dir > 0) {
+		m_nImgRotAngle++;
+	}
+	else {
+		/*pass*/
+	}
+}
+
+int ImagingContext::getImgRotAngle() const
+{
+	return m_nImgRotAngle;
 }
 
 /// 歪み補正

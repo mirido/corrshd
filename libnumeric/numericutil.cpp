@@ -4,6 +4,22 @@
 // [DBGSW] ヒストグラムをダンプする。
 //#define DUMP_HIST
 
+/// Get number of grid points included in half-open section [0, ub).
+int get_num_grid_points(const int ub, const int cyc)
+{
+	return (ub + (cyc - 1)) / cyc;
+}
+
+/// Approximate equal operator on double type values. 
+bool can_equal(const double a, const double b)
+{
+	const double abs_a = std::abs(a);
+	const double abs_b = std::abs(a);
+	const double mag = std::max(abs_a, abs_b);
+	const double border = mag * std::numeric_limits<double>::epsilon();
+	return (std::abs(a - b) <= 2 * border);
+}
+
 /// 大津の方法による判別分析
 /// http://ithat.me/2016/02/05/opencv-discriminant-analysis-method-otsu-cpp
 int discriminant_analysis_by_otsu(const std::vector<uchar>& data)

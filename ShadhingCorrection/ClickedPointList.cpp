@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ClickedPointList.h"
 
-#include "geometryutil.h"
+#include "../libimaging/geometryutil.h"
 
 // [CONF] ‘I‘ğ‚·‚é“_‚Ì”
 #define NPOINTS_MAX					4

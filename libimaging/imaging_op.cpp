@@ -2,6 +2,7 @@
 #include "imaging_op.h"
 
 #include "../libnumeric/numericutil.h"
+#include "geometryutil.h"
 
 /// グレースケール画像に変換する。
 bool conv_color_to_gray(const cv::Mat& srcImage, cv::Mat& grayImage)
@@ -71,7 +72,11 @@ void warp_image(
 }
 
 /// マスクされていない画像の画素データを取得する。
-std::vector<uchar> get_unmasked_data(const cv::Mat_<uchar>& image, const cv::Mat_<uchar>& mask)
+std::vector<uchar> get_unmasked_data(
+	const cv::Mat_<uchar>& image,
+	const cv::Mat_<uchar>& mask,
+	const cv::Rect& smpROI
+)
 {
 	const int width = image.cols;
 	const int height = image.rows;
@@ -79,11 +84,47 @@ std::vector<uchar> get_unmasked_data(const cv::Mat_<uchar>& image, const cv::Mat
 		throw std::logic_error("*** ERR ***");
 	}
 
+	const cv::Rect ROI = clip_rect_into_image(smpROI, width, height);
+	int sx, sy, ex, ey;
+	decompose_rect(ROI, sx, sy, ex, ey);
+
 	std::vector<uchar> data;
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
+	for (int y = sy; y < ey; y++) {
+		for (int x = sx; x < ex; x++) {
 			if (mask(y, x) > 0) {
 				data.push_back(image(y, x));
+			}
+		}
+	}
+
+	return data;
+}
+
+/// マスクされていない画像の座標と輝度を取得する。
+std::vector<LumSample> get_unmasked_point_and_lum(
+	const cv::Mat_<uchar>& image,
+	const cv::Mat_<uchar>& mask,
+	const cv::Rect& smpROI
+)
+{
+	const int width = image.cols;
+	const int height = image.rows;
+	if (!(mask.cols == width && mask.rows == height)) {
+		throw std::logic_error("*** ERR ***");
+	}
+
+	const cv::Rect ROI = clip_rect_into_image(smpROI, width, height);
+	int sx, sy, ex, ey;
+	decompose_rect(ROI, sx, sy, ex, ey);
+
+	std::vector<LumSample> data;
+	for (int y = sy; y < ey; y++) {
+		for (int x = sx; x < ex; x++) {
+			if (mask(y, x) > 0) {
+				LumSample val;
+				val.m_point = cv::Point(x, y);
+				val.m_lum = image(y, x);
+				data.push_back(val);
 			}
 		}
 	}

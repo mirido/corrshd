@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ImagingCanvas.h"
 
-#include "geometryutil.h"
-#include "imaging_op.h"
+#include "../libimaging/geometryutil.h"
+#include "../libimaging/imaging_op.h"
 
 // [CONF] ƒKƒCƒhü‚Ì•`‰æF
 #define GUIDE_COLOR		cv::Scalar(0, 0, 255)

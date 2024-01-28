@@ -5,6 +5,7 @@ class ImagingContext
 	cv::Ptr<cv::Mat> m_pSrcImage;
 	ImagingCanvas m_imagingCanvas;
 	ClickedPointList m_clickedPointList;
+	int m_nImgRotAngle;
 
 	// Image processing algorithm after perspective correction
 	std::unique_ptr<IImgFunc> m_pImgFunc;
@@ -26,6 +27,9 @@ public:
 
 	/// 座標初期化
 	void clearPointList();
+
+	/// Set state at once.
+	void setState(const int nImgRotAngle, const std::vector<cv::Point>& points);
 
 	/// 既存座標列が空か否かを返す。
 	bool isPointListEmpty() const;
@@ -59,6 +63,8 @@ public:
 
 	/// キャンバスとソース画像回転
 	void rotate(const int dir);
+	
+	int getImgRotAngle() const;
 
 	/// 歪み補正
 	bool correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg);
