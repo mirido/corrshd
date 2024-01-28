@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
+### Added
+- New shading correction algorithm ImgFunc_shdc02 added.
+- the unit test project "utest" added. (Powered by GoogleTest.)
+
+### Changed
+- On the existing shading correction algorithm
+   (currently named ImgFunc_shdc01), calcuration of binarization ROI
+   improved.
+- The default shading correction algorithm has been changed to 
+  ImgFunc_shdc02.
+
 ### Fixed
 - Slightly modified README.md and remove unused .bat file.
 
