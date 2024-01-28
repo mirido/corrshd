@@ -7,6 +7,12 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/imaging_op.h"
 
+// [CONF] ROI size for determine binarization threshold (ratio)
+#define BIN_ROI_RATIO		0.8
+
+// [CONF] Kernel size for determine binarization threshold (ratio)
+#define BIN_KERNEL_RATIO	0.025
+
 const char* ImgFunc_shdc01::getName() const
 {
 	return "shd01";
@@ -17,12 +23,34 @@ const char* ImgFunc_shdc01::getSummary() const
 	return "Tiny shading correction with Black Top Hat algorithm.";
 }
 
+namespace
+{
+	cv::Rect get_bin_ROI(const cv::Size& imgSz)
+	{
+		return get_scaled_rect_from_size(imgSz, BIN_ROI_RATIO);
+	}
+
+	cv::Size get_bin_kernel_size(const cv::Size& imgSz)
+	{
+		const int aveSz = std::max(imgSz.width, imgSz.height);
+		const int knsz0 = (int)std::round(C_DBL(aveSz) * BIN_KERNEL_RATIO);
+		const int knszOdd = 2 * ((knsz0 + 1) / 2) + 1;
+		return cv::Size(knszOdd, knszOdd);
+	}
+
+	cv::Mat get_bin_kernel(const cv::Size& imgSz)
+	{
+		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
+		return cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
+	}
+
+}	// namespace
+
 bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
 	cv::Mat tmp;
 
 	cv::Mat gray1 = srcImg;
-	cv::Size dstSz = cv::Size(srcImg.cols, srcImg.rows);
 
 #ifndef NDEBUG
 	cout << std::setbase(10);
@@ -30,15 +58,13 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	// 明るさのむらを均一化(ブラックハット演算、gray2)
 	// クロージング結果 - 原画像、という演算なので、均一化とともに背景と線の輝度が反転する。
-	// 以下の行末コメントは、dstSz.width == 800 の下でカーネルサイズを変えて実験した結果。
+	// 以下の行末コメントは、srcImg.size().width == 800 の下でカーネルサイズを変えて実験した結果。
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));		// 線がかすれる
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(10, 10));
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));		// 良好
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// 遅い
-	const int knsz = (int)std::round(std::max(dstSz.width, dstSz.height) * 0.025);
-	const cv::Size kernelSz = cv::Size(knsz, knsz);
-	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
+	cv::Mat kernel = get_bin_kernel(srcImg.size());
 	cv::Mat gray2;
 	cv::morphologyEx(gray1, gray2, cv::MORPH_BLACKHAT, kernel);
 	dumpImg(gray2, "image_after_black_hat", DBG_IMG_DIR);
@@ -48,17 +74,18 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// 均一化画像gray2平滑化(gray1)
 	cv::blur(gray2, gray1, cv::Size(3, 3));
 
-	// 平滑化結果gray1に対し、大津の方法で閾値th1を算出
-	const double th1 = cv::threshold(gray1, tmp, 0, 255, cv::THRESH_OTSU);
+	// 平滑化結果gray1のbinROI内に対し、大津の方法で閾値th1を算出
+	const cv::Rect binROI = get_bin_ROI(gray1.size());
+	tmp = gray1(binROI).clone();
+	const double th1 = cv::threshold(tmp, tmp, 0, 255, cv::THRESH_OTSU);
 	cout << "th1=" << th1 << endl;
 	tmp.release();		// 2値化結果は使わない
 
 #ifndef NDEBUG
 	// get_unmasked_data()のテスト
 	{
-		cv::Mat nonmask = cv::Mat::ones(gray1.rows, gray1.cols, CV_8UC1);
-		const cv::Rect r = get_scaled_rect_from_size(gray1.size(), 1.0);
-		const std::vector<uchar> dbg_data = get_unmasked_data(gray1, nonmask, r);
+		cv::Mat nonmask = cv::Mat::ones(gray1.rows, gray1.cols, gray1.type()) * 255.0;
+		const std::vector<uchar> dbg_data = get_unmasked_data(gray1, nonmask, binROI);
 		const int dbg_th1 = discriminant_analysis_by_otsu(dbg_data);
 		cout << "dbg_th1=" << dbg_th1 << endl;
 		if (dbg_th1 != (int)std::round(th1)) {
