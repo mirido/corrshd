@@ -63,6 +63,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 #ifndef NDEBUG
 	cout << std::setbase(10);
 #endif
+
 	// Prepare source image for sampling.
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 5);
@@ -95,12 +96,18 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	// Make mask for drawing line change.
 	cv::Mat maskForDLChg;
+#if 1
+	if (!makeMaskImage(srcImg, maskForDLChg)) {
+		return false;
+	}
+#else
 	cv::Mat srcImg2_Tmp;
 	cv::bitwise_not(invSrcImg, srcImg2_Tmp);
 	if (!makeMaskImage(srcImg2_Tmp, maskForDLChg)) {
 		return false;
 	}
 	srcImg2_Tmp.release();
+#endif
 	//maskForDLChg = cv::Mat::zeros(srcImg.size(), CV_8UC1);		// Test.
 
 	// Sample pixels on drawing line.

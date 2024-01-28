@@ -175,7 +175,8 @@ void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Ma
 
 			if (maskForDLChg.at<uchar>(y, x) == C_UCHAR(0)) {
 				// (Point on background)
-				fLum = 255.0;
+				fLum = 255.0;				// Mask background
+				//fLum = 255.0 - fLum;		// Inversion only on background.
 			}
 			else {
 				// (Point near drawing line)

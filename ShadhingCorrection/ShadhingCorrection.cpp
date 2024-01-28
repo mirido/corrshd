@@ -377,12 +377,29 @@ namespace
 	void setup_imaging_context_for_debug(ImagingContext& ctx)
 	{
 #if 1
-		const int nImgRotAngle = -1;
+		// IMG00090
+		//const int nImgRotAngle = -1;
+		//const std::vector<cv::Point> corners{
+		//	cv::Point(429, 3955),
+		//	cv::Point(2952, 4048),
+		//	cv::Point(2680, 425),
+		//	cv::Point(457, 721)
+		//};
+		// IMG00073
+		//const int nImgRotAngle = 1;
+		//const std::vector<cv::Point> corners{
+		//	cv::Point(2907, 275),
+		//	cv::Point(209, 262),
+		//	cv::Point(260, 4027),
+		//	cv::Point(2870, 4010)
+		//};
+		// IMG0105
+		const int nImgRotAngle = 3;
 		const std::vector<cv::Point> corners{
-			cv::Point(418, 3948),
-			cv::Point(2949, 4047),
-			cv::Point(2672, 428),
-			cv::Point(454, 721)
+			cv::Point(774, 3653),
+			cv::Point(2901, 3702),
+			cv::Point(2877, 580),
+			cv::Point(728, 629)
 		};
 		ctx.setState(nImgRotAngle, corners);
 #else
