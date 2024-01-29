@@ -7,12 +7,6 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/imaging_op.h"
 
-// [CONF] ROI size for determine binarization threshold (ratio)
-#define BIN_ROI_RATIO		0.8
-
-// [CONF] Kernel size for determine binarization threshold (ratio)
-#define BIN_KERNEL_RATIO	0.025
-
 const char* ImgFunc_shdc01::getName() const
 {
 	return "shd01";
@@ -20,31 +14,8 @@ const char* ImgFunc_shdc01::getName() const
 
 const char* ImgFunc_shdc01::getSummary() const
 {
-	return "Tiny shading correction with Black Top Hat algorithm.";
+	return "Shading correction with Black Top Hat and gamma correction.";
 }
-
-namespace
-{
-	cv::Rect get_bin_ROI(const cv::Size& imgSz)
-	{
-		return get_scaled_rect_from_size(imgSz, BIN_ROI_RATIO);
-	}
-
-	cv::Size get_bin_kernel_size(const cv::Size& imgSz)
-	{
-		const int aveSz = std::max(imgSz.width, imgSz.height);
-		const int knsz0 = (int)std::round(C_DBL(aveSz) * BIN_KERNEL_RATIO);
-		const int knszOdd = 2 * ((knsz0 + 1) / 2) + 1;
-		return cv::Size(knszOdd, knszOdd);
-	}
-
-	cv::Mat get_bin_kernel(const cv::Size& imgSz)
-	{
-		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
-		return cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
-	}
-
-}	// namespace
 
 bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
@@ -64,7 +35,7 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(10, 10));
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));		// ó«çD
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// íxÇ¢
-	cv::Mat kernel = get_bin_kernel(srcImg.size());
+	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 	cv::Mat gray2;
 	cv::morphologyEx(gray1, gray2, cv::MORPH_BLACKHAT, kernel);
 	dumpImg(gray2, "image_after_black_hat", DBG_IMG_DIR);

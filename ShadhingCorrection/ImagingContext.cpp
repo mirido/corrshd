@@ -8,6 +8,13 @@
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
 #include "ImgFunc_shdc02.h"
+#include "ImgFunc_whitening01.h"
+#include "../libimaging/imaging_op.h"
+#include "ImgFuncWithSampling.h"
+#include "ImgFunc_whitening02.h"
+#include "ImgFunc_uniform.h"
+#include "ImgFunc_shdc03.h"
+
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
@@ -19,7 +26,10 @@ ImagingContext::ImagingContext()
 	// Select algorithm.
 	// TODO: Make it variable by command line arguments.
 	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
-	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc02);
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc02);
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_whitening01);
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_whitening02);
+	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc03);
 }
 
 /// ソース画像設定

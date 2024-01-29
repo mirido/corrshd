@@ -2,7 +2,7 @@
 
 class ImgFuncBase : public IImgFunc
 {
-	unsigned long m_imgDumpCnt;
+	static unsigned long m_imgDumpCnt;		// Thread safety is ignored.
 
 public:
 	ImgFuncBase();
@@ -22,3 +22,13 @@ public:
 // [DBGSW] Directory to save intermediate images
 // TODO: Make it variable by command line arguments.
 #define DBG_IMG_DIR		"C:\\usr2\\debug\\"
+
+//
+//	Utily
+//
+
+cv::Rect get_bin_ROI(const cv::Size& imgSz);
+
+cv::Size get_bin_kernel_size(const cv::Size& imgSz);
+
+cv::Mat get_bin_kernel(const cv::Size& imgSz);
