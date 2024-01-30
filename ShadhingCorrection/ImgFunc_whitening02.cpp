@@ -7,17 +7,6 @@
 
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_whitening02::ImgFunc_whitening02()
-	: m_bNormalLumGradation(true)
-{
-	/*pass*/
-}
-
-void ImgFunc_whitening02::setLumGradiationToNormal(const bool bNormal)
-{
-	m_bNormalLumGradation = bNormal;
-}
-
 const char* ImgFunc_whitening02::getName() const
 {
 	return "whitening02";
@@ -46,7 +35,6 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
 	plotSamples(morphoTmpImg, samplesOnBg, "samples on background", DBG_IMG_DIR);
 #endif
-	morphoTmpImg.release();
 
 	// Approximate lighting tilt on background.
 	std::vector<double> cflistOnBg;
@@ -60,9 +48,16 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(stdWhiteImg, "standard white image", DBG_IMG_DIR);
 	dstImg = stdWhiteImg - srcImg;
 	dumpImg(dstImg, "shading corrected image", DBG_IMG_DIR);
+	if (m_bNeedMaskNearZeroToZero) {
+		cv::Mat diffImg;
+		cv::absdiff(stdWhiteImg, morphoTmpImg, diffImg);
+		makeMaskNearZeroToZero(dstImg, diffImg);
+	}
+
+	morphoTmpImg.release();
 	stdWhiteImg.release();
 
-	if (m_bNormalLumGradation) {
+	if (m_bDoFinalInversion) {
 		cv::bitwise_not(dstImg, dstImg);
 	}
 

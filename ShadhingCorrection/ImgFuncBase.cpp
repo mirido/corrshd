@@ -8,12 +8,6 @@
 // [CONF] Default image file extension.
 #define DEFAULT_IMG_EXT		".bmp"
 
-// [CONF] ROI size for determine binarization threshold (ratio)
-#define BIN_ROI_RATIO		0.8
-
-// [CONF] Kernel size for determine binarization threshold (ratio)
-#define BIN_KERNEL_RATIO	0.025
-
 //
 //	For DEBUG
 //
@@ -45,7 +39,7 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 	}
 
 	// Display the image on the screen.
-	const cv::String cap = numStr + cv::String("_") + caption;
+	cv::String cap = numStr + cv::String("_") + caption;
 	cv::imshow(cap, image);
 
 	// Save image to specified directory.
@@ -55,6 +49,17 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 		if (strchr("\\/", CHAR_TO_INT(dir.back())) == NULL) {
 			dir += cv::String("/");
 		}
+
+		// Replace space to '_' in cap.
+		std::string cap2;
+		for (auto it = cap.begin(); it != cap.end(); it++) {
+			int c = CHAR_TO_INT(*it);
+			if (isspace(c)) {
+				c = '_';
+			}
+			cap2.push_back(C_UCHAR(c));
+		}
+		cap = cap2;
 
 		// Decide filename.
 		// If cap have no extension, add DEFAULT_IMG_EXT as extension.
@@ -69,27 +74,4 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 		cv::imwrite(dir + filename, image);
 	}
 #endif
-}
-
-//
-//	Utily
-//
-
-cv::Rect get_bin_ROI(const cv::Size& imgSz)
-{
-	return get_scaled_rect_from_size(imgSz, BIN_ROI_RATIO);
-}
-
-cv::Size get_bin_kernel_size(const cv::Size& imgSz)
-{
-	const int ageImgSz = (imgSz.width, imgSz.height) / 2;
-	const int knsz0 = (int)std::round(C_DBL(ageImgSz) * BIN_KERNEL_RATIO);
-	const int knszOdd = std::max(3, 2 * ((knsz0 + 1) / 2) + 1);
-	return cv::Size(knszOdd, knszOdd);
-}
-
-cv::Mat get_bin_kernel(const cv::Size& imgSz)
-{
-	const cv::Size kernelSz = get_bin_kernel_size(imgSz);
-	return cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
 }

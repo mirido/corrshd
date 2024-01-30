@@ -9,8 +9,6 @@
 #include "ImgFunc_shdc01.h"
 #include "ImgFunc_shdc02.h"
 #include "ImgFunc_whitening01.h"
-#include "../libimaging/imaging_op.h"
-#include "ImgFuncWithSampling.h"
 #include "ImgFunc_whitening02.h"
 #include "ImgFunc_uniform.h"
 #include "ImgFunc_shdc03.h"

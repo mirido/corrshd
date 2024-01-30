@@ -1,14 +1,10 @@
 #pragma once
 
-class ImgFunc_whitening01 : public ImgFuncBase
+#include "WithFinalInversion.h"
+
+class ImgFunc_whitening01 : public ImgFuncBase, public WithFinalInversion
 {
-	bool m_bNormalLumGradation;
-
 public:
-	ImgFunc_whitening01();
-
-	void setLumGradiationToNormal(const bool bNormal);
-
 	const char* getName() const;
 	const char* getSummary() const;
 

@@ -1,23 +1,10 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
 #include "ImgFuncBase.h"
-#include "../libimaging/imaging_op.h"
-#include "ImgFuncWithSampling.h"
 #include "ImgFunc_uniform.h"
 
 #include "../libnumeric/numericutil.h"
 #include "../libimaging/shdcutil.h"
-
-ImgFunc_uniform::ImgFunc_uniform()
-	: m_bNormalLumGradation(true)
-{
-	/*pass*/
-}
-
-void ImgFunc_uniform::setLumGradiationToNormal(const bool bNormal)
-{
-	m_bNormalLumGradation = bNormal;
-}
 
 const char* ImgFunc_uniform::getName() const
 {

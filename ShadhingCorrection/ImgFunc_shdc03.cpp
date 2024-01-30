@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
-#include "../libimaging/imaging_op.h"
 #include "ImgFuncBase.h"
-#include "ImgFuncWithSampling.h"
 #include "ImgFunc_whitening02.h"
 #include "ImgFunc_uniform.h"
 #include "ImgFunc_shdc03.h"
@@ -13,8 +11,8 @@
 
 ImgFunc_shdc03::ImgFunc_shdc03()
 {
-	m_imgFunc_Whiteing.setLumGradiationToNormal(false);
-	m_imgFunc_uniform.setLumGradiationToNormal(false);
+	m_imgFunc_Whiteing.needMaskNearZeroToZero(true);
+	m_imgFunc_Whiteing.doFinalInversion(false);
 }
 
 const char* ImgFunc_shdc03::getName() const
@@ -32,6 +30,8 @@ bool ImgFunc_shdc03::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Whitening.
 	cv::Mat invWhitenedImage;
 	m_imgFunc_Whiteing.run(srcImg, invWhitenedImage);
+
+	dumpImg(m_imgFunc_Whiteing.getMaskNearZeroToZero(), "mask near 0 to 0", DBG_IMG_DIR);
 
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 

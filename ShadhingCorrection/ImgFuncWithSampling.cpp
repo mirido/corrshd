@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
 #include "ImgFuncBase.h"
-#include "../libimaging/imaging_op.h"
 #include "ImgFuncWithSampling.h"
 
 #include "../libnumeric/regression.h"

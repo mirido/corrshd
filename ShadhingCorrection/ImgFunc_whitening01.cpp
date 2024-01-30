@@ -7,17 +7,6 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/imaging_op.h"
 
-ImgFunc_whitening01::ImgFunc_whitening01()
-	: m_bNormalLumGradation(true)
-{
-	/*pass*/
-}
-
-void ImgFunc_whitening01::setLumGradiationToNormal(const bool bNormal)
-{
-	m_bNormalLumGradation = bNormal;
-}
-
 const char* ImgFunc_whitening01::getName() const
 {
 	return "whitening01";
@@ -42,7 +31,7 @@ bool ImgFunc_whitening01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::morphologyEx(srcImg, dstImg, cv::MORPH_BLACKHAT, kernel);
 	dumpImg(dstImg, "image_after_black_hat", DBG_IMG_DIR);
 
-	if (m_bNormalLumGradation) {
+	if (m_bDoFinalInversion) {
 		cv::bitwise_not(dstImg, dstImg);
 	}
 

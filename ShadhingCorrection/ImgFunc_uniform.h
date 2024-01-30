@@ -1,14 +1,10 @@
 #pragma once
 
+#include "ImgFuncWithSampling.h"
+
 class ImgFunc_uniform : public ImgFuncWithSampling
 {
-	bool m_bNormalLumGradation;
-
 public:
-	ImgFunc_uniform();
-
-	void setLumGradiationToNormal(const bool bNormal);
-
 	const char* getName() const;
 	const char* getSummary() const;
 

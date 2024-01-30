@@ -1,14 +1,12 @@
 #pragma once
 
-class ImgFunc_whitening02 : public ImgFuncWithSampling
+#include "ImgFuncWithSampling.h"
+#include "WithFinalInversion.h"
+#include "WithMaskNearZeroToZero.h"
+
+class ImgFunc_whitening02 : public ImgFuncWithSampling, public WithFinalInversion, public WithMaskNearZeroToZero
 {
-	bool m_bNormalLumGradation;
-
 public:
-	ImgFunc_whitening02();
-
-	void setLumGradiationToNormal(const bool bNormal);
-
 	const char* getName() const;
 	const char* getSummary() const;
 

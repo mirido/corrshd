@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../libimaging/imaging_op.h"	/*introduce LumSample*/
+
 class ImgFuncWithSampling : public ImgFuncBase
 {
 public:
