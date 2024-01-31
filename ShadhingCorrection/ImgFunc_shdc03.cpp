@@ -31,12 +31,24 @@ bool ImgFunc_shdc03::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat invWhitenedImage;
 	m_imgFunc_Whiteing.run(srcImg, invWhitenedImage);
 
-	dumpImg(m_imgFunc_Whiteing.getMaskNearZeroToZero(), "mask near 0 to 0", DBG_IMG_DIR);
+	const cv::Mat& maskNearZeroToZero = m_imgFunc_Whiteing.getMaskNearZeroToZero();
+	dumpImg(maskNearZeroToZero, "mask near 0 to 0", DBG_IMG_DIR);
 
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 
 	// Eliminate bakcground noize.
-#if 0
+#if 1
+#if 1
+	cv::Mat maskToCleanupBG;
+	const double th2 = cv::threshold(invWhitenedImage, maskToCleanupBG, 0, 255, cv::THRESH_OTSU);
+	cout << "th2=" << th2 << endl;
+	cv::dilate(maskToCleanupBG, maskToCleanupBG, kernel);
+	dumpImg(maskToCleanupBG, "mask for cleanup background (thicked)", DBG_IMG_DIR);
+	cv::bitwise_and(maskToCleanupBG, maskNearZeroToZero, maskToCleanupBG);
+	//cv::bitwise_or(maskToCleanupBG, maskNearZeroToZero, maskToCleanupBG);
+	dumpImg(maskToCleanupBG, "mask for cleanup background (slimed)", DBG_IMG_DIR);
+	cv::bitwise_and(invWhitenedImage, maskToCleanupBG, invWhitenedImage);
+#else
 #if 1
 	cv::Mat maskForCleanupBG;
 	cv::dilate(invWhitenedImage, maskForCleanupBG, kernel);
@@ -53,6 +65,7 @@ bool ImgFunc_shdc03::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::threshold(invWhitenedImage, invWhitenedImage, th2 * 0.5, 255.0, cv::THRESH_TOZERO);
 #endif
 	dumpImg(invWhitenedImage, "cleanup image", DBG_IMG_DIR);
+#endif
 #endif
 
 	// Uniform.
