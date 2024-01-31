@@ -17,9 +17,11 @@ private:
 		const cv::Rect& binROI
 	);
 
+public:
 	/// Make mask image for drawing line change.
 	void makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask);
 
+private:
 	/// Sample pixels on drawing line. 
 	std::vector<LumSample> sampleDrawLine(
 		const cv::Mat_<uchar>& invImage,
