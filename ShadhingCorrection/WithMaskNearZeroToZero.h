@@ -17,7 +17,7 @@ protected:
 	void makeMaskNearZeroToZero(
 		const cv::Mat& srcImg,
 		const cv::Mat& diffImg,
-		const cv::InputArray& maskToLimitRange = cv::noArray()
+		const cv::InputArray mask = cv::noArray()
 	);
 
 };

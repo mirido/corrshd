@@ -46,12 +46,17 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat stdWhiteImg;
 	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
 	dumpImg(stdWhiteImg, "standard white image", DBG_IMG_DIR);
+	// Following subtraction is achieved as saturation operation.
 	dstImg = stdWhiteImg - srcImg;
 	dumpImg(dstImg, "shading corrected image", DBG_IMG_DIR);
+
+	// Make mask for near zero to zero.
 	if (m_bNeedMaskNearZeroToZero) {
-		cv::Mat diffImg;
-		cv::absdiff(stdWhiteImg, morphoTmpImg, diffImg);
-		makeMaskNearZeroToZero(dstImg, diffImg);
+		cv::Mat signedImgA, signedImgB;
+		stdWhiteImg.convertTo(signedImgA, CV_16SC1);
+		morphoTmpImg.convertTo(signedImgB, CV_16SC1);
+		const cv::Mat signedDiffImg = signedImgA - signedImgB;
+		makeMaskNearZeroToZero(dstImg, signedDiffImg);
 	}
 
 	morphoTmpImg.release();
