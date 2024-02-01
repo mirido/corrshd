@@ -12,7 +12,7 @@
 #include "ImgFunc_whitening02.h"
 #include "ImgFunc_uniform.h"
 #include "ImgFunc_shdc03.h"
-
+#include "ImgFunc_shdc04.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
@@ -28,6 +28,7 @@ ImagingContext::ImagingContext()
 	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_whitening01);
 	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_whitening02);
 	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc03);
+	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc04);
 }
 
 /// ソース画像設定

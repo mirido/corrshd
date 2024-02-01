@@ -31,6 +31,13 @@ bool ImgFunc_whitening01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::morphologyEx(srcImg, dstImg, cv::MORPH_BLACKHAT, kernel);
 	dumpImg(dstImg, "image_after_black_hat", DBG_IMG_DIR);
 
+	if (m_bNeedMaskToKeepDrawLine) {
+		makeMaskToKeepDrawLine(dstImg);
+	}
+	else {
+		m_maskToKeepDrawLine.release();
+	}
+
 	if (m_bDoFinalInversion) {
 		cv::bitwise_not(dstImg, dstImg);
 	}

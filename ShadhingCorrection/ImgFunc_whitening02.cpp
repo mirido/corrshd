@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
 #include "ImgFuncBase.h"
-#include "../libimaging/imaging_op.h"
 #include "ImgFuncWithSampling.h"
 #include "ImgFunc_whitening02.h"
 
@@ -50,17 +49,15 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dstImg = stdWhiteImg - srcImg;
 	dumpImg(dstImg, "shading corrected image", DBG_IMG_DIR);
 
-	// Make mask for near zero to zero.
-	if (m_bNeedMaskNearZeroToZero) {
-		cv::Mat signedImgA, signedImgB;
-		stdWhiteImg.convertTo(signedImgA, CV_16SC1);
-		morphoTmpImg.convertTo(signedImgB, CV_16SC1);
-		const cv::Mat signedDiffImg = signedImgA - signedImgB;
-		makeMaskNearZeroToZero(dstImg, signedDiffImg);
-	}
-
 	morphoTmpImg.release();
 	stdWhiteImg.release();
+
+	if (m_bNeedMaskToKeepDrawLine) {
+		makeMaskToKeepDrawLine(dstImg);
+	}
+	else {
+		m_maskToKeepDrawLine.release();
+	}
 
 	if (m_bDoFinalInversion) {
 		cv::bitwise_not(dstImg, dstImg);

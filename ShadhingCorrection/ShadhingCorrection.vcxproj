@@ -172,6 +172,7 @@
     <ClCompile Include="ImgFuncBase.cpp" />
     <ClCompile Include="ImgFuncWithSampling.cpp" />
     <ClCompile Include="ImgFunc_shdc03.cpp" />
+    <ClCompile Include="ImgFunc_shdc04.cpp" />
     <ClCompile Include="ImgFunc_uniform.cpp" />
     <ClCompile Include="ImgFunc_shdc01.cpp" />
     <ClCompile Include="ImgFunc_shdc02.cpp" />
@@ -196,7 +197,7 @@
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatWarningAsError>
     </ClCompile>
     <ClCompile Include="WithFinalInversion.cpp" />
-    <ClCompile Include="WithMaskNearZeroToZero.cpp" />
+    <ClCompile Include="WithMaskToKeepDrawLine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bin_kernel.h" />
@@ -208,6 +209,7 @@
     <ClInclude Include="ImgFuncBase.h" />
     <ClInclude Include="ImgFuncWithSampling.h" />
     <ClInclude Include="ImgFunc_shdc03.h" />
+    <ClInclude Include="ImgFunc_shdc04.h" />
     <ClInclude Include="ImgFunc_uniform.h" />
     <ClInclude Include="ImgFunc_shdc01.h" />
     <ClInclude Include="ImgFunc_shdc02.h" />
@@ -219,7 +221,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WithFinalInversion.h" />
-    <ClInclude Include="WithMaskNearZeroToZero.h" />
+    <ClInclude Include="WithMaskToKeepDrawLine.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ShadhingCorrection.rc" />

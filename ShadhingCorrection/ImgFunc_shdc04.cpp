@@ -1,31 +1,31 @@
 #include "stdafx.h"
 #include "IImgFunc.h"
 #include "ImgFuncBase.h"
-#include "ImgFunc_whitening01.h"
+#include "ImgFunc_whitening02.h"
 #include "ImgFunc_uniform.h"
-#include "ImgFunc_shdc03.h"
+#include "ImgFunc_shdc04.h"
 
 #include "../libnumeric/numericutil.h"
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_shdc03::ImgFunc_shdc03()
+ImgFunc_shdc04::ImgFunc_shdc04()
 {
 	m_imgFunc_Whiteing.needMaskToKeepDrawLine(true);
 	m_imgFunc_Whiteing.doFinalInversion(false);
 }
 
-const char* ImgFunc_shdc03::getName() const
+const char* ImgFunc_shdc04::getName() const
 {
 	return "shd03";
 }
 
-const char* ImgFunc_shdc03::getSummary() const
+const char* ImgFunc_shdc04::getSummary() const
 {
 	return "Corrects lighting tilt by cubic regression.";
 }
 
-bool ImgFunc_shdc03::run(const cv::Mat& srcImg, cv::Mat& dstImg)
+bool ImgFunc_shdc04::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
 	// Whitening.
 	cv::Mat invWhitenedImage;

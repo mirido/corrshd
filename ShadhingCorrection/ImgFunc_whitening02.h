@@ -2,9 +2,10 @@
 
 #include "ImgFuncWithSampling.h"
 #include "WithFinalInversion.h"
-#include "WithMaskNearZeroToZero.h"
+#include "WithMaskToKeepDrawLine.h"
 
-class ImgFunc_whitening02 : public ImgFuncWithSampling, public WithFinalInversion, public WithMaskNearZeroToZero
+class ImgFunc_whitening02
+	: public ImgFuncWithSampling, public WithFinalInversion, public WithMaskToKeepDrawLine
 {
 public:
 	const char* getName() const;

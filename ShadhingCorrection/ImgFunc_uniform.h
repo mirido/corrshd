@@ -1,25 +1,16 @@
 #pragma once
 
 #include "ImgFuncWithSampling.h"
+#include "WithMaskToKeepDrawLine.h"
 
-class ImgFunc_uniform : public ImgFuncWithSampling
+class ImgFunc_uniform
+	: public ImgFuncWithSampling, public WithMaskToKeepDrawLine
 {
 public:
 	const char* getName() const;
 	const char* getSummary() const;
 
 	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
-
-private:
-	/// Get binarization threshold with Otsu.
-	double getTh1WithOtsu(
-		const cv::Mat& bluredBhatImg,
-		const cv::Rect& binROI
-	);
-
-public:
-	/// Make mask image for drawing line change.
-	void makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask);
 
 private:
 	/// Sample pixels on drawing line. 

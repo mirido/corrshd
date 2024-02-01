@@ -69,7 +69,10 @@
     <ClCompile Include="WithFinalInversion.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="WithMaskNearZeroToZero.cpp">
+    <ClCompile Include="WithMaskToKeepDrawLine.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgFunc_shdc04.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,7 +137,10 @@
     <ClInclude Include="WithFinalInversion.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="WithMaskNearZeroToZero.h">
+    <ClInclude Include="WithMaskToKeepDrawLine.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgFunc_shdc04.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
