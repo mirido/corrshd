@@ -376,23 +376,47 @@ namespace
 	/// Setup imaging context for reproduce.
 	void setup_imaging_context_for_debug(ImagingContext& ctx)
 	{
-#if 1
+#if 0
+		// IMG00075
+		const int nImgRotAngle = -1;
+		const std::vector<cv::Point> corners{
+			cv::Point(879, 3152),
+			cv::Point(2313, 3212),
+			cv::Point(2360, 1142),
+			cv::Point(953, 1128)
+		}; 
+		ctx.setState(nImgRotAngle, corners);
+#elif 0
 		// IMG00090
-		//const int nImgRotAngle = -1;
-		//const std::vector<cv::Point> corners{
-		//	cv::Point(429, 3955),
-		//	cv::Point(2952, 4048),
-		//	cv::Point(2680, 425),
-		//	cv::Point(457, 721)
-		//};
+		const int nImgRotAngle = -1;
+		const std::vector<cv::Point> corners{
+			cv::Point(429, 3955),
+			cv::Point(2952, 4048),
+			cv::Point(2680, 425),
+			cv::Point(457, 721)
+		};
+		ctx.setState(nImgRotAngle, corners);
+#elif 0
+		// IMG00094
+		const int nImgRotAngle = 1;
+		const std::vector<cv::Point> corners{
+			cv::Point(2943, 583),
+			cv::Point(589, 421),
+			cv::Point(667, 4032),
+			cv::Point(2959, 3800)
+		};
+		ctx.setState(nImgRotAngle, corners); 
+#elif 0
 		// IMG00073
-		//const int nImgRotAngle = 1;
-		//const std::vector<cv::Point> corners{
-		//	cv::Point(2907, 275),
-		//	cv::Point(209, 262),
-		//	cv::Point(260, 4027),
-		//	cv::Point(2870, 4010)
-		//};
+		const int nImgRotAngle = 1;
+		const std::vector<cv::Point> corners{
+			cv::Point(2907, 275),
+			cv::Point(209, 262),
+			cv::Point(260, 4027),
+			cv::Point(2870, 4010)
+		};
+		ctx.setState(nImgRotAngle, corners);
+#elif 1
 		// IMG0105
 		const int nImgRotAngle = 3;
 		const std::vector<cv::Point> corners{
