@@ -6,6 +6,9 @@ int get_num_grid_points(const int ub, const int cyc);
 /// Approximate equal operator on double type values. 
 bool can_equal(const double a, const double b);
 
+/// Generates floating point number consisting of consecutive 1's.
+double gen_consecutive_1s(const int cnt, const int expn);
+
 /// ‘å’Ã‚Ì•û–@‚É‚æ‚é”»•Ê•ªÍ
 /// http://ithat.me/2016/02/05/opencv-discriminant-analysis-method-otsu-cpp
 int discriminant_analysis_by_otsu(const std::vector<uchar>& data);

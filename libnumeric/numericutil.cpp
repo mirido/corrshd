@@ -13,11 +13,53 @@ int get_num_grid_points(const int ub, const int cyc)
 /// Approximate equal operator on double type values. 
 bool can_equal(const double a, const double b)
 {
-	const double abs_a = std::abs(a);
-	const double abs_b = std::abs(a);
-	const double mag = std::max(abs_a, abs_b);
-	const double border = mag * std::numeric_limits<double>::epsilon();
-	return (std::abs(a - b) <= 2 * border);
+	if (std::isnan(a) || std::isnan(b)) {
+		return false;
+	}
+	if (std::isinf(a) || std::isinf(b)) {
+		return (a == b);
+	}
+
+	const auto min_expn = std::numeric_limits<double>::min_exponent;
+	const auto digits = std::numeric_limits<double>::digits;
+
+	int expn_a, expn_b;
+	std::frexp(a, &expn_a);
+	std::frexp(b, &expn_b);
+
+	const int expn = std::max(min_expn, std::max(expn_a, expn_b));
+	assert(expn >= min_expn);
+
+	const double mod_epsilon = std::ldexp(0.5, expn - digits);
+	assert(mod_epsilon > 0.0);
+
+	return (std::abs(a - b) <= mod_epsilon);
+}
+
+/// Generates floating point number consisting of consecutive 1's.
+double gen_consecutive_1s(const int cnt, const int expn)
+{
+	// Make 2^(expn)
+	double r = 1.0;
+	if (expn > 0) {
+		for (int i = 0; i < expn; i++) {
+			r *= 2.0;
+		}
+	}
+	else {
+		for (int i = 0; i > expn; i--) {
+			r /= 2.0;
+		}
+	}
+
+	// Make 1.111...*2^(expn)
+	double x = 0.0;
+	for (int i = 0; i < cnt; i++) {
+		x += r;
+		r /= 2.0;
+	}
+
+	return x;
 }
 
 /// ‘å’Ã‚Ì•û–@‚É‚æ‚é”»•Ê•ªÍ
