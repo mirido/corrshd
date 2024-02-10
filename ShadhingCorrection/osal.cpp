@@ -13,12 +13,12 @@ void osal_setup_locale()
 	setlocale(LC_ALL, "C");
 	_wsetlocale(LC_ALL, L"C");
 
-	//cin.imbue(std::locale("C"));
-	//cout.imbue(std::locale("C"));
-	//cerr.imbue(std::locale("C"));
+	//cin.imbue(std::locale("C", std::locale::all));
+	//cout.imbue(std::locale("C", std::locale::all));
+	//cerr.imbue(std::locale("C", std::locale::all));
 
-	//std::wcin.imbue(std::locale("C"));
-	//std::wcout.imbue(std::locale("C"));
+	//std::wcin.imbue(std::locale("C", std::locale::all));
+	//std::wcout.imbue(std::locale("C", std::locale::all));
 
 	std::locale::global(std::locale("C", std::locale::all));
 }
