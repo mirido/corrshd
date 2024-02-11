@@ -336,7 +336,19 @@ TEST(numericTest, ldexp_around_0) {
 	const auto min_expn = std::numeric_limits<double>::min_exponent;
 	const auto digits = std::numeric_limits<double>::digits;
 
-	// 0.5^(min_expn - digits) != 0.0
+	// 0.5^(min_expn - digits + 1) > 0.0
+	x = std::ldexp(0.5, min_expn - digits + 1);
+	EXPECT_FALSE(std::isnan(x));
+	EXPECT_FALSE(std::isinf(x));
+	EXPECT_GT(x, 0.0);
+
+	// 0.5^(min_expn - digits + 1) / 2.0 = 0.0
+	x = std::ldexp(0.5, min_expn - digits + 1);
+	EXPECT_FALSE(std::isnan(x));
+	EXPECT_FALSE(std::isinf(x));
+	EXPECT_EQ(0.0, x / 2.0);
+
+	// 0.5^(min_expn - digits) > 0.0 (Why?)
 	x = std::ldexp(0.5, min_expn - digits);
 	EXPECT_FALSE(std::isnan(x));
 	EXPECT_FALSE(std::isinf(x));
@@ -346,7 +358,7 @@ TEST(numericTest, ldexp_around_0) {
 	x = std::ldexp(0.5, min_expn - digits - 1);
 	EXPECT_FALSE(std::isnan(x));
 	EXPECT_FALSE(std::isinf(x));
-	EXPECT_EQ(x, 0.0);
+	EXPECT_EQ(0.0, x);
 
 	restore_format(sv_spec, cout);
 }
