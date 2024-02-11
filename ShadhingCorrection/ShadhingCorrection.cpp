@@ -12,45 +12,6 @@
 #include "pathutil.h"
 #include "PhysicalSize.h"
 
-#ifdef USE_OPENCV_WORLD_DLL
-#ifdef NDEBUG
-#pragma comment(lib, "opencv_world480.lib")
-#else
-#pragma comment(lib, "opencv_world480d.lib")
-#endif
-#else
-#pragma comment(lib, "ippicvmt.lib")
-#ifdef NDEBUG
-#pragma comment(lib, "IlmImf.lib")
-#pragma comment(lib, "ippiw.lib")
-#pragma comment(lib, "ittnotify.lib")
-#pragma comment(lib, "libjpeg-turbo.lib")
-#pragma comment(lib, "libopenjp2.lib")
-#pragma comment(lib, "libpng.lib")
-#pragma comment(lib, "libtiff.lib")
-#pragma comment(lib, "libwebp.lib")
-#pragma comment(lib, "opencv_core480.lib")
-#pragma comment(lib, "opencv_highgui480.lib")
-#pragma comment(lib, "opencv_imgcodecs480.lib")
-#pragma comment(lib, "opencv_imgproc480.lib")
-#pragma comment(lib, "zlib.lib")
-#else
-#pragma comment(lib, "IlmImfd.lib")
-#pragma comment(lib, "ippiwd.lib")
-#pragma comment(lib, "ittnotifyd.lib")
-#pragma comment(lib, "libjpeg-turbod.lib")
-#pragma comment(lib, "libopenjp2d.lib")
-#pragma comment(lib, "libpngd.lib")
-#pragma comment(lib, "libtiffd.lib")
-#pragma comment(lib, "libwebpd.lib")
-#pragma comment(lib, "opencv_core480d.lib")
-#pragma comment(lib, "opencv_highgui480d.lib")
-#pragma comment(lib, "opencv_imgcodecs480d.lib")
-#pragma comment(lib, "opencv_imgproc480d.lib")
-#pragma comment(lib, "zlibd.lib")
-#endif
-#endif	/*USE_OPENCV_WORLD_DLL*/
-
 // Program name (Automatically acquired from argv[0].)
 std::string PROG_NAME;
 
@@ -76,19 +37,12 @@ const double mm_per_inch = 25.4;
 
 namespace
 {
-	/// parse string as cv::Size2d
-	bool parse_as_Size2d(const char* const str, cv::Size2d& size)
+	/// parse string as PhysicalSize
+	bool parse_as_Size2d(const char* const str, PhysicalSize& psz)
 	{
-		size = cv::Size2d();
-
 		std::istringstream is(str);
-		PhysicalSize psz;
 		is >> psz;
-		if (!is) {
-			return false;
-		}
-		size = cv::Size2d(psz.width(), psz.height());
-		return true;
+		return !!is;
 	}
 
 	/// Get the approximate size of the ROI.
@@ -291,7 +245,7 @@ namespace
 	struct AppParam
 	{
 		std::string m_imageFile;		// Input image file path
-		cv::Size2d m_ROISize;			// ROI physical size in mm
+		PhysicalSize m_ROISize;			// ROI physical size in mm (or standart paper size name)
 		double m_dpi;					// Resolution in dpi
 		std::string m_outfile;			// Output image file path
 		bool m_bCutoffOnly;				// Cut off only or not flag
@@ -359,14 +313,14 @@ namespace
 				cerr << "ERROR: Illegal dpi value. (-dpi=" << m_dpi << ")" << endl;
 				return 1;
 			}
-			cv::Size2d size2d;
-			if (!parse_as_Size2d(ROISizeStr.c_str(), size2d)) {
+			PhysicalSize psz;
+			if (!parse_as_Size2d(ROISizeStr.c_str(), psz)) {
 				cerr << "ERROR: Illegal ROI size. (roi-size=" << ROISizeStr << ")" << endl;
 				return 1;
 			}
-			const int widthInPx = (int)std::round((m_dpi * size2d.width) / mm_per_inch);
-			const int heightInPx = (int)std::round((m_dpi * size2d.height) / mm_per_inch);
-			m_ROISize = size2d;
+			const int widthInPx = (int)std::round((m_dpi * psz.width()) / mm_per_inch);
+			const int heightInPx = (int)std::round((m_dpi * psz.height()) / mm_per_inch);
+			m_ROISize = psz;
 			m_outputImgSz = cv::Size(widthInPx, heightInPx);
 
 			return 0;
@@ -452,9 +406,9 @@ int main(const int argc, char* argv[])
 	// Print specified arguments for check.
 	cout
 		<< "Speciied argument: \"" << param.m_imageFile << "\" "
-		<< param.m_ROISize.width << "x" << param.m_ROISize.height << " "
-		<< "-dpi " << param.m_dpi << " "
-		<< "\"" << param.m_outfile << "\"";
+		<< param.m_ROISize.str() << " "
+		<< "-dpi=" << param.m_dpi << " "
+		<< "-outfile=\"" << param.m_outfile << "\"";
 	if (param.m_bCutoffOnly) {
 		cout << "-cutoffonly";
 	}
@@ -656,3 +610,42 @@ int main(const int argc, char* argv[])
 
 	return 0;
 }
+
+#ifdef USE_OPENCV_WORLD_DLL
+#ifdef NDEBUG
+#pragma comment(lib, "opencv_world480.lib")
+#else
+#pragma comment(lib, "opencv_world480d.lib")
+#endif
+#else
+#pragma comment(lib, "ippicvmt.lib")
+#ifdef NDEBUG
+#pragma comment(lib, "IlmImf.lib")
+#pragma comment(lib, "ippiw.lib")
+#pragma comment(lib, "ittnotify.lib")
+#pragma comment(lib, "libjpeg-turbo.lib")
+#pragma comment(lib, "libopenjp2.lib")
+#pragma comment(lib, "libpng.lib")
+#pragma comment(lib, "libtiff.lib")
+#pragma comment(lib, "libwebp.lib")
+#pragma comment(lib, "opencv_core480.lib")
+#pragma comment(lib, "opencv_highgui480.lib")
+#pragma comment(lib, "opencv_imgcodecs480.lib")
+#pragma comment(lib, "opencv_imgproc480.lib")
+#pragma comment(lib, "zlib.lib")
+#else
+#pragma comment(lib, "IlmImfd.lib")
+#pragma comment(lib, "ippiwd.lib")
+#pragma comment(lib, "ittnotifyd.lib")
+#pragma comment(lib, "libjpeg-turbod.lib")
+#pragma comment(lib, "libopenjp2d.lib")
+#pragma comment(lib, "libpngd.lib")
+#pragma comment(lib, "libtiffd.lib")
+#pragma comment(lib, "libwebpd.lib")
+#pragma comment(lib, "opencv_core480d.lib")
+#pragma comment(lib, "opencv_highgui480d.lib")
+#pragma comment(lib, "opencv_imgcodecs480d.lib")
+#pragma comment(lib, "opencv_imgproc480d.lib")
+#pragma comment(lib, "zlibd.lib")
+#endif
+#endif	/*USE_OPENCV_WORLD_DLL*/
