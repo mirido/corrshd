@@ -165,6 +165,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AppParam.cpp" />
     <ClCompile Include="ClickedPointList.cpp" />
     <ClCompile Include="ImagingCanvas.cpp" />
     <ClCompile Include="ImagingContext.cpp" />
@@ -191,6 +192,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AppParam.h" />
     <ClInclude Include="ClickedPointList.h" />
     <ClInclude Include="cv_keycode.h" />
     <ClInclude Include="ImagingCanvas.h" />
