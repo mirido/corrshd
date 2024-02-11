@@ -230,8 +230,7 @@ namespace
 	void dump_imaging_context_for_debug(const ImagingContext& ctx)
 	{
 		const int nImgRotAngle = ctx.getImgRotAngle();
-		std::vector<cv::Point> corners;
-		ctx.getPointList(corners);
+		std::vector<cv::Point> corners = ctx.getClockwiseList();
 
 		cout << "const int nImgRotAngle = " << nImgRotAngle << ";" << endl;
 		cout << "const std::vector<cv::Point> corners{" << endl;
@@ -245,6 +244,69 @@ namespace
 			cout << endl;
 		}
 		cout << "};" << endl;
+	}
+
+	/// Do shading correction.
+	bool do_shading_correction(const AppParam& param, ImagingContext& ctx)
+	{
+		cv::Mat outputImg;
+
+		// 頂点自動登録
+		// デバッグ時のiteration効率を上げるため、頂点が全く未設定の場合は
+		// 画像の4隅を自動的に設定する。
+		if (ctx.isPointListEmpty()) {
+			cv::Mat& canvas = ctx.refCanvas();		// Alias
+			ctx.addOrMovePoint(0, 0);
+			ctx.addOrMovePoint(canvas.cols - 1, 0);
+			ctx.addOrMovePoint(canvas.cols - 1, canvas.rows - 1);
+			ctx.addOrMovePoint(0, canvas.rows - 1);
+		}
+		// シェーディング補正 (or cutoff only)
+		{
+			// Check that 4 corners are specified.
+			const std::vector<cv::Point> corners = ctx.getClockwiseList();
+			if (corners.size() != 4) {
+				cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
+				return false;
+			}
+			dump_imaging_context_for_debug(ctx);
+
+			// Print the size before and after conversion.
+			cv::Size appxROISize = get_approximate_size(corners);
+			if (!(appxROISize.width > 0 && appxROISize.height > 0)) {
+				cout << "ERROR: Illegal corner selection. (width=" << appxROISize.width << ", height=" << appxROISize.height << ")" << endl;
+				return false;
+			}
+			cout << "Convert about " << appxROISize << " image to " << param.m_outputImgSz << " image. (in pixel)" << endl;
+			cout << "horizontal ratio=" << (100.0 * (double)param.m_outputImgSz.width) / (double)appxROISize.width << "%" << endl;
+			cout << "  vertical ratio=" << (100.0 * (double)param.m_outputImgSz.height) / (double)appxROISize.height << "%" << endl;
+
+			// Do correction.
+			bool bSuc;
+			const char* caption;
+			if (param.m_bCutoffOnly) {
+				bSuc = ctx.correctDistortion(param.m_outputImgSz, outputImg);
+				caption = "Distortion correction";
+			}
+			else {
+				bSuc = ctx.doShadingCorrection(param.m_outputImgSz, outputImg);
+				caption = " Shading correction";
+			}
+			if (bSuc) {
+				cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
+				show_output_image(outputImg);
+
+				// 結果画像保存
+				if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
+					cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
+				}
+			}
+			else {
+				cout << "Info: " << caption << " failed." << endl;
+			}
+		}
+
+		return true;
 	}
 
 }	// namespace
@@ -387,8 +449,21 @@ int main(const int argc, char* argv[])
 			}
 		}
 
-		// カーソルキー以外のキーボードコマンド処理
-		cv::Mat outputImg;
+		const int numImgAlgorithms = ctx.getNumImagingAlgorithms();
+		int curImgAlgorithmIdx = ctx.getCurImagingAlgorithmIdx();
+
+		// Keyboard command processing other than cursor keys (1).
+		if (isdigit(CHAR_TO_INT(c))) {
+			const int m = CHAR_TO_INT(c) - '0';
+			const int idx = (m == 0) ? 10 : m - 1;
+			if (idx < numImgAlgorithms) {
+				ctx.selectImagingAlgorithmByIdx(idx);
+				refresh_input_image_disp(ctx, g_bShowAsSameMag);
+				continue;
+			}
+		}
+
+		// Keyboard command processing other than cursor keys (2)
 		switch (c) {
 		case '\t':
 			// Current point切り替え
@@ -407,60 +482,25 @@ int main(const int argc, char* argv[])
 			g_bShowAsSameMag = !g_bShowAsSameMag;
 			break;
 		case 's':
-			// 頂点自動登録
-			// デバッグ時のiteration効率を上げるため、頂点が全く未設定の場合は
-			// 画像の4隅を自動的に設定する。
-			if (ctx.isPointListEmpty()) {
-				cv::Mat& canvas = ctx.refCanvas();		// Alias
-				ctx.addOrMovePoint(0, 0);
-				ctx.addOrMovePoint(canvas.cols - 1, 0);
-				ctx.addOrMovePoint(canvas.cols - 1, canvas.rows - 1);
-				ctx.addOrMovePoint(0, canvas.rows - 1);
+			// Do shading correction (or cutoff only).
+			do_shading_correction(param, ctx);
+			break;
+		case'+':
+		case '-':
+			// Change image processing algorithm.
+			if (CHAR_TO_INT(c) == '+') {
+				curImgAlgorithmIdx++;
+				curImgAlgorithmIdx %= numImgAlgorithms;
 			}
-			// シェーディング補正 (or cutoff only)
-			{
-				// Check that 4 corners are specified.
-				const std::vector<cv::Point> corners = ctx.getClockwiseList();
-				if (corners.size() != 4) {
-					cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
-					break;
-				}
-				dump_imaging_context_for_debug(ctx);
-
-				// Print the size before and after conversion.
-				cv::Size appxROISize = get_approximate_size(corners);
-				if (!(appxROISize.width > 0 && appxROISize.height > 0)) {
-					cout << "ERROR: Illegal corner selection. (width=" << appxROISize.width << ", height=" << appxROISize.height << ")" << endl;
-					break;
-				}
-				cout << "Convert about " << appxROISize << " image to " << param.m_outputImgSz << " image. (in pixel)" << endl;
-				cout << "horizontal ratio=" << (100.0 * (double)param.m_outputImgSz.width) / (double)appxROISize.width << "%" << endl;
-				cout << "  vertical ratio=" << (100.0 * (double)param.m_outputImgSz.height) / (double)appxROISize.height << "%" << endl;
-
-				// Do correction.
-				bool bSuc;
-				const char* caption;
-				if (param.m_bCutoffOnly) {
-					bSuc = ctx.correctDistortion(param.m_outputImgSz, outputImg);
-					caption = "Distortion correction";
+			else {
+				if (curImgAlgorithmIdx <= 0) {
+					curImgAlgorithmIdx = numImgAlgorithms - 1;
 				}
 				else {
-					bSuc = ctx.doShadingCorrection(param.m_outputImgSz, outputImg);
-					caption = " Shading correction";
-				}
-				if (bSuc) {
-					cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
-					show_output_image(outputImg);
-
-					// 結果画像保存
-					if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
-						cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
-					}
-				}
-				else {
-					cout << "Info: " << caption << " failed." << endl;
+					curImgAlgorithmIdx--;
 				}
 			}
+			ctx.selectImagingAlgorithmByIdx(curImgAlgorithmIdx);
 			break;
 		default:
 #ifndef NDEBUG

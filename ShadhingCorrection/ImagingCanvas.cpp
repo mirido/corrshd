@@ -5,7 +5,16 @@
 #include "../libimaging/imaging_op.h"
 
 // [CONF] ガイド線の描画色
-#define GUIDE_COLOR		cv::Scalar(0, 0, 255)
+#define GUIDE_COLOR		(cv::Scalar(0.0, 0.0, 255.0))
+
+// [CONF] Foreground color of text.
+#define TEXT_COLOR		(cv::Scalar(0.0, 255.0, 0.0))
+
+// [CONF] Top Left point of text.
+#define TEXT_TOP_LEFT	(cv::Point(4, 4))
+
+// [CONF] Letter height in pixel.
+#define LETTER_HEIGHT	10
 
 ImagingCanvas::ImagingCanvas()
 {
@@ -37,8 +46,9 @@ bool ImagingCanvas::setupCanvas(const cv::Rect& srcArea, const cv::Size& dispSiz
 	// できたキャンバスをPolyLine消去用に記憶
 	m_canvasMaster = m_canvas.clone();
 
-	// Dirty areaクリア
-	m_dirtyArea = cv::Rect();
+	// Dirty rangeクリア
+	m_dirtyRange = cv::Rect();
+	m_dirtyRange2 = cv::Rect();
 
 	return true;
 }
@@ -97,23 +107,49 @@ void ImagingCanvas::drawPolylines(const std::vector<cv::Point>& vertexes, const 
 		eyMax = std::max(eyMax, ey + (vtxMarkerRadius + thickness));
 	}
 
-	// Dirty area記憶
+	// Dirty range記憶
 	sxMin = std::max(sxMin, 0);
 	syMin = std::max(syMin, 0);
 	exMax = std::min(exMax, m_canvas.cols);
 	eyMax = std::min(eyMax, m_canvas.rows);
 	const cv::Rect rect = cv::Rect(sxMin, syMin, exMax - sxMin, eyMax - syMin);
-	m_dirtyArea = clip_rect_into_image(rect, m_canvas.cols, m_canvas.rows);
+	m_dirtyRange = clip_rect_into_image(rect, m_canvas.cols, m_canvas.rows);
+}
+
+/// キャンバスに文字列を描画する。
+void ImagingCanvas::drawText(const std::string& text)
+{
+	const auto face = cv::FONT_HERSHEY_SIMPLEX;
+	const auto scale = cv::getFontScaleFromHeight(face, LETTER_HEIGHT);
+	const int thickness = 1;
+
+	int baseline;
+	const cv::Size textSize = cv::getTextSize(cv::String(text), face, scale, thickness, &baseline);
+
+	const cv::Point org(TEXT_TOP_LEFT.x, TEXT_TOP_LEFT.y + textSize.height);
+	cv::putText(m_canvas, cv::String(text), org, face, scale, TEXT_COLOR, thickness);
+
+	m_dirtyRange2 = cv::Rect(TEXT_TOP_LEFT.x, TEXT_TOP_LEFT.y, textSize.width, textSize.height + baseline);
 }
 
 /// キャンバスへの描画を消去する。
 void ImagingCanvas::cleanup()
 {
-	const cv::Rect dirtyRect = m_dirtyArea;
+	const cv::Rect dirtyRect = m_dirtyRange;
+	const cv::Rect dirtyRect2 = m_dirtyRange2;
 
+	// Erase polyline.
 	if (!is_empty_rect(dirtyRect)) {
 		cv::Mat ROISrc = cv::Mat(m_canvasMaster, dirtyRect);
 		cv::Mat ROIDst = cv::Mat(m_canvas, dirtyRect);
+		//cv::rectangle(ROISrc, cv::Point(0, 0), cv::Point(ROISrc.cols - 1, ROISrc.rows - 1), cv::Scalar(255, 0, 0), 5);		// DEBUG
+		ROISrc.copyTo(ROIDst);
+	}
+
+	// Erase text.
+	if (!is_empty_rect(dirtyRect2)) {
+		cv::Mat ROISrc = cv::Mat(m_canvasMaster, dirtyRect2);
+		cv::Mat ROIDst = cv::Mat(m_canvas, dirtyRect2);
 		//cv::rectangle(ROISrc, cv::Point(0, 0), cv::Point(ROISrc.cols - 1, ROISrc.rows - 1), cv::Scalar(255, 0, 0), 5);		// DEBUG
 		ROISrc.copyTo(ROIDst);
 	}

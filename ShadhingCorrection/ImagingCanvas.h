@@ -8,7 +8,8 @@ class ImagingCanvas
 	cv::Rect m_srcArea;
 	cv::Size m_dispSize;
 
-	cv::Rect m_dirtyArea;
+	cv::Rect m_dirtyRange;		// Dirty range on polyline.
+	cv::Rect m_dirtyRange2;		// Dirty range on text.
 
 public:
 	ImagingCanvas();
@@ -27,6 +28,9 @@ public:
 
 	/// キャンバスに多角形を描画する。
 	void drawPolylines(const std::vector<cv::Point>& vertexes, const int vtxMarkerRadius, const int curIdx);
+
+	/// キャンバスに文字列を描画する。
+	void drawText(const std::string& text);
 
 	/// キャンバスへの描画を消去する。
 	void cleanup();

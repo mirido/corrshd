@@ -13,13 +13,35 @@
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
 #define NEAR_DISTANCE_MAX			16
 
+namespace
+{
+	void append_imgfunc(
+		IImgFunc* const pImgFunc,
+		std::map<std::string, std::shared_ptr<IImgFunc> >& dic,
+		std::vector<std::string>& names
+	)
+	{
+		std::string name = pImgFunc->getName();
+		auto found_it = dic.find(name);
+		if (!(found_it == dic.end())) {
+			// (Duplicate names found.)
+			throw std::logic_error("*** ERR ***");
+		}
+		dic[name] = std::shared_ptr<IImgFunc>(pImgFunc);
+		names.push_back(name);
+	}
+
+}	// namespace
+
 ImagingContext::ImagingContext()
 	: m_nImgRotAngle(0)
 {
-	// Select algorithm.
-	// TODO: Make it variable by command line arguments.
-	//m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc01);
-	m_pImgFunc = std::unique_ptr<IImgFunc>(new ImgFunc_shdc02);
+	append_imgfunc(new ImgFunc_shdc01, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc02, m_imgFuncDic, m_imgFuncNames);
+	if (!selectImagingAlgorithmByName(m_imgFuncNames.front())) {
+		// (Internal error.)
+		throw std::logic_error("*** ERR ***");
+	}
 }
 
 /// ソース画像設定
@@ -84,17 +106,21 @@ bool ImagingContext::isPointListEmpty() const
 	return m_clickedPointList.empty();
 }
 
+#if 0
 /// 既存座標の個数を取得する。
 int ImagingContext::pointListSize() const
 {
 	return m_clickedPointList.size();
 }
+#endif
 
+#if 0
 /// 既存座標列を取得する。
 int ImagingContext::getPointList(std::vector<cv::Point>& points) const
 {
 	return m_clickedPointList.getPointList(points);
 }
+#endif
 
 /// 最も左上から時計回りの順のリストを取得する。
 std::vector<cv::Point> ImagingContext::getClockwiseList() const
@@ -176,6 +202,11 @@ void ImagingContext::refreshCanvas()
 
 	// 描画
 	m_imagingCanvas.drawPolylines(vertexes, NEAR_DISTANCE_MAX, curIdx);
+
+	// Draw current imaging processing algorithm.
+	std::string name = m_pImgFunc->getName();
+	std::string summary = m_pImgFunc->getSummary();
+	m_imagingCanvas.drawText(name + " -- " + summary);
 }
 
 /// キャンバスとソース画像回転
@@ -199,9 +230,56 @@ void ImagingContext::rotate(const int dir)
 	}
 }
 
+/// Get rotation angle of canvas and source image.
 int ImagingContext::getImgRotAngle() const
 {
 	return m_nImgRotAngle;
+}
+
+/// Select image processing algorithm.
+bool ImagingContext::selectImagingAlgorithmByName(const std::string& name)
+{
+	auto found_it = m_imgFuncDic.find(name);
+	if (found_it == m_imgFuncDic.end()) {
+		return false;
+	}
+	if (m_pImgFunc == NULL || found_it->first != m_pImgFunc->getName()) {
+		m_pImgFunc = found_it->second;
+	}
+	return true;
+}
+
+/// Get current image processing algorithm name.
+std::string ImagingContext::getCurImagingAlgorithmName() const
+{
+	return m_pImgFunc->getName();
+}
+
+/// Select image processing algorithm.
+bool ImagingContext::selectImagingAlgorithmByIdx(const int idx)
+{
+	if (ZT(idx) >= m_imgFuncNames.size()) {
+		return false;
+	}
+	return selectImagingAlgorithmByName(m_imgFuncNames[ZT(idx)]);
+}
+
+/// Get current image processing algorithm index.
+int ImagingContext::getCurImagingAlgorithmIdx() const
+{
+	const auto name = m_pImgFunc->getName();
+	auto found_it = std::find(m_imgFuncNames.begin(), m_imgFuncNames.end(), name);
+	if (!(found_it != m_imgFuncNames.end())) {
+		throw std::logic_error("*** ERR ***");
+	}
+	auto ofs = std::distance(m_imgFuncNames.begin(), found_it);
+	return C_INT(ofs);
+}
+
+/// Get number of image processing algorithms.
+int ImagingContext::getNumImagingAlgorithms() const
+{
+	return C_INT(m_imgFuncNames.size());
 }
 
 /// 歪み補正
