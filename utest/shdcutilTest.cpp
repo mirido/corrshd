@@ -88,10 +88,14 @@ namespace
 	/// Evaluate error between imgExp and imgAct.
 	void evaluate_error(const cv::Mat& imgExp, const cv::Mat& imgAct)
 	{
-		cv::Mat diffImg = imgAct - imgExp;
+		cv::Mat signedDiffImg;
+		{
+			cv::Mat diffImg = imgAct - imgExp;
+			diffImg.convertTo(signedDiffImg, CV_16SC1, 1.0, 0.0);
+		}
 
 		cv::Mat mean, stddev;
-		cv::meanStdDev(diffImg, mean, stddev);
+		cv::meanStdDev(signedDiffImg, mean, stddev);
 		cout << "mean.size()=" << mean.size() << ", stddev.size()=" << stddev.size() << endl;
 		const double fmean = mean.at<double>(0, 0);
 		const double fstddev = stddev.at<double>(0, 0);

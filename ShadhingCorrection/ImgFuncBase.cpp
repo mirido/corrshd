@@ -11,8 +11,9 @@
 //	For DEBUG
 //
 
+unsigned long ImgFuncBase::m_imgDumpCnt = C_ULONG(0);
+
 ImgFuncBase::ImgFuncBase()
-	: m_imgDumpCnt(C_ULONG(0))
 {
 	/*pass*/
 }
@@ -37,7 +38,7 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 	}
 
 	// Display the image on the screen.
-	const cv::String cap = numStr + cv::String("_") + caption;
+	cv::String cap = numStr + cv::String("_") + caption;
 	cv::imshow(cap, image);
 
 	// Save image to specified directory.
@@ -47,6 +48,17 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 		if (strchr("\\/", CHAR_TO_INT(dir.back())) == NULL) {
 			dir += cv::String("/");
 		}
+
+		// Replace space to '_' in cap.
+		std::string cap2;
+		for (auto it = cap.begin(); it != cap.end(); it++) {
+			int c = CHAR_TO_INT(*it);
+			if (isspace(c)) {
+				c = '_';
+			}
+			cap2.push_back(C_UCHAR(c));
+		}
+		cap = cap2;
 
 		// Decide filename.
 		// If cap have no extension, add DEFAULT_IMG_EXT as extension.

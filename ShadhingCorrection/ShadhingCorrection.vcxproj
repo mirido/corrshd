@@ -166,12 +166,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AppParam.cpp" />
+    <ClCompile Include="bin_kernel.cpp" />
     <ClCompile Include="ClickedPointList.cpp" />
     <ClCompile Include="ImagingCanvas.cpp" />
     <ClCompile Include="ImagingContext.cpp" />
     <ClCompile Include="ImgFuncBase.cpp" />
+    <ClCompile Include="ImgFuncWithSampling.cpp" />
     <ClCompile Include="ImgFunc_shdc01.cpp" />
     <ClCompile Include="ImgFunc_shdc02.cpp" />
+    <ClCompile Include="ImgFunc_shdc03.cpp" />
+    <ClCompile Include="ImgFunc_shdc04.cpp" />
+    <ClCompile Include="ImgFunc_uniform.cpp" />
+    <ClCompile Include="ImgFunc_whitening01.cpp" />
+    <ClCompile Include="ImgFunc_whitening02.cpp" />
     <ClCompile Include="osal.cpp" />
     <ClCompile Include="pathutil.cpp" />
     <ClCompile Include="PhysicalSize.cpp" />
@@ -191,23 +198,34 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatWarningAsError>
     </ClCompile>
+    <ClCompile Include="WithFinalInversion.cpp" />
+    <ClCompile Include="WithMaskToKeepDrawLine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppParam.h" />
+    <ClInclude Include="bin_kernel.h" />
     <ClInclude Include="ClickedPointList.h" />
     <ClInclude Include="cv_keycode.h" />
     <ClInclude Include="ImagingCanvas.h" />
     <ClInclude Include="ImagingContext.h" />
     <ClInclude Include="IImgFunc.h" />
     <ClInclude Include="ImgFuncBase.h" />
+    <ClInclude Include="ImgFuncWithSampling.h" />
     <ClInclude Include="ImgFunc_shdc01.h" />
     <ClInclude Include="ImgFunc_shdc02.h" />
+    <ClInclude Include="ImgFunc_shdc03.h" />
+    <ClInclude Include="ImgFunc_shdc04.h" />
+    <ClInclude Include="ImgFunc_uniform.h" />
+    <ClInclude Include="ImgFunc_whitening01.h" />
+    <ClInclude Include="ImgFunc_whitening02.h" />
     <ClInclude Include="osal.h" />
     <ClInclude Include="pathutil.h" />
     <ClInclude Include="PhysicalSize.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="PointWrp.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="WithFinalInversion.h" />
+    <ClInclude Include="WithMaskToKeepDrawLine.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ShadhingCorrection.rc" />

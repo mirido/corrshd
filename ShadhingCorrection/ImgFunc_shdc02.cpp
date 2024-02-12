@@ -8,53 +8,15 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-// [CONF] ROI size for determine binarization threshold (ratio)
-#define BIN_ROI_RATIO		0.8
-
-// [CONF] Kernel size for determine binarization threshold (ratio)
-#define BIN_KERNEL_RATIO	0.025
-
 const char* ImgFunc_shdc02::getName() const
 {
-	return "shd02";
+	return "shdc02";
 }
 
 const char* ImgFunc_shdc02::getSummary() const
 {
-	return "Corrects lighting tilt by cubic regression.";
+	return "Shading correction with cubic polynomial regression, then flatten blackness and masking.";
 }
-
-namespace
-{
-	cv::Rect get_bin_ROI(const cv::Size& imgSz)
-	{
-		return get_scaled_rect_from_size(imgSz, BIN_ROI_RATIO);
-	}
-
-	cv::Size get_bin_kernel_size(const cv::Size& imgSz)
-	{
-		const int aveSz = std::max(imgSz.width, imgSz.height);
-		const int knsz0 = (int)std::round(C_DBL(aveSz) * BIN_KERNEL_RATIO);
-		const int knszOdd = 2 * ((knsz0 + 1) / 2) + 1;
-		return cv::Size(knszOdd, knszOdd);
-	}
-
-	cv::Mat get_bin_kernel(const cv::Size& imgSz)
-	{
-		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
-		return cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
-	}
-
-	size_t get_exp_nsamples(const cv::Rect& smpROI)
-	{
-		const cv::Size imgSz = cv::Size(smpROI.width, smpROI.height);
-		const cv::Size kernelSz = get_bin_kernel_size(imgSz);
-		const int hcnt = (imgSz.width + (kernelSz.width - 1)) / kernelSz.width;
-		const int vcnt = (imgSz.height + (kernelSz.height - 1)) / kernelSz.height;
-		return ZT(4) * ZT(hcnt) * ZT(vcnt);
-	}
-
-}	// namespace
 
 bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
@@ -130,7 +92,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	predict_image(invSrcImg.size(), cflistOnDL, invBlacknessTiltImg);
 	dumpImg(invBlacknessTiltImg, "blackness tilt image", DBG_IMG_DIR);
 	dstImg = invSrcImg;
-	stretch_luminance(dstImg, maskForDLChg, invBlacknessTiltImg);
+	stretch_and_invert_luminance(dstImg, maskForDLChg, invBlacknessTiltImg);
 
 	return true;
 }
@@ -281,7 +243,7 @@ void ImgFunc_shdc02::plotSamples(
 {
 	const cv::Vec3b RED{ C_UCHAR(0), C_UCHAR(0), C_UCHAR(255) };
 
-	cv::Mat kernel = get_bin_kernel(srcImg.size());
+	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 	cout << "srcImgSz=" << srcImg.size() << ", kernelSz=" << kernel.size() << endl;
 
 	cv::Mat canvas;

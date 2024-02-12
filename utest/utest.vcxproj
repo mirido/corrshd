@@ -172,6 +172,7 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cvMatTest.cpp" />
     <ClCompile Include="fmtutil.cpp" />
     <ClCompile Include="numericTest.cpp" />
     <ClCompile Include="numericutilTest.cpp" />

@@ -2,7 +2,7 @@
 
 class ImgFuncBase : public IImgFunc
 {
-	unsigned long m_imgDumpCnt;
+	static unsigned long m_imgDumpCnt;		// Thread safety is ignored.
 
 public:
 	ImgFuncBase();
@@ -22,3 +22,5 @@ public:
 // [DBGSW] Directory to save intermediate images
 // TODO: Make it variable by command line arguments.
 #define DBG_IMG_DIR		"C:\\usr2\\debug\\"
+
+#include "bin_kernel.h"

@@ -156,8 +156,8 @@ void predict_image(const cv::Size& imgSz, const std::vector<double>& cflist, cv:
 	}
 }
 
-/// Stretch luminance.
-void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Mat& invBlacknessMap)
+/// Stretch and invert luminance.
+void stretch_and_invert_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Mat& invBlacknessMap)
 {
 	const int m = image.rows;
 	const int n = image.cols;
@@ -184,14 +184,41 @@ void stretch_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, const cv::Ma
 				//fLum = invBlackLumEnd;		// Test.
 				//fLum = 1.0;				// Test.
 				//fLum = 0.0;				// Test.
-				if (invBlackLumEnd > 0.0) {
+				if (invBlackLumEnd != 0.0) {
 					fLum = 255.0 * (1.0 - fLum / invBlackLumEnd);
 				}
 				else {
-					fLum = 255.0;
+					fLum = 0.0;
 				}
 			}
 
+			clip_as_lum255(fLum);
+			lum = static_cast<uchar>(fLum);
+		}
+	}
+}
+
+/// Stretch luminance.
+void stretch_luminance(cv::Mat& image, const cv::Mat& lumEndMap)
+{
+	const int m = image.rows;
+	const int n = image.cols;
+	if (!(lumEndMap.rows == m && lumEndMap.cols == n)) {
+		throw std::logic_error("*** ERR ***");
+	}
+
+	for (int y = 0; y < m; y++) {
+		for (int x = 0; x < n; x++) {
+			uchar& lum = image.at<uchar>(y, x);		// Alias
+			double fLum = static_cast<double>(lum);
+
+			const double lumEnd = C_DBL(lumEndMap.at<uchar>(y, x));
+			if (lumEnd != 0.0) {
+				fLum = (255.0 * fLum) / lumEnd;
+			}
+			else {
+				fLum = 255.0;
+			}
 			clip_as_lum255(fLum);
 			lum = static_cast<uchar>(fLum);
 		}

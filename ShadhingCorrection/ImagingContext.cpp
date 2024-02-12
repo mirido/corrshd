@@ -8,6 +8,11 @@
 #include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
 #include "ImgFunc_shdc02.h"
+#include "ImgFunc_whitening01.h"
+#include "ImgFunc_whitening02.h"
+#include "ImgFunc_uniform.h"
+#include "ImgFunc_shdc03.h"
+#include "ImgFunc_shdc04.h"
 
 // [CONF] クリック位置の距離の閾値
 // 既存ポイントとのマンハッタン距離が以下の値以下なら既存ポイントの選択とみなす。
@@ -38,6 +43,10 @@ ImagingContext::ImagingContext()
 {
 	append_imgfunc(new ImgFunc_shdc01, m_imgFuncDic, m_imgFuncNames);
 	append_imgfunc(new ImgFunc_shdc02, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening01, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening02, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc03, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc04, m_imgFuncDic, m_imgFuncNames);
 	if (!selectImagingAlgorithmByName(m_imgFuncNames.front())) {
 		// (Internal error.)
 		throw std::logic_error("*** ERR ***");
