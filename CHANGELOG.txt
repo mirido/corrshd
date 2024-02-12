@@ -6,15 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- New shading correction algorithm ImgFunc_shdc02 added.
+- Add image processing algorithms. (Total 6 types.)
+- Add hot keys to dinamically select above algorithms ('+', '-' or digit '1'..'6').
+- Made it possible to reproduce the correction condition with command line.
 - the unit test project "utest" added. (Powered by GoogleTest.)
 
 ### Changed
 - On the existing shading correction algorithm
    (currently named ImgFunc_shdc01), calcuration of binarization ROI
    improved.
-- The default shading correction algorithm has been changed to 
-  ImgFunc_shdc02.
 
 ### Fixed
 - Slightly modified README.md and remove unused .bat file.
