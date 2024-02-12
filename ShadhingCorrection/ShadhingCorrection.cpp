@@ -11,6 +11,7 @@
 #include "osal.h"
 #include "pathutil.h"
 #include "PhysicalSize.h"
+#include "PointWrp.h"
 
 #include "AppParam.h"
 
@@ -192,62 +193,39 @@ namespace
 
 namespace
 {
-	/// Setup imaging context for reproduce.
-	void setup_imaging_context_for_debug(ImagingContext& ctx)
+	/// Setup imaging context if specified by AppParam.
+	void setup_imaging_context(const AppParam& param, ImagingContext& ctx)
 	{
-#if 1
-		// IMG00090
-		//const int nImgRotAngle = -1;
-		//const std::vector<cv::Point> corners{
-		//	cv::Point(429, 3955),
-		//	cv::Point(2952, 4048),
-		//	cv::Point(2680, 425),
-		//	cv::Point(457, 721)
-		//};
-		// IMG00073
-		//const int nImgRotAngle = 1;
-		//const std::vector<cv::Point> corners{
-		//	cv::Point(2907, 275),
-		//	cv::Point(209, 262),
-		//	cv::Point(260, 4027),
-		//	cv::Point(2870, 4010)
-		//};
-		// IMG0105
-		const int nImgRotAngle = 3;
-		const std::vector<cv::Point> corners{
-			cv::Point(774, 3653),
-			cv::Point(2901, 3702),
-			cv::Point(2877, 580),
-			cv::Point(728, 629)
-		};
-		ctx.setState(nImgRotAngle, corners);
-#else
-		(void)(ctx);
-#endif
+		// Setup rotation angle and corner points.
+		if (!param.m_cornerPoints.empty()) {
+			ctx.setState(param.m_rotAngle, param.m_cornerPoints);
+		}
+
+		// Setup image processing algorithm.
+		if (!param.m_imgAlgorithm.empty()) {
+			if (!ctx.selectImagingAlgorithmByName(param.m_imgAlgorithm)) {
+				cerr << "ERROR: Unknown imaging algorithm. (\"" << param.m_imgAlgorithm << "\")" << endl;
+			}
+		}
 	}
 
-	/// Print corners as C++ program code for reproduce.
-	void dump_imaging_context_for_debug(const ImagingContext& ctx)
+	/// Sync imaging context.
+	void sync_imaging_context(const ImagingContext& ctx, AppParam& param)
 	{
-		const int nImgRotAngle = ctx.getImgRotAngle();
-		std::vector<cv::Point> corners = ctx.getClockwiseList();
+		param.m_rotAngle = ctx.getImgRotAngle();
+		param.m_cornerPoints = ctx.getClockwiseList();
+		param.m_imgAlgorithm = ctx.getCurImagingAlgorithmName();
+		param.update_outfile_path();
+	}
 
-		cout << "const int nImgRotAngle = " << nImgRotAngle << ";" << endl;
-		cout << "const std::vector<cv::Point> corners{" << endl;
-		const size_t sz = corners.size();
-		for (size_t i = 0; i < sz; i++) {
-			const cv::Point& pt = corners[i];		// Alias
-			cout << "\tcv::Point(" << pt.x << ", " << pt.y << ")";
-			if (i < sz - 1) {
-				cout << ",";
-			}
-			cout << endl;
-		}
-		cout << "};" << endl;
+	/// Print last AppSetting for reproduce.
+	void print_last_imaging_context(const AppParam& param)
+	{
+		cout << PROG_NAME << " " << param << endl;
 	}
 
 	/// Do shading correction.
-	bool do_shading_correction(const AppParam& param, ImagingContext& ctx)
+	bool do_shading_correction(AppParam& param, ImagingContext& ctx)
 	{
 		cv::Mat outputImg;
 
@@ -269,7 +247,8 @@ namespace
 				cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
 				return false;
 			}
-			dump_imaging_context_for_debug(ctx);
+			sync_imaging_context(ctx, param);
+			print_last_imaging_context(param);
 
 			// Print the size before and after conversion.
 			cv::Size appxROISize = get_approximate_size(corners);
@@ -331,15 +310,7 @@ int main(const int argc, char* argv[])
 	}
 
 	// Print specified arguments for check.
-	cout
-		<< "Speciied argument: \"" << param.m_imageFile << "\" "
-		<< param.m_ROISize.str() << " "
-		<< "-dpi=" << param.m_dpi << " "
-		<< "-outfile=\"" << param.m_outfile << "\"";
-	if (param.m_bCutoffOnly) {
-		cout << "-cutoffonly";
-	}
-	cout << endl;
+	cout << "Speciied argument: " << param << endl;
 	cout << "Output image size=" << param.m_outputImgSz << " (in pixel)" << endl;
 
 	// 画像読み込み
@@ -363,7 +334,8 @@ int main(const int argc, char* argv[])
 	cv::namedWindow(IMAGE_WND_NAME, cv::WINDOW_AUTOSIZE);
 	cv::setMouseCallback(IMAGE_WND_NAME, mouse_callback, (void*)&ctx);
 
-	setup_imaging_context_for_debug(ctx);	// For DEBUG.
+	setup_imaging_context(param, ctx);
+	sync_imaging_context(ctx, param);
 	refresh_input_image_disp(ctx, g_bShowAsSameMag);
 
 	int prevKeyIn = '\0';

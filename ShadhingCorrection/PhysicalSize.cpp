@@ -174,7 +174,7 @@ std::ostream& PhysicalSize::output(std::ostream& os) const
 std::string PhysicalSize::str() const
 {
 	std::ostringstream ost;
-	ost << *this;
+	output(ost);
 	return ost.str();
 }
 

@@ -176,6 +176,7 @@
     <ClCompile Include="pathutil.cpp" />
     <ClCompile Include="PhysicalSize.cpp" />
     <ClCompile Include="ShadhingCorrection.cpp" />
+    <ClCompile Include="PointWrp.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -205,6 +206,7 @@
     <ClInclude Include="pathutil.h" />
     <ClInclude Include="PhysicalSize.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="PointWrp.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
