@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "PhysicalSize.h"
 
+#include "../libnumeric/numericutil.h"
+
 namespace
 {
 	// Definition of standard paper sizes
@@ -129,7 +131,11 @@ double PhysicalSize::height() const
 std::istream& PhysicalSize::input(std::istream& is)
 {
 	std::string buf;
+
+	auto sv_f = is.flags();
+	is.setf(std::ios::skipws);
 	is >> buf;
+	is.flags(sv_f);
 
 	auto found_it = stdPaperSizeDic.find(buf);
 	if (found_it != stdPaperSizeDic.end()) {
@@ -150,7 +156,34 @@ std::istream& PhysicalSize::input(std::istream& is)
 	return is;
 }
 
+std::ostream& PhysicalSize::output(std::ostream& os) const
+{
+	// Return as standard paper size name whenever possible.
+	for (auto it = stdPaperSizeDic.begin(); it != stdPaperSizeDic.end(); it++) {
+		const cv::Size2d& s = it->second;		// Alias
+		if (can_equal(s.width, m_width) && s.height == m_height) {
+			os << it->first;
+			return os;
+		}
+	}
+
+	os << m_width << "x" << m_height;
+	return os;
+}
+
+std::string PhysicalSize::str() const
+{
+	std::ostringstream ost;
+	output(ost);
+	return ost.str();
+}
+
 std::istream& operator>>(std::istream& is, PhysicalSize& psize)
 {
 	return psize.input(is);
+}
+
+std::ostream& operator<<(std::ostream& os, const PhysicalSize& psize)
+{
+	return psize.output(os);
 }
