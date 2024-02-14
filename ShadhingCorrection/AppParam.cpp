@@ -1,22 +1,20 @@
 #include "stdafx.h"
 #include "PhysicalSize.h"
 #include "PointWrp.h"
+#include "DstImgSizeFunc.h"
 #include "AppParam.h"
 
 #include "pathutil.h"
-#include "PhysicalSize.h"
-
-// [CONF] Factor to convert 1 inch to mm
-const double mm_per_inch = 25.4;
 
 namespace
 {
-	/// Parse string as PhysicalSize.
-	bool parse_as_Size2d(const char* const str, PhysicalSize& psz)
+	/// Parse string as DstImgFunc.
+	bool parse_as_DstImgFunc(const char* const str, DstImgSizeFunc& dszfunc)
 	{
-		std::istringstream is(str);
-		is >> psz;
-		return !!is;
+		std::istringstream ist(str);
+		ist.setf(std::ios::skipws);
+		ist >> dszfunc;
+		return !!ist;
 	}
 
 	/// Parse string as std::vector<PointWrp>.
@@ -25,29 +23,29 @@ namespace
 		PointWrp pt;
 		char c;
 
-		std::istringstream is(str);
-		is.setf(std::ios::skipws);
+		std::istringstream ist(str);
+		ist.setf(std::ios::skipws);
 
 		ptls.clear();
 		for (int i = 0; i < 4; i++) {
-			is >> pt;
-			if (!is) {
+			ist >> pt;
+			if (!ist) {
 				return false;
 			}
 			ptls.push_back(pt);
 
 			if (i + 1 < 4) {
-				is >> c;
-				if (is.eof()) {
+				ist >> c;
+				if (ist.eof()) {
 					return true;
 				}
-				if (!is || c != ',') {
+				if (!ist || c != ',') {
 					return false;
 				}
 			}
 		}
 
-		return !!is;
+		return !!ist;
 	}
 
 	/// Stringization method.
@@ -66,8 +64,8 @@ namespace
 	/// Generate about message.
 	cv::String gen_about_msg()
 	{
-		std::ostringstream os;
-		os
+		std::ostringstream ost;
+		ost
 			<< PROG_NAME << " -- " << SUMMARY << endl
 			<< COPYRIGHT << endl
 			<< "Using OpenCV version: " << CV_VERSION << endl
@@ -76,7 +74,7 @@ namespace
 			<< "This program captures a specified input-image ROI (region of interest)" << endl
 			<< "and corrects for perspective distortion, uneven brightness, and line shading." << endl
 			<< "The correcting algorithm is particularly suitable to capturing hand-drawn line drawings." << endl;
-		return os.str().c_str();
+		return ost.str().c_str();
 	}
 
 	/// Print usage.
@@ -108,7 +106,7 @@ namespace
 	const cv::String keys =
 		"{ h ?              |       | print this message }"
 		"{ @image-file      |       | image file to be corrected }"
-		"{ @roi-size        | B5    | physical size of ROI }"
+		"{ @roi-size        | B5    | physical size of ROI (or magnification ratio of src image to dst image) }"
 		"{ dpi              | 96.0  | output resolution in dot per inch }"
 		"{ outfile          |       | output image file name }"
 		"{ cutoffonly       |       | do nothing other than perspective correction }"
@@ -120,7 +118,7 @@ namespace
 }	// namespace
 
 AppParam::AppParam()
-	: m_dpi(0.0), m_bCutoffOnly(false), m_rotAngle(0)
+	: m_bCutoffOnly(false), m_rotAngle(0)
 {
 	/*pass*/
 }
@@ -146,7 +144,13 @@ int AppParam::parse(int argc, char* argv[]) {
 	// (ROI size)
 	const cv::String ROISizeStr = parser.get<cv::String>("@roi-size");
 	// -dpi=<x>
-	m_dpi = parser.get<double>("dpi");
+	const double dpi = parser.get<double>("dpi");
+	if (!parser.check() || dpi <= 0.0) {
+		if (parser.check()) {
+			cerr << "ERROR: Illegal dpi value. (-dpi=\"" << parser.get<cv::String>("dpi") << "\")" << endl;
+		}
+		return -1;
+	}
 	// -outfile=<output-file>
 	m_outfileOrg.clear();
 	if (parser.has("outfile")) {
@@ -188,19 +192,11 @@ int AppParam::parse(int argc, char* argv[]) {
 	}
 
 	// Parse step 2: Do detailed conversion.
-	if (m_dpi <= 0.0) {
-		cerr << "ERROR: Illegal dpi value. (-dpi=" << m_dpi << ")" << endl;
+	m_dstImgSizeFunc.setDpi(dpi);
+	if (!parse_as_DstImgFunc(ROISizeStr.c_str(), m_dstImgSizeFunc)) {
+		cerr << "ERROR: Illegal image size specification. (roi-size=" << ROISizeStr << ")" << endl;
 		return 1;
 	}
-	PhysicalSize psz;
-	if (!parse_as_Size2d(ROISizeStr.c_str(), psz)) {
-		cerr << "ERROR: Illegal ROI size. (roi-size=" << ROISizeStr << ")" << endl;
-		return 1;
-	}
-	const int widthInPx = (int)std::round((m_dpi * psz.width()) / mm_per_inch);
-	const int heightInPx = (int)std::round((m_dpi * psz.height()) / mm_per_inch);
-	m_ROISize = psz;
-	m_outputImgSz = cv::Size(widthInPx, heightInPx);
 
 	// Parser step 3: Update outfile path.
 	update_outfile_path();
@@ -239,10 +235,7 @@ void AppParam::update_outfile_path()
 
 std::istream& AppParam::input(std::istream& is)
 {
-
-
-
-
+	// TODO: Create.
 	return is;
 }
 
@@ -250,9 +243,11 @@ std::ostream& AppParam::output(std::ostream& os) const
 {
 	os << "\"" << m_imageFile << "\"";
 	os << " ";
-	os << m_ROISize.str();
-	os << " ";
-	os << "-dpi=" << m_dpi;
+	os << m_dstImgSizeFunc;
+	if (!m_dstImgSizeFunc.isMagnificationMode()) {
+		os << " ";
+		os << "-dpi=" << m_dstImgSizeFunc.getDpi();
+	}
 	if (!m_outfileOrg.empty()) {
 		os << " ";
 		os << "-outfile=\"" << m_outfile << "\"";
