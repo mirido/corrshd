@@ -13,6 +13,7 @@
 #include "PhysicalSize.h"
 #include "PointWrp.h"
 
+#include "DstImgSizeFunc.h"
 #include "AppParam.h"
 
 // Program name (Automatically acquired from argv[0].)
@@ -224,65 +225,57 @@ namespace
 		cout << PROG_NAME << " " << param << endl;
 	}
 
-	/// Do shading correction.
+	/// Do shading correction. (or cutoff only)
 	bool do_shading_correction(AppParam& param, ImagingContext& ctx)
 	{
 		cv::Mat outputImg;
 
-		// 頂点自動登録
-		// デバッグ時のiteration効率を上げるため、頂点が全く未設定の場合は
-		// 画像の4隅を自動的に設定する。
-		if (ctx.isPointListEmpty()) {
-			cv::Mat& canvas = ctx.refCanvas();		// Alias
-			ctx.addOrMovePoint(0, 0);
-			ctx.addOrMovePoint(canvas.cols - 1, 0);
-			ctx.addOrMovePoint(canvas.cols - 1, canvas.rows - 1);
-			ctx.addOrMovePoint(0, canvas.rows - 1);
+		// Check that 4 corners are specified.
+		const std::vector<cv::Point> corners = ctx.getClockwiseList();
+		if (!corners.empty() && corners.size() != 4) {
+			cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
+			return false;
 		}
-		// シェーディング補正 (or cutoff only)
-		{
-			// Check that 4 corners are specified.
-			const std::vector<cv::Point> corners = ctx.getClockwiseList();
-			if (corners.size() != 4) {
-				cout << "ERROR: Correction cannot be started because the number of corners is insufficient." << endl;
-				return false;
-			}
-			sync_imaging_context(ctx, param);
-			print_last_imaging_context(param);
+		sync_imaging_context(ctx, param);
+		print_last_imaging_context(param);
 
-			// Print the size before and after conversion.
-			cv::Size appxROISize = get_approximate_size(corners);
-			if (!(appxROISize.width > 0 && appxROISize.height > 0)) {
-				cout << "ERROR: Illegal corner selection. (width=" << appxROISize.width << ", height=" << appxROISize.height << ")" << endl;
-				return false;
-			}
-			cout << "Convert about " << appxROISize << " image to " << param.m_outputImgSz << " image. (in pixel)" << endl;
-			cout << "horizontal ratio=" << (100.0 * (double)param.m_outputImgSz.width) / (double)appxROISize.width << "%" << endl;
-			cout << "  vertical ratio=" << (100.0 * (double)param.m_outputImgSz.height) / (double)appxROISize.height << "%" << endl;
+		// Print the size before and after conversion.
+		const cv::Size appxROISize = (corners.empty()) ? ctx.refSrcImage()->size() : get_approximate_size(corners);
+		if (!(appxROISize.width > 0 && appxROISize.height > 0)) {
+			cout << "ERROR: Illegal corner selection. (width=" << appxROISize.width << ", height=" << appxROISize.height << ")" << endl;
+			return false;
+		}
+		const DstImgSizeFunc& dszfunc = param.m_dstImgSizeFunc;		// Alias
+		cv::Size outputImgSz;
+		if (!dszfunc.getDstImgSize(ctx.refSrcImage()->size(), outputImgSz)) {
+			throw std::logic_error("*** ERR ***");
+		}
+		cout << "Convert about " << appxROISize << " image to " << outputImgSz << " image. (in pixel)" << endl;
+		cout << "horizontal ratio=" << (100.0 * (double)outputImgSz.width) / (double)appxROISize.width << "%" << endl;
+		cout << "  vertical ratio=" << (100.0 * (double)outputImgSz.height) / (double)appxROISize.height << "%" << endl;
 
-			// Do correction.
-			bool bSuc;
-			const char* caption;
-			if (param.m_bCutoffOnly) {
-				bSuc = ctx.correctDistortion(param.m_outputImgSz, outputImg);
-				caption = "Distortion correction";
-			}
-			else {
-				bSuc = ctx.doShadingCorrection(param.m_outputImgSz, outputImg);
-				caption = " Shading correction";
-			}
-			if (bSuc) {
-				cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
-				show_output_image(outputImg);
+		// Do correction.
+		bool bSuc;
+		const char* caption;
+		if (param.m_bCutoffOnly) {
+			bSuc = ctx.correctDistortion(outputImgSz, outputImg);
+			caption = "Distortion correction";
+		}
+		else {
+			bSuc = ctx.doShadingCorrection(outputImgSz, outputImg);
+			caption = " Shading correction";
+		}
+		if (bSuc) {
+			cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
+			show_output_image(outputImg);
 
-				// 結果画像保存
-				if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
-					cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
-				}
+			// 結果画像保存
+			if (!cv::imwrite(static_cast<cv::String>(param.m_outfile), outputImg)) {
+				cout << "ERROR: cv::imwrite() failed. (file name=\"" << param.m_outfile << "\")" << endl;
 			}
-			else {
-				cout << "Info: " << caption << " failed." << endl;
-			}
+		}
+		else {
+			cout << "Info: " << caption << " failed." << endl;
 		}
 
 		return true;
@@ -311,7 +304,6 @@ int main(const int argc, char* argv[])
 
 	// Print specified arguments for check.
 	cout << "Speciied argument: " << param << endl;
-	cout << "Output image size=" << param.m_outputImgSz << " (in pixel)" << endl;
 
 	// 画像読み込み
 	cv::Ptr<cv::Mat> pSrcImage(new cv::Mat());
@@ -319,6 +311,16 @@ int main(const int argc, char* argv[])
 	if (pSrcImage->data == NULL) {
 		cout << "ERROR: cv::imread() failed. (file name=\"" << param.m_imageFile << "\")" << endl;
 		return 1;
+	}
+
+	{
+		const DstImgSizeFunc& dszfunc = param.m_dstImgSizeFunc;		// Alias
+		cv::Size outputImgSz;
+		if (!dszfunc.getDstImgSize(pSrcImage->size(), outputImgSz)) {
+			cout << "ERROR: DstImgSizeFunc::getDstImgSize() failed. (" << dszfunc << " -dpi=" << dszfunc.getDpi() << ")" << endl;
+			return false;
+		}
+		cout << "Output image size=" << outputImgSz << " (in pixel)" << endl;
 	}
 
 	// 画像操作準備

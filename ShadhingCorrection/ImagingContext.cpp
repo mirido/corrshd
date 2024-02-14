@@ -302,6 +302,12 @@ bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
 		return false;
 	}
 
+	// If no corner point specified, do resize only.
+	if (m_clickedPointList.empty()) {
+		cv::resize(grayImage, dstImg, dstSz);
+		return true;
+	}
+
 	// 既存座標(歪んだROIの4頂点)を時計回りの順でリスト化
 	const std::vector<cv::Point> srcROICorners = m_clickedPointList.getClockwiseLlist();
 	if (srcROICorners.size() != nptsExp) {

@@ -168,6 +168,7 @@
     <ClCompile Include="AppParam.cpp" />
     <ClCompile Include="bin_kernel.cpp" />
     <ClCompile Include="ClickedPointList.cpp" />
+    <ClCompile Include="DstImgSizeFunc.cpp" />
     <ClCompile Include="ImagingCanvas.cpp" />
     <ClCompile Include="ImagingContext.cpp" />
     <ClCompile Include="ImgFuncBase.cpp" />
@@ -206,6 +207,7 @@
     <ClInclude Include="bin_kernel.h" />
     <ClInclude Include="ClickedPointList.h" />
     <ClInclude Include="cv_keycode.h" />
+    <ClInclude Include="DstImgSizeFunc.h" />
     <ClInclude Include="ImagingCanvas.h" />
     <ClInclude Include="ImagingContext.h" />
     <ClInclude Include="IImgFunc.h" />

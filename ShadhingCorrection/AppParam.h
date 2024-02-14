@@ -15,15 +15,13 @@ extern std::string OPENCV_URL;
 struct AppParam
 {
 	std::string m_imageFile;		// Input image file path
-	PhysicalSize m_ROISize;			// ROI physical size in mm (or standart paper size name)
-	double m_dpi;					// Resolution in dpi
+	DstImgSizeFunc m_dstImgSizeFunc;	// The function to determine destination image size.
+
 private:
 	std::string m_outfileOrg;		// Specified output image file or file path
 public:
 	std::string m_outfile;			// Output image file path
 	bool m_bCutoffOnly;				// Cut off only or not flag
-
-	cv::Size m_outputImgSz;			// Output image size (calculated based on m_ROISize and m_dpi)
 
 	int m_rotAngle;					// Rotation angle of image.
 	std::vector<cv::Point> m_cornerPoints;	// Corner point list of ROI.
