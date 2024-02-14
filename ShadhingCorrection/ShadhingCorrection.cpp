@@ -317,10 +317,13 @@ int main(const int argc, char* argv[])
 		const DstImgSizeFunc& dszfunc = param.m_dstImgSizeFunc;		// Alias
 		cv::Size outputImgSz;
 		if (!dszfunc.getDstImgSize(pSrcImage->size(), outputImgSz)) {
-			cout << "ERROR: DstImgSizeFunc::getDstImgSize() failed. (" << dszfunc << " -dpi=" << dszfunc.getDpi() << ")" << endl;
-			return false;
+			throw std::logic_error("*** ERR ***");
 		}
 		cout << "Output image size=" << outputImgSz << " (in pixel)" << endl;
+		if (outputImgSz.width <= 0 || outputImgSz.height <= 0) {
+			cerr << "ERROR: Illegal output image size." << endl;
+			return 1;
+		}
 	}
 
 	// 画像操作準備
