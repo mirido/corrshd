@@ -38,31 +38,31 @@ namespace
 
 		width = height = 0.0;
 
-		std::istringstream is(size_str);
-		is.setf(std::ios::skipws);
+		std::istringstream ist(size_str);
+		ist.setf(std::ios::skipws);
 
 		// Read width from str_size
-		is >> tmp;
-		if (!is) {
+		ist >> tmp;
+		if (!ist) {
 			return false;
 		}
 		width = tmp;
 
 		// Skip 'x' in size_str
-		is >> c;
+		ist >> c;
 		if (c != 'x') {
 			return false;
 		}
 
 		// Read height from size_str
-		is >> tmp;
-		if (!is) {
+		ist >> tmp;
+		if (!ist) {
 			return false;
 		}
 		height = tmp;
 
 		// Check tail of size_str
-		if (!is.eof()) {
+		if (!ist.eof()) {
 			return false;
 		}
 

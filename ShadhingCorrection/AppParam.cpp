@@ -11,10 +11,10 @@ namespace
 	/// Parse string as DstImgFunc.
 	bool parse_as_DstImgFunc(const char* const str, DstImgSizeFunc& dszfunc)
 	{
-		std::istringstream is(str);
-		is.setf(std::ios::skipws);
-		is >> dszfunc;
-		return !!is;
+		std::istringstream ist(str);
+		ist.setf(std::ios::skipws);
+		ist >> dszfunc;
+		return !!ist;
 	}
 
 	/// Parse string as std::vector<PointWrp>.
@@ -23,29 +23,29 @@ namespace
 		PointWrp pt;
 		char c;
 
-		std::istringstream is(str);
-		is.setf(std::ios::skipws);
+		std::istringstream ist(str);
+		ist.setf(std::ios::skipws);
 
 		ptls.clear();
 		for (int i = 0; i < 4; i++) {
-			is >> pt;
-			if (!is) {
+			ist >> pt;
+			if (!ist) {
 				return false;
 			}
 			ptls.push_back(pt);
 
 			if (i + 1 < 4) {
-				is >> c;
-				if (is.eof()) {
+				ist >> c;
+				if (ist.eof()) {
 					return true;
 				}
-				if (!is || c != ',') {
+				if (!ist || c != ',') {
 					return false;
 				}
 			}
 		}
 
-		return !!is;
+		return !!ist;
 	}
 
 	/// Stringization method.
@@ -64,8 +64,8 @@ namespace
 	/// Generate about message.
 	cv::String gen_about_msg()
 	{
-		std::ostringstream os;
-		os
+		std::ostringstream ost;
+		ost
 			<< PROG_NAME << " -- " << SUMMARY << endl
 			<< COPYRIGHT << endl
 			<< "Using OpenCV version: " << CV_VERSION << endl
@@ -74,7 +74,7 @@ namespace
 			<< "This program captures a specified input-image ROI (region of interest)" << endl
 			<< "and corrects for perspective distortion, uneven brightness, and line shading." << endl
 			<< "The correcting algorithm is particularly suitable to capturing hand-drawn line drawings." << endl;
-		return os.str().c_str();
+		return ost.str().c_str();
 	}
 
 	/// Print usage.

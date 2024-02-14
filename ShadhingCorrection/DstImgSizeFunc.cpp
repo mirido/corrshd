@@ -12,21 +12,21 @@ namespace
 	{
 		char c;
 
-		std::istringstream is(str);
-		is >> c;
-		if (!is || c != 'x') {
+		std::istringstream ist(str);
+		ist >> c;
+		if (!ist || c != 'x') {
 			return false;
 		}
-		is >> mag;
-		return !!is;
+		ist >> mag;
+		return !!ist;
 	}
 
 	/// Parse string as PhysicalSize.
 	bool parse_as_Size2d(const char* const str, PhysicalSize& psz)
 	{
-		std::istringstream is(str);
-		is >> psz;
-		return !!is;
+		std::istringstream ist(str);
+		ist >> psz;
+		return !!ist;
 	}
 
 }	// namespace

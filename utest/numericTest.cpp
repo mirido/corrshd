@@ -155,17 +155,17 @@ namespace
 	// Return a string like "B'0.1{4}".
 	std::string val_str(const char* const frac, const int n)
 	{
-		std::ostringstream os;
-		os << "B'" << frac << "{" << std::noshowpos << n << "}";
-		return os.str();
+		std::ostringstream ost;
+		ost << "B'" << frac << "{" << std::noshowpos << n << "}";
+		return ost.str();
 	}
 
 	// Return a string like "2^(-53)".
 	std::string iv2_str(const int n)
 	{
-		std::ostringstream os;
-		os << "2^(" << std::noshowpos << n << ")";
-		return os.str();
+		std::ostringstream ost;
+		ost << "2^(" << std::noshowpos << n << ")";
+		return ost.str();
 	}
 
 	void print_result(const char* const frac, const int digits, const int expn_to_add, const double x, const double y)
