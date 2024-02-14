@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add hot keys to dinamically select above algorithms ('+', '-' or digit '1'..'6').
 - Made it possible to reproduce the correction condition with command line.
 - the unit test project "utest" added. (Powered by GoogleTest.)
+- Add magnification mode to specify output image size relatively.
 
 ### Changed
 - On the existing shading correction algorithm
