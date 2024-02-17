@@ -148,8 +148,9 @@ void ImagingCanvas::cleanup()
 
 	// Erase text.
 	if (!is_empty_rect(dirtyRect2)) {
-		cv::Mat ROISrc = cv::Mat(m_canvasMaster, dirtyRect2);
-		cv::Mat ROIDst = cv::Mat(m_canvas, dirtyRect2);
+		const auto dirtyRect3 = clip_rect_into_image(dirtyRect2, m_canvasMaster.cols, m_canvasMaster.rows);
+		cv::Mat ROISrc = cv::Mat(m_canvasMaster, dirtyRect3);
+		cv::Mat ROIDst = cv::Mat(m_canvas, dirtyRect3);
 		//cv::rectangle(ROISrc, cv::Point(0, 0), cv::Point(ROISrc.cols - 1, ROISrc.rows - 1), cv::Scalar(255, 0, 0), 5);		// DEBUG
 		ROISrc.copyTo(ROIDst);
 	}
