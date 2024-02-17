@@ -3,9 +3,9 @@
 #include "../libimaging/imaging_op.h"
 #include "ImagingCanvas.h"
 #include "IImgFunc.h"
+#include "ImgFuncBase.h"
 #include "ImagingContext.h"
 
-#include "ImgFuncBase.h"
 #include "ImgFunc_shdc01.h"
 #include "ImgFunc_shdc02.h"
 #include "ImgFunc_whitening01.h"
@@ -39,17 +39,23 @@ namespace
 }	// namespace
 
 ImagingContext::ImagingContext()
-	: m_nImgRotAngle(0)
 {
-	append_imgfunc(new ImgFunc_shdc01, m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc02, m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_whitening01, m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_whitening02, m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc03, m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc04, m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc01(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc02(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening01(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening02(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc03(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc04(m_param), m_imgFuncDic, m_imgFuncNames);
 	if (!selectImagingAlgorithmByName(m_imgFuncNames.front())) {
 		// (Internal error.)
 		throw std::logic_error("*** ERR ***");
+	}
+}
+
+void ImagingContext::cleanup()
+{
+	if (m_pImgFunc != NULL) {
+		m_pImgFunc->cleanup();
 	}
 }
 
@@ -344,7 +350,7 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 		return false;
 	}
 	assert(gray1.channels() == 1);	// 結果はグレースケール画像
-	m_pImgFunc->dumpImg(gray1, "counter_warped_image", DBG_IMG_DIR);
+	m_pImgFunc->dumpImg(gray1, "counter_warped_image");
 
 	// Image processing after perspective correction
 	return m_pImgFunc->run(gray1, dstImg);

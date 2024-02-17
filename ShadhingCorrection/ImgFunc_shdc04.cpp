@@ -9,7 +9,10 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_shdc04::ImgFunc_shdc04()
+ImgFunc_shdc04::ImgFunc_shdc04(Param& param)
+	: ImgFuncBase(param),
+	m_imgFunc_Whiteing(param),
+	m_imgFunc_uniform(param)
 {
 	m_imgFunc_Whiteing.needMaskToKeepDrawLine(true);
 	m_imgFunc_Whiteing.doFinalInversion(false);
@@ -32,22 +35,22 @@ bool ImgFunc_shdc04::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	m_imgFunc_Whiteing.run(srcImg, invWhitenedImage);
 
 	const cv::Mat& maskToKeepDrawLine = m_imgFunc_Whiteing.getMaskToKeepDrawLine();
-	dumpImg(maskToKeepDrawLine, "mask to keep draw line", DBG_IMG_DIR);
+	dumpImg(maskToKeepDrawLine, "mask to keep draw line");
 
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 
 	// Make dilated image dl1 and d2.
 	cv::Mat dl1;
 	cv::dilate(maskToKeepDrawLine, dl1, kernel);
-	dumpImg(dl1, "Dilated image dl1", DBG_IMG_DIR);
+	dumpImg(dl1, "Dilated image dl1");
 	cv::Mat dl2;
 	cv::dilate(dl1, dl2, kernel);
-	dumpImg(dl2, "Dilated image dl2", DBG_IMG_DIR);
+	dumpImg(dl2, "Dilated image dl2");
 
 	// Make fringe mask fr2.
 	// We can assume that fr2 does not contain any drawing lines.
 	cv::Mat fr2 = dl2 - dl1;
-	dumpImg(fr2, "Fringe mask fr2", DBG_IMG_DIR);
+	dumpImg(fr2, "Fringe mask fr2");
 
 	// Get background level with fr2.
 	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size());
@@ -70,7 +73,7 @@ bool ImgFunc_shdc04::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	// Clean up background.
 	cv::bitwise_and(invWhitenedImage, dl2, invWhitenedImage);
-	dumpImg(invWhitenedImage, "cleanup image", DBG_IMG_DIR);
+	dumpImg(invWhitenedImage, "cleanup image");
 
 	// Uniform.
 	cv::Mat invUniformedImage;

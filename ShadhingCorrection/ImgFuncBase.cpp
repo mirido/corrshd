@@ -7,32 +7,50 @@
 // [CONF] Default image file extension.
 #define DEFAULT_IMG_EXT		".bmp"
 
-//
-//	For DEBUG
-//
+// [CONF] Stride between windows.
+#define STRIDE_WND_X		(1920 / 20)
+#define STRIDE_WND_Y		20
 
-unsigned long ImgFuncBase::m_imgDumpCnt = C_ULONG(0);
+// [CONF] Default directory to save intermediate images
+#define DBG_IMG_DIR		"C:\\usr2\\debug\\"
 
-ImgFuncBase::ImgFuncBase()
+ImgFuncBase::Param::Param()
+	: m_pbDump(new bool(false)),
+	m_pImgCnt(new unsigned long(0)),
+	m_pDbgImgDir(new std::string(DBG_IMG_DIR)),
+	m_pWndNameList(new std::vector<std::string>),
+	m_pImgFileList(new std::vector<std::string>)
 {
 	/*pass*/
 }
 
+ImgFuncBase::ImgFuncBase(Param& param)
+	: m_param(param)
+{
+	/*pass*/
+}
+
+//
+//	For DEBUG
+//
+
 /// Reset image dump count.
 void ImgFuncBase::resetImgDumpCnt()
 {
-	m_imgDumpCnt = C_ULONG(0);
+	*m_param.m_pImgCnt = C_ULONG(0);
+	cleanup();
 }
 
 /// Dump intermediate image. (For DEBUG.)
-void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const char* const dstDir)
+void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption)
 {
-#ifdef NDEBUG
-	(void)(image, caption, dstDir);
-#else
-	m_imgDumpCnt++;
+	if (!*m_param.m_pbDump) {
+		return;
+	}
 
-	cv::String numStr = std::to_string(m_imgDumpCnt);
+	(*m_param.m_pImgCnt)++;
+
+	cv::String numStr = std::to_string(*m_param.m_pImgCnt);
 	if (numStr.length() < 2) {
 		numStr = cv::String("0") + numStr;
 	}
@@ -40,8 +58,13 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 	// Display the image on the screen.
 	cv::String cap = numStr + cv::String("_") + caption;
 	cv::imshow(cap, image);
+	const int wnd_x = (*m_param.m_pImgCnt) * STRIDE_WND_X;
+	const int wnd_y = (*m_param.m_pImgCnt) * STRIDE_WND_Y;
+	cv::moveWindow(cap, wnd_x, wnd_y);
+	m_param.m_pWndNameList->push_back(cap);
 
 	// Save image to specified directory.
+	const char* const dstDir = m_param.m_pDbgImgDir->c_str();
 	if (dstDir != NULL) {
 		// Make directory path string.
 		cv::String dir(dstDir);
@@ -70,7 +93,26 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption, const
 		}
 
 		// Save image.
-		cv::imwrite(dir + filename, image);
+		const std::string fpath = dir + filename;
+		cv::imwrite(fpath, image);
+		m_param.m_pImgFileList->push_back(fpath);
 	}
-#endif
+}
+
+/// Clean up intermediage image.
+void ImgFuncBase::cleanup()
+{
+	// Destroy intermediate image windows.
+	auto pWndNameList = m_param.m_pWndNameList;		// Alias
+	for (auto it = pWndNameList->begin(); it != pWndNameList->end(); it++) {
+		cv::destroyWindow(*it);
+	}
+	pWndNameList->clear();
+
+	// Delete intermediate image files.
+	auto pImgFileList = m_param.m_pImgFileList;		// Alias
+	for (auto it = pImgFileList->begin(); it != pImgFileList->end(); it++) {
+		std::remove(it->c_str());
+	}
+	pImgFileList->clear();
 }

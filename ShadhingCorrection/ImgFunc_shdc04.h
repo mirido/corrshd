@@ -6,7 +6,7 @@ class ImgFunc_shdc04 : public ImgFuncBase
 	ImgFunc_uniform m_imgFunc_uniform;
 
 public:
-	ImgFunc_shdc04();
+	ImgFunc_shdc04(Param& param);
 
 	const char* getName() const;
 	const char* getSummary() const;

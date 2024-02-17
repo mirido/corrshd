@@ -4,6 +4,7 @@
 #include "ImagingCanvas.h"
 
 #include "IImgFunc.h"
+#include "ImgFuncBase.h"
 #include "ImagingContext.h"
 
 #include "cv_keycode.h"
@@ -219,7 +220,7 @@ namespace
 		param.update_outfile_path();
 	}
 
-	/// Print last AppSetting for reproduce.
+	/// Print last AppParam for reproduce.
 	void print_last_imaging_context(const AppParam& param)
 	{
 		cout << PROG_NAME << " " << param << endl;
@@ -329,6 +330,12 @@ int main(const int argc, char* argv[])
 	// 画像操作準備
 	ImagingContext ctx;
 	ctx.setSrcImage(pSrcImage);
+
+	// Select dump or not intermediate image.
+	// TODO: Make it variable with AppParam.
+#ifndef NDEBUG
+	(*ctx.m_param.m_pbDump) = true;
+#endif
 
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
@@ -489,6 +496,8 @@ int main(const int argc, char* argv[])
 		// 画像表示更新
 		refresh_input_image_disp(ctx, g_bShowAsSameMag);
 	}
+
+	ctx.cleanup();
 
 	return 0;
 }

@@ -22,6 +22,9 @@ public:
 	virtual void resetImgDumpCnt() = 0;
 
 	/// Dump intermediate image.
-	virtual void dumpImg(const cv::Mat& image, const char* const caption, const char* const dstDir) = 0;
+	virtual void dumpImg(const cv::Mat& image, const char* const caption) = 0;
+
+	/// Clean up intermediage image.
+	virtual void cleanup() = 0;
 
 };

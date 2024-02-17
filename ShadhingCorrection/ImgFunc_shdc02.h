@@ -3,6 +3,8 @@
 class ImgFunc_shdc02 : public ImgFuncBase
 {
 public:
+	ImgFunc_shdc02(Param& param);
+
 	const char* getName() const;
 	const char* getSummary() const;
 
@@ -33,15 +35,13 @@ private:
 	void dumpAppxImg(
 		const cv::Mat srcImg,
 		const std::vector<double>& cflist,
-		const char* const caption,
-		const char* const dstDir
+		const char* const caption
 	);
 
 	/// Plot sample points. (For DEBUG.)
 	void plotSamples(
 		const cv::Mat_<uchar>& srcImg,
 		const std::vector<LumSample>& samples,
-		const char* const caption,
-		const char* const dstDir
+		const char* const caption
 	);
 };
