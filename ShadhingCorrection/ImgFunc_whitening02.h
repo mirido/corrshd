@@ -8,6 +8,8 @@ class ImgFunc_whitening02
 	: public ImgFuncWithSampling, public WithFinalInversion, public WithMaskToKeepDrawLine
 {
 public:
+	ImgFunc_whitening02(Param& param);
+
 	const char* getName() const;
 	const char* getSummary() const;
 

@@ -5,6 +5,8 @@
 class ImgFuncWithSampling : public ImgFuncBase
 {
 public:
+	ImgFuncWithSampling(Param& param);
+
 	//
 	//	For DEBUG
 	//
@@ -13,16 +15,14 @@ public:
 	void dumpAppxImg(
 		const cv::Mat srcImg,
 		const std::vector<double>& cflist,
-		const char* const caption,
-		const char* const dstDir
+		const char* const caption
 	);
 
 	/// Plot sample points. (For DEBUG.)
 	void plotSamples(
 		const cv::Mat_<uchar>& srcImg,
 		const std::vector<LumSample>& samples,
-		const char* const caption,
-		const char* const dstDir
+		const char* const caption
 	);
 
 };

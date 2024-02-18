@@ -13,7 +13,13 @@ class ImagingContext
 	std::map<std::string, std::shared_ptr<IImgFunc> > m_imgFuncDic;
 
 public:
+	// For intermediate image dump.
+	ImgFuncBase::Param m_param;
+
+public:
 	ImagingContext();
+
+	void cleanup();
 
 	/// ƒ\[ƒX‰æ‘œİ’è
 	void setSrcImage(cv::Ptr<cv::Mat> pSrcImage);

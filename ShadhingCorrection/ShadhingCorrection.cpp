@@ -4,6 +4,7 @@
 #include "ImagingCanvas.h"
 
 #include "IImgFunc.h"
+#include "ImgFuncBase.h"
 #include "ImagingContext.h"
 
 #include "cv_keycode.h"
@@ -216,10 +217,10 @@ namespace
 		param.m_rotAngle = ctx.getImgRotAngle();
 		param.m_cornerPoints = ctx.getClockwiseList();
 		param.m_imgAlgorithm = ctx.getCurImagingAlgorithmName();
-		param.update_outfile_path();
+		param.updateOutfilePath();
 	}
 
-	/// Print last AppSetting for reproduce.
+	/// Print last AppParam for reproduce.
 	void print_last_imaging_context(const AppParam& param)
 	{
 		cout << PROG_NAME << " " << param << endl;
@@ -292,10 +293,19 @@ int main(const int argc, char* argv[])
 
 	// Parse commandline arguments.
 	AppParam param;
-	const int parseResult = param.parse(argc, argv);
+	int parseResult = param.parse(argc, argv);
 	if (parseResult < 0) {
 		// (Usage printed.)
-		return 0;
+		if (argc < 2) {
+			// (No arguments)
+			// Execute setting dialogue.
+			if (param.inputDialogue(cout, cin)) {
+				parseResult = 0;
+			}
+		}
+		else {
+			return 0;
+		}
 	}
 	if (parseResult != 0) {
 		// (Error occured.)
@@ -329,6 +339,10 @@ int main(const int argc, char* argv[])
 	// 画像操作準備
 	ImagingContext ctx;
 	ctx.setSrcImage(pSrcImage);
+
+	// Select dump or not intermediate image.
+	*ctx.m_param.m_pbDump = param.m_bDumpItmImg;
+	*ctx.m_param.m_pDbgImgDir = param.m_dbgImgDir;
 
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)
@@ -489,6 +503,8 @@ int main(const int argc, char* argv[])
 		// 画像表示更新
 		refresh_input_image_disp(ctx, g_bShowAsSameMag);
 	}
+
+	ctx.cleanup();
 
 	return 0;
 }

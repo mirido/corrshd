@@ -6,6 +6,12 @@
 
 #include "../libimaging/shdcutil.h"
 
+ImgFunc_whitening02::ImgFunc_whitening02(Param& param)
+	: ImgFuncWithSampling(param)
+{
+	/*pass*/
+}
+
 const char* ImgFunc_whitening02::getName() const
 {
 	return "whitening02";
@@ -21,7 +27,7 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Prepare source image for sampling.
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 5);
-	dumpImg(median3x3, "median3x3", DBG_IMG_DIR);
+	dumpImg(median3x3, "median3x3");
 
 	// Prepare kernel for morphological operation.
 	const cv::Mat kernel = get_bin_kernel(median3x3.size());
@@ -32,7 +38,7 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	auto samplesOnBg = sampleImage(morphoTmpImg);
 #ifndef NDEBUG
 	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
-	plotSamples(morphoTmpImg, samplesOnBg, "samples on background", DBG_IMG_DIR);
+	plotSamples(morphoTmpImg, samplesOnBg, "samples on background");
 #endif
 
 	// Approximate lighting tilt on background.
@@ -44,10 +50,10 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Whitening.
 	cv::Mat stdWhiteImg;
 	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
-	dumpImg(stdWhiteImg, "standard white image", DBG_IMG_DIR);
+	dumpImg(stdWhiteImg, "standard white image");
 	// Following subtraction is achieved as saturation operation.
 	dstImg = stdWhiteImg - srcImg;
-	dumpImg(dstImg, "shading corrected image", DBG_IMG_DIR);
+	dumpImg(dstImg, "shading corrected image");
 
 	morphoTmpImg.release();
 	stdWhiteImg.release();

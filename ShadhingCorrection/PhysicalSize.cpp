@@ -118,6 +118,11 @@ PhysicalSize::PhysicalSize()
 	/*pass*/
 }
 
+bool PhysicalSize::empty() const
+{
+	return (m_width <= 0 || m_height <= 0);
+}
+
 double PhysicalSize::width() const
 {
 	return m_width;

@@ -37,6 +37,16 @@ DstImgSizeFunc::DstImgSizeFunc()
 	/*pass*/
 }
 
+bool DstImgSizeFunc::empty() const
+{
+	if (m_bAsRelative) {
+		return (m_magFactor <= 0.0);
+	}
+	else {
+		return (m_ROISize.empty() || m_dpi <= 0.0);
+	}
+}
+
 void DstImgSizeFunc::setMagFactor(const double magFactor)
 {
 	m_bAsRelative = true;

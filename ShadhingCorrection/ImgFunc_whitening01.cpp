@@ -7,6 +7,12 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/imaging_op.h"
 
+ImgFunc_whitening01::ImgFunc_whitening01(Param& param)
+	: ImgFuncBase(param)
+{
+	/*pass*/
+}
+
 const char* ImgFunc_whitening01::getName() const
 {
 	return "whitening01";
@@ -29,7 +35,7 @@ bool ImgFunc_whitening01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// ’x‚¢
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());
 	cv::morphologyEx(srcImg, dstImg, cv::MORPH_BLACKHAT, kernel);
-	dumpImg(dstImg, "image_after_black_hat", DBG_IMG_DIR);
+	dumpImg(dstImg, "image_after_black_hat");
 
 	if (m_bNeedMaskToKeepDrawLine) {
 		makeMaskToKeepDrawLine(dstImg);

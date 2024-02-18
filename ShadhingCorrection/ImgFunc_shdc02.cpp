@@ -8,6 +8,12 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
+ImgFunc_shdc02::ImgFunc_shdc02(Param& param)
+	: ImgFuncBase(param)
+{
+	/*pass*/
+}
+
 const char* ImgFunc_shdc02::getName() const
 {
 	return "shdc02";
@@ -29,7 +35,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Prepare source image for sampling.
 	cv::Mat median3x3;
 	cv::medianBlur(srcImg, median3x3, 5);
-	dumpImg(median3x3, "median3x3", DBG_IMG_DIR);
+	dumpImg(median3x3, "median3x3");
 
 	// Prepare kernel for dirate or erode.
 	const cv::Mat kernel = get_bin_kernel(median3x3.size());
@@ -39,7 +45,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	auto samplesOnBg = sampleImage(morphoTmpImg);
 #ifndef NDEBUG
 	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
-	plotSamples(morphoTmpImg, samplesOnBg, "samples on background", DBG_IMG_DIR);
+	plotSamples(morphoTmpImg, samplesOnBg, "samples on background");
 #endif
 	morphoTmpImg.release();
 
@@ -53,7 +59,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat stdWhiteImg;
 	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
 	cv::Mat invSrcImg = stdWhiteImg - srcImg;
-	dumpImg(invSrcImg, "shading corrected image", DBG_IMG_DIR);
+	dumpImg(invSrcImg, "shading corrected image");
 	stdWhiteImg.release();
 
 	// Make mask for drawing line change.
@@ -77,7 +83,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	auto samplesOnDL = sampleDrawLine(morphoTmpImg, maskForDLChg, samplesOnBg.size());
 #ifndef NDEBUG
 	cout << "samplesOnDL: size=" << samplesOnDL.size() << endl;
-	plotSamples(morphoTmpImg, samplesOnDL, "samples on drawing line", DBG_IMG_DIR);
+	plotSamples(morphoTmpImg, samplesOnDL, "samples on drawing line");
 #endif
 	morphoTmpImg.release();
 
@@ -90,7 +96,7 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Enhance drawing line.
 	cv::Mat invBlacknessTiltImg;
 	predict_image(invSrcImg.size(), cflistOnDL, invBlacknessTiltImg);
-	dumpImg(invBlacknessTiltImg, "blackness tilt image", DBG_IMG_DIR);
+	dumpImg(invBlacknessTiltImg, "blackness tilt image");
 	dstImg = invSrcImg;
 	stretch_and_invert_luminance(dstImg, maskForDLChg, invBlacknessTiltImg);
 
@@ -109,7 +115,7 @@ double ImgFunc_shdc02::getTh1FromBluredBlackHatResult(
 	cv::Mat tmp;
 	const double th1 = cv::threshold(binROIImg, tmp, 0, 255, cv::THRESH_OTSU);
 	cout << "th1=" << th1 << endl;
-	dumpImg(tmp, "ROI_img_for_det_th1", DBG_IMG_DIR);
+	dumpImg(tmp, "ROI_img_for_det_th1");
 	tmp.release();		// 2値化結果は使わない
 
 #ifndef NDEBUG
@@ -149,7 +155,7 @@ bool ImgFunc_shdc02::makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask)
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
 	cv::Mat gray2;
 	cv::morphologyEx(srcImg, gray2, cv::MORPH_BLACKHAT, kernel);
-	dumpImg(gray2, "image_after_black_hat", DBG_IMG_DIR);
+	dumpImg(gray2, "image_after_black_hat");
 
 	// 以下、gray2を均一化画像と呼ぶ。
 
@@ -164,7 +170,7 @@ bool ImgFunc_shdc02::makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask)
 	// マスク作成
 	// 平滑化画像gray1の輝度th1以下を黒(0)、超過を白(255)にする(maskImg)
 	cv::threshold(gray1, mask, th1, 255.0, cv::THRESH_BINARY);
-	dumpImg(mask, "mask", DBG_IMG_DIR);
+	dumpImg(mask, "mask");
 
 	return true;
 }
@@ -209,8 +215,7 @@ std::vector<LumSample> ImgFunc_shdc02::sampleDrawLine(
 void ImgFunc_shdc02::dumpAppxImg(
 	const cv::Mat srcImg,
 	const std::vector<double>& cflist,
-	const char* const caption,
-	const char* const dstDir
+	const char* const caption
 )
 {
 	const int m = srcImg.rows;
@@ -230,15 +235,14 @@ void ImgFunc_shdc02::dumpAppxImg(
 			appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)(255.0 - 2 * std::abs(srcVal - apxVal));
 		}
 	}
-	dumpImg(appxImg, caption, dstDir);
+	dumpImg(appxImg, caption);
 }
 
 /// Plot sample points. (For DEBUG.)
 void ImgFunc_shdc02::plotSamples(
 	const cv::Mat_<uchar>& srcImg,
 	const std::vector<LumSample>& samples,
-	const char* const caption,
-	const char* const dstDir
+	const char* const caption
 )
 {
 	const cv::Vec3b RED{ C_UCHAR(0), C_UCHAR(0), C_UCHAR(255) };
@@ -264,5 +268,5 @@ void ImgFunc_shdc02::plotSamples(
 		canvas.at<cv::Vec3b>(y, x) = markerColor;
 	}
 
-	dumpImg(canvas, caption, dstDir);
+	dumpImg(canvas, caption);
 }

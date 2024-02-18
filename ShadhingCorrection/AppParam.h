@@ -28,13 +28,21 @@ public:
 
 	std::string m_imgAlgorithm;		// Image processing algorithm.
 
+	// Minor items.
+	bool m_bDumpItmImg;				// Dump intermediate image or not.
+	std::string m_dbgImgDir;		// Directry to save intermediate images.
+
+public:
 	AppParam();
 
 	/// Parse command arguments.
 	int parse(int argc, char* argv[]);
 
 	/// Update output file path (m_outfile).
-	void update_outfile_path();
+	void updateOutfilePath();
+
+	/// Input dialogue.
+	bool inputDialogue(std::ostream& os, std::istream& is);
 
 	std::istream& input(std::istream& is);
 	std::ostream& output(std::ostream& os) const;

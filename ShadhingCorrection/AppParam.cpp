@@ -4,7 +4,12 @@
 #include "DstImgSizeFunc.h"
 #include "AppParam.h"
 
+#include "IImgFunc.h"
+#include "ImgFuncBase.h"	/*introduce DBG_IMG_DIR*/
+
+#include "osal.h"
 #include "pathutil.h"
+#include "streamutil.h"
 
 namespace
 {
@@ -118,9 +123,11 @@ namespace
 }	// namespace
 
 AppParam::AppParam()
-	: m_bCutoffOnly(false), m_rotAngle(0)
+	: m_bCutoffOnly(false), m_rotAngle(0), m_bDumpItmImg(false), m_dbgImgDir(DBG_IMG_DIR)
 {
-	/*pass*/
+#ifndef NDEBUG
+	m_bDumpItmImg = true;
+#endif
 }
 
 /// Parse command arguments.
@@ -199,19 +206,19 @@ int AppParam::parse(int argc, char* argv[]) {
 	}
 
 	// Parser step 3: Update outfile path.
-	update_outfile_path();
+	updateOutfilePath();
 
 	return 0;
 }
 
 /// Update output file path (m_outfile).
-void AppParam::update_outfile_path()
+void AppParam::updateOutfilePath()
 {
 	std::string dir, fnameMajor, ext;
 	parse_file_name(m_imageFile.c_str(), dir, fnameMajor, ext);
 
 	if (!m_outfileOrg.empty()) {
-		// (Parser have been "outfile")
+		// (Parser already has output file name)
 		// If outfile specified, output with that file name.
 		// In this case, if the output file name does not have a directory,
 		// it will be output to the same directory as the input file name.
@@ -226,11 +233,261 @@ void AppParam::update_outfile_path()
 		}
 	}
 	else {
-		// (Parser have not been "outfile")
+		// (Parser does not have output file name)
 		// If no outfile specified, output with modified image-file name. 
-		const std::string algname = (!m_imgAlgorithm.empty()) ? m_imgAlgorithm : "mod";
+		const std::string algname = (!m_imgAlgorithm.empty()) ? m_imgAlgorithm : "xxx";
 		m_outfile = dir + fnameMajor + "_" + algname + ext;
 	}
+}
+
+/// Input dialogue.
+bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
+{
+	std::istringstream ist;
+	std::string strTmp;
+	double fTmp;
+	DstImgSizeFunc dszFuncTmp;
+	bool bRet;
+
+	os << endl;
+
+	//	Major items.
+	do {
+		os << "*" << endl;
+		os << "*   <<Basic settings>>" << endl;
+		os << "*" << endl;
+		os << endl;
+
+		// m_imageFile
+		do {
+			// Input
+			os << "[Required] Input image file." << endl;
+			if (!m_imageFile.empty()) {
+				os << "(current=\"" << m_imageFile << "\")" << endl;
+			}
+			os << ">";
+			strTmp = get_line_from_istream(is);
+			if (!is) { return false; }
+
+			// Check
+			if (strTmp.empty() && !m_imageFile.empty()) {
+				strTmp = m_imageFile;
+			}
+			if (strTmp.empty() || !osal_is_regular_file(strTmp.c_str())) {
+				os << "ERROR: File not found." << endl;
+				continue;
+			}
+
+			// Pass
+			m_imageFile = strTmp;
+			break;
+		} while (1);
+		os << endl;
+
+		// m_dstImgSizeFunc
+		do {
+			// Input
+			os << "[Required] Physical size of target (or magnification to target to output image)" << endl;
+			if (!m_dstImgSizeFunc.empty()) {
+				os << "(current=" << m_dstImgSizeFunc << ")" << endl;
+			}
+			os << ">";
+			strTmp = get_line_from_istream(is);
+			if (!is) { return false; }
+
+			// Check
+			ist.clear();
+			ist.str(strTmp);
+			ist >> dszFuncTmp;
+			if (!ist) {
+				os << "ERROR: Syntax error." << endl;
+				continue;
+			}
+
+			// Pass
+			m_dstImgSizeFunc = dszFuncTmp;
+			break;
+		} while (1);
+		os << endl;
+
+		// dpi
+		if (!m_dstImgSizeFunc.isMagnificationMode()) {
+			do {
+				// Input
+				os << "[Required] Input dpi of output image." << endl;
+				if (!m_dstImgSizeFunc.empty()) {
+					os << "(current=" << m_dstImgSizeFunc.getDpi() << " dpi)" << endl;
+				}
+				os << ">";
+				is >> fTmp;
+				if (!is) { return false; }
+				is.ignore();
+
+				// Check
+				if (fTmp <= 0.0) {
+					os << "ERROR: Illegal dpi value. (" << fTmp << " dpi)" << endl;
+					continue;
+				}
+
+				// Pass
+				m_dstImgSizeFunc.setDpi(fTmp);
+				break;
+			} while (1);
+			os << endl;
+		}
+
+		// m_outfileOrg
+		do {
+			// Input
+			os << "[Optional] Output image file." << endl;
+			if (!m_outfileOrg.empty()) {
+				os << "(current=\"" << m_outfileOrg << "\")" << endl;
+			}
+			os << ">";
+			strTmp = get_line_from_istream(is);
+			if (!is) { return false; }
+
+			// Check
+			/*pass*/
+
+			// Pass
+			m_outfileOrg = strTmp;
+			break;
+		} while (1);
+		os << endl;
+
+		// m_bCutoffOnly
+		do {
+			// Input
+			os << "[Optional] Do you want to shading correction after cut-out? ";
+			bRet = get_selection_from_istream(os, is, "Yes No", strTmp, true);
+
+			// Check
+			if (!bRet) {
+				os << "ERROR: Syntax error. (input=\"" << strTmp << "\")" << endl;
+				continue;
+			}
+
+			// Pass
+			m_bCutoffOnly = (strTmp == "NO");
+			break;
+		} while (1);
+		os << endl;
+
+		// m_rotAngle -- Excluded from dialogue.
+		/*pass*/
+
+		// m_cornerPoints -- Excluded from dialogue.
+		/*pass*/
+
+		// m_imgAlgorithm -- Excluded from dialogue.
+		/*pass*/
+
+		// Confirm
+		updateOutfilePath();
+		do {
+			// Input
+			os << "Result image file path=\"" << m_outfile << "\")" << endl;
+			os << "Confirm above setting. ";
+			bRet = get_selection_from_istream(os, is, "Yes No Retry", strTmp, false);
+
+			// Check
+			if (!bRet) {
+				os << "ERROR: Syntax error. (input=\"" << strTmp << "\")" << endl;
+				continue;
+			}
+
+			// Pass
+			break;
+		} while (1);
+		cout << endl;
+
+		// Check
+		if (strTmp != "YES") {
+			// (Retry)
+			continue;
+		}
+
+		// Pass
+		break;
+	} while (1);
+
+	// Minor items.
+	do {
+		os << "*" << endl;
+		os << "*   <<Minor settings>>" << endl;
+		os << "*" << endl;
+		os << endl;
+
+		// Show current.
+		os << "- Dump intermediate image: " << ((m_bDumpItmImg) ? "YES" : "NO") << endl;
+		if (m_bDumpItmImg) {
+			os << "- Directory to save intermediate images: \"" << m_dbgImgDir << "\"" << endl;
+		}
+
+		// Query go / nogo.
+		os << "Proceed with above setting(s)? ";
+		bRet = get_selection_from_istream(os, is, "Yes No", strTmp, true);
+		
+		// Check
+		if (!bRet) {
+			os << "ERROR: Syntax error. (input=\"" << strTmp << "\")" << endl;
+			continue;
+		}
+		if (strTmp == "YES") {
+			// Pass
+			break;
+		}
+		
+		// m_bDumpItmImg
+		do {
+			// Input
+			os << "[Optional] Do you want to dump intermediate image? ";
+			bRet = get_selection_from_istream(os, is, "Yes No", strTmp, false);
+
+			// Check
+			if (!bRet) {
+				os << "ERROR: Syntax error. (input=\"" << strTmp << "\")" << endl;
+				continue;
+			}
+
+			// Pass
+			m_bDumpItmImg = (strTmp == "YES");
+			break;
+		} while (1);
+		os << endl;
+
+		// m_dbgImgDir
+		if (m_bDumpItmImg) {
+			do {
+				// Input
+				os << "[Required] Input directory to save intermediate image." << endl;
+				if (!m_dbgImgDir.empty()) {
+					os << "(current=\"" << m_dbgImgDir << "\")" << endl;
+				}
+				os << ">";
+				strTmp = get_line_from_istream(is);
+				if (!is) { return false; }
+
+				// Check
+				if (strTmp.empty() && !m_dbgImgDir.empty()) {
+					strTmp = m_dbgImgDir;
+				}
+				if (strTmp.empty() || !osal_ensure_dir_exists(strTmp.c_str())) {
+					os << "ERROR: Directory creation failed." << endl;
+					continue;
+				}
+
+				// Pass
+				m_imageFile = strTmp;
+				break;
+			} while (1);
+			os << endl;
+		}
+	} while (1);
+	os << endl;
+
+	return true;
 }
 
 std::istream& AppParam::input(std::istream& is)

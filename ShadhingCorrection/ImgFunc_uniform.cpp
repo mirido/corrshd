@@ -6,6 +6,12 @@
 #include "../libnumeric/numericutil.h"
 #include "../libimaging/shdcutil.h"
 
+ImgFunc_uniform::ImgFunc_uniform(Param& param)
+	: ImgFuncWithSampling(param)
+{
+	/*pass*/
+}
+
 const char* ImgFunc_uniform::getName() const
 {
 	return "uniforming";
@@ -33,7 +39,7 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	auto samplesOnDL = sampleDrawLine(morphoTmpImg, maskToKeepDL);
 #ifndef NDEBUG
 	cout << "samplesOnDL: size=" << samplesOnDL.size() << endl;
-	plotSamples(morphoTmpImg, samplesOnDL, "samples on drawing line", DBG_IMG_DIR);
+	plotSamples(morphoTmpImg, samplesOnDL, "samples on drawing line");
 #endif
 	morphoTmpImg.release();
 
@@ -48,7 +54,7 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Enhance drawing line.
 	cv::Mat invBlacknessTiltImg;
 	predict_image(srcImg.size(), cflistOnDL, invBlacknessTiltImg);
-	dumpImg(invBlacknessTiltImg, "inv blackness tilt image", DBG_IMG_DIR);
+	dumpImg(invBlacknessTiltImg, "inv blackness tilt image");
 	dstImg = srcImg;
 	stretch_luminance(dstImg, invBlacknessTiltImg);
 

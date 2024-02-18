@@ -5,6 +5,9 @@
 #define NOMINMAX
 #include <Windows.h>
 
+#include <imagehlp.h>
+#include <Shlwapi.h>
+
 #include <locale.h>
 
 /// ƒƒP[ƒ‹‚ğİ’è‚·‚éB
@@ -38,3 +41,18 @@ void* osal_get_thread_id()
 {
 	return (void*)(INT_PTR)GetCurrentThreadId();
 }
+
+/// Check if given file path corresponds to a regular file.
+bool osal_is_regular_file(const char* const fpath)
+{
+	return !!PathFileExistsA(fpath);
+}
+
+/// Ensure specified directry exists.
+bool osal_ensure_dir_exists(const char* const fpath)
+{
+	return !!MakeSureDirectoryPathExists(fpath);
+}
+
+#pragma comment(lib, "imagehlp.lib")
+#pragma comment(lib, "Shlwapi.lib")

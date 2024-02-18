@@ -6,6 +6,12 @@
 #include "../libnumeric/regression.h"
 #include "../libimaging/shdcutil.h"
 
+ImgFuncWithSampling::ImgFuncWithSampling(Param& param)
+	: ImgFuncBase(param)
+{
+	/*pass*/
+}
+
 //
 //	For DEBUG
 //
@@ -14,8 +20,7 @@
 void ImgFuncWithSampling::dumpAppxImg(
 	const cv::Mat srcImg,
 	const std::vector<double>& cflist,
-	const char* const caption,
-	const char* const dstDir
+	const char* const caption
 )
 {
 	const int m = srcImg.rows;
@@ -35,15 +40,14 @@ void ImgFuncWithSampling::dumpAppxImg(
 			appxImg.at<uchar>(C_INT(y), C_INT(x)) = (uchar)(255.0 - 2 * std::abs(srcVal - apxVal));
 		}
 	}
-	dumpImg(appxImg, caption, dstDir);
+	dumpImg(appxImg, caption);
 }
 
 /// Plot sample points. (For DEBUG.)
 void ImgFuncWithSampling::plotSamples(
 	const cv::Mat_<uchar>& srcImg,
 	const std::vector<LumSample>& samples,
-	const char* const caption,
-	const char* const dstDir
+	const char* const caption
 )
 {
 	const cv::Vec3b RED{ C_UCHAR(0), C_UCHAR(0), C_UCHAR(255) };
@@ -69,5 +73,5 @@ void ImgFuncWithSampling::plotSamples(
 		canvas.at<cv::Vec3b>(y, x) = markerColor;
 	}
 
-	dumpImg(canvas, caption, dstDir);
+	dumpImg(canvas, caption);
 }
