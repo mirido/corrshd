@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Slightly modified README.md and remove unused .bat file.
+- Fixed crash when text ran out of source image canvas.
 
 ## [1.0.1.1] - 2024-01-16
 ### Changed
