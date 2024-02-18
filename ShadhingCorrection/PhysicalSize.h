@@ -7,6 +7,7 @@ class PhysicalSize
 
 public:
 	PhysicalSize();
+	bool empty() const;
 	double width() const;
 	double height() const;
 	std::istream& input(std::istream& is);

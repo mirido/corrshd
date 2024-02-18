@@ -199,6 +199,7 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level4</WarningLevel>
       <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatWarningAsError>
     </ClCompile>
+    <ClCompile Include="streamutil.cpp" />
     <ClCompile Include="WithFinalInversion.cpp" />
     <ClCompile Include="WithMaskToKeepDrawLine.cpp" />
   </ItemGroup>
@@ -226,6 +227,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="PointWrp.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="streamutil.h" />
     <ClInclude Include="WithFinalInversion.h" />
     <ClInclude Include="WithMaskToKeepDrawLine.h" />
   </ItemGroup>

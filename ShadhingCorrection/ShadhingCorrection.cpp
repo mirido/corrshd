@@ -217,7 +217,7 @@ namespace
 		param.m_rotAngle = ctx.getImgRotAngle();
 		param.m_cornerPoints = ctx.getClockwiseList();
 		param.m_imgAlgorithm = ctx.getCurImagingAlgorithmName();
-		param.update_outfile_path();
+		param.updateOutfilePath();
 	}
 
 	/// Print last AppParam for reproduce.
@@ -293,10 +293,19 @@ int main(const int argc, char* argv[])
 
 	// Parse commandline arguments.
 	AppParam param;
-	const int parseResult = param.parse(argc, argv);
+	int parseResult = param.parse(argc, argv);
 	if (parseResult < 0) {
 		// (Usage printed.)
-		return 0;
+		if (argc < 2) {
+			// (No arguments)
+			// Execute setting dialogue.
+			if (param.inputDialogue(cout, cin)) {
+				parseResult = 0;
+			}
+		}
+		else {
+			return 0;
+		}
 	}
 	if (parseResult != 0) {
 		// (Error occured.)
@@ -332,10 +341,8 @@ int main(const int argc, char* argv[])
 	ctx.setSrcImage(pSrcImage);
 
 	// Select dump or not intermediate image.
-	// TODO: Make it variable with AppParam.
-#ifndef NDEBUG
-	(*ctx.m_param.m_pbDump) = true;
-#endif
+	*ctx.m_param.m_pbDump = param.m_bDumpItmImg;
+	*ctx.m_param.m_pDbgImgDir = param.m_dbgImgDir;
 
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)

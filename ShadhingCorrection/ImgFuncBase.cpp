@@ -11,9 +11,6 @@
 #define STRIDE_WND_X		(1920 / 20)
 #define STRIDE_WND_Y		20
 
-// [CONF] Default directory to save intermediate images
-#define DBG_IMG_DIR		"C:\\usr2\\debug\\"
-
 ImgFuncBase::Param::Param()
 	: m_pbDump(new bool(false)),
 	m_pImgCnt(new unsigned long(0)),

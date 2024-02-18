@@ -36,4 +36,7 @@ public:
 
 };
 
+// [CONF] Default directory to save intermediate images
+#define DBG_IMG_DIR		"C:\\usr2\\debug\\"
+
 #include "bin_kernel.h"

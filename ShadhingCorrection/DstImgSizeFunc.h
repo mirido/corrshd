@@ -15,6 +15,7 @@ class DstImgSizeFunc
 
 public:
 	DstImgSizeFunc();
+	bool empty() const;
 private:
 	void setMagFactor(const double magFactor);
 	void setPhysicalSize(const PhysicalSize& psz);
