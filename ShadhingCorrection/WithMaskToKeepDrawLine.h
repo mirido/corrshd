@@ -12,8 +12,10 @@ public:
 
 	void needMaskToKeepDrawLine(const bool bNeed);
 
+protected:
 	void makeMaskToKeepDrawLine(const cv::Mat& srcImg);
 
+public:
 	const cv::Mat& getMaskToKeepDrawLine() const;
 
 private:

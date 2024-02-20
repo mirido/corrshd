@@ -160,6 +160,7 @@
     <ClInclude Include="imaging_op.h" />
     <ClInclude Include="shdcutil.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Vec3bImgUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="geometryutil.cpp" />
@@ -171,6 +172,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Vec3bImgUtil.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

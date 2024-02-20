@@ -1,19 +1,14 @@
 #pragma once
 
-#include "ImgFuncWithSampling.h"
-#include "WithFinalInversion.h"
-#include "WithMaskToKeepDrawLine.h"
+#include "ImgFunc_whitening02Base.h"
 
-class ImgFunc_whitening02
-	: public ImgFuncWithSampling, public WithFinalInversion, public WithMaskToKeepDrawLine
+class ImgFunc_whitening02 : public ImgFunc_whitening02Base
 {
 public:
 	ImgFunc_whitening02(Param& param);
 
 	const char* getName() const;
 	const char* getSummary() const;
-
-	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
 
 private:
 	/// Sample pixels.

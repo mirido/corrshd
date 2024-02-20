@@ -39,6 +39,7 @@ namespace
 }	// namespace
 
 ImagingContext::ImagingContext()
+	: m_avoidfg(m_param)
 {
 	append_imgfunc(new ImgFunc_shdc01(m_param), m_imgFuncDic, m_imgFuncNames);
 	append_imgfunc(new ImgFunc_shdc02(m_param), m_imgFuncDic, m_imgFuncNames);
@@ -298,19 +299,24 @@ int ImagingContext::getNumImagingAlgorithms() const
 }
 
 /// 歪み補正
-bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
+bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg, const bool bConvToGray)
 {
 	const int nptsExp = 4;
 
 	// グレースケール画像に変換
-	cv::Mat grayImage;
-	if (!conv_color_to_gray(*m_pSrcImage, grayImage)) {
-		return false;
+	cv::Mat targetImage;
+	if (bConvToGray) {
+		if (!conv_color_to_gray(*m_pSrcImage, targetImage)) {
+			return false;
+		}
+	}
+	else {
+		targetImage = *m_pSrcImage;
 	}
 
 	// If no corner point specified, do resize only.
 	if (m_clickedPointList.empty()) {
-		cv::resize(grayImage, dstImg, dstSz);
+		cv::resize(targetImage, dstImg, dstSz);
 		return true;
 	}
 
@@ -327,7 +333,7 @@ bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg)
 	}
 
 	// 変換実行
-	warp_image(grayImage, dstImg, srcROICorners2f, nptsExp, dstSz);
+	warp_image(targetImage, dstImg, srcROICorners2f, nptsExp, dstSz);
 
 	return true;
 }
@@ -344,12 +350,20 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 	m_pImgFunc->resetImgDumpCnt();
 
 	// Perspective correction
-	cv::Mat gray1;
-	if (!correctDistortion(dstSz, gray1)) {
+	cv::Mat BGRImgFromFront;
+	if (!correctDistortion(dstSz, BGRImgFromFront, false)) {
 		cout << __FUNCTION__ << "correctDistortion() failed." << endl;
 		return false;
 	}
-	assert(gray1.channels() == 1);	// 結果はグレースケール画像
+	assert(BGRImgFromFront.channels() == 3);	// 結果はBGR画像
+
+	// Avoid foreground objects.
+	if (m_avoidfg.run(BGRImgFromFront, dstImg)) {
+		return true;		// Test.
+	}
+
+	cv::Mat gray1;
+	cv::cvtColor(BGRImgFromFront, gray1, cv::COLOR_BGR2GRAY);
 	m_pImgFunc->dumpImg(gray1, "counter_warped_image");
 
 	// Image processing after perspective correction

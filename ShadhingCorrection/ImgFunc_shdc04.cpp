@@ -58,7 +58,7 @@ bool ImgFunc_shdc04::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat iwhROI = invWhitenedImage(binROI);
 #if 0
 	const cv::Scalar mean = cv::mean(iwhROI, fr2ROI);
-	cout << "shdc03 mean=" << mean[0] << endl;
+	cout << "shdc04 mean=" << mean[0] << endl;
 	const double bglevel = mean[0];
 #else
 	const cv::Scalar mean, stddev;
