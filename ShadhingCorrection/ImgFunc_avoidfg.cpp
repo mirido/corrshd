@@ -90,7 +90,12 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
 
-	dstImg = maskToAvoidFgObj;
+	// Run whitening02wwm (2nd).
+	m_whitening02wwm.updateMaskToAvoidFgObj(maskToAvoidFgObj);
+	if (!m_whitening02wwm.run(grayImg, dstImg)) {
+		return false;
+	}
+	cv::bitwise_not(dstImg, dstImg);
 
 	return true;
 }
