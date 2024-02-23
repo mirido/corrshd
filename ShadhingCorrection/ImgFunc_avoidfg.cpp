@@ -97,7 +97,7 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpYUVImgAsBGR(posterized, "posterized YUV image (as BGR)");
 
 	// Make second mask to avoid fg obj.
-	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
+	make_mask_to_avoid_fg_obj(posterized, maskToAvoidFgObj);
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
 
 	// Update global mask (2nd).
