@@ -12,7 +12,11 @@ public:
 
 	void needMaskToKeepDrawLine(const bool bNeed);
 
-	void makeMaskToKeepDrawLine(const cv::Mat& srcImg);
+	void makeMaskToKeepDrawLine(
+		const cv::Mat& srcImg,
+		const double ratioOfSmpROIToImgSz,
+		const cv::Mat& maskToAvoidFgObj
+	);
 
 	const cv::Mat& getMaskToKeepDrawLine() const;
 
@@ -20,7 +24,8 @@ private:
 	/// Get binarization threshold with Otsu.
 	double getThWithOtsu(
 		const cv::Mat& bluredBhatImg,
-		const cv::Rect& binROI
+		const cv::Rect& binROI,
+		const cv::Mat& maskToAvoidFgObj
 	);
 
 };

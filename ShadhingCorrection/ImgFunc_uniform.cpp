@@ -27,7 +27,7 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// This method assumes that background pixels of srcImg are almost equalized to 0.
 
 	// Make mask to keep draw line.
-	makeMaskToKeepDrawLine(srcImg);
+	makeMaskToKeepDrawLine(srcImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
 	cv::Mat maskToKeepDL = m_maskToKeepDrawLine;
 
 	// Prepare kernel for dirate or erode.
@@ -68,7 +68,7 @@ std::vector<LumSample> ImgFunc_uniform::sampleDrawLine(
 )
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
-	const cv::Rect smpROI = get_bin_ROI(image.size());
+	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
 
 	const int cntx = get_num_grid_points(smpROI.width, kernelSz.width);
 	const int cnty = get_num_grid_points(smpROI.height, kernelSz.height);

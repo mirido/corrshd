@@ -3,15 +3,12 @@
 
 #include "../libimaging/geometryutil.h"
 
-// [CONF] ROI size for determine binarization threshold (ratio)
-#define BIN_ROI_RATIO		0.8
-
 // [CONF] Kernel size for determine binarization threshold (ratio)
 #define BIN_KERNEL_RATIO	0.025
 
-cv::Rect get_bin_ROI(const cv::Size& imgSz)
+cv::Rect get_bin_ROI(const cv::Size& imgSz, const double ratioOfSmpROIToImgSz)
 {
-	return get_scaled_rect_from_size(imgSz, BIN_ROI_RATIO);
+	return get_scaled_rect_from_size(imgSz, ratioOfSmpROIToImgSz);
 }
 
 cv::Size get_bin_kernel_size(const cv::Size& imgSz)

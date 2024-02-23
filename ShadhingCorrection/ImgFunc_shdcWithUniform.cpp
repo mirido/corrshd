@@ -40,7 +40,7 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(fr2, "Fringe mask fr2");
 
 	// Get background level with fr2.
-	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size());
+	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
 	cv::Mat fr2ROI = fr2(binROI);
 	cv::Mat iwhROI = invWhitenedImage(binROI);
 #if 0

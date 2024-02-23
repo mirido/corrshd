@@ -60,7 +60,7 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	stdWhiteImg.release();
 
 	if (m_bNeedMaskToKeepDrawLine) {
-		makeMaskToKeepDrawLine(dstImg);
+		makeMaskToKeepDrawLine(dstImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
 	}
 	else {
 		m_maskToKeepDrawLine.release();
@@ -83,6 +83,6 @@ size_t ImgFunc_whitening02::getLastSizeOfSamplesOnBG() const
 std::vector<LumSample> ImgFunc_whitening02::sampleImage(const cv::Mat_<uchar>& image)
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
-	const cv::Rect smpROI = get_bin_ROI(image.size());
-	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height);
+	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
+	return sample_pixels(image, smpROI, *(m_param.m_pMaskToAvoidFgObj), kernelSz.width, kernelSz.height);
 }

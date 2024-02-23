@@ -11,12 +11,17 @@
 #define STRIDE_WND_X		(1920 / 20)
 #define STRIDE_WND_Y		20
 
+// [CONF] ROI size for determine binarization threshold (ratio)
+#define BIN_ROI_RATIO		0.8
+
 ImgFuncBase::Param::Param()
-	: m_pbDump(new bool(false)),
-	m_pImgCnt(new unsigned long(0)),
-	m_pDbgImgDir(new std::string(DBG_IMG_DIR)),
-	m_pWndNameList(new std::vector<std::string>),
-	m_pImgFileList(new std::vector<std::string>)
+	: m_pbDump(new bool(false))
+	, m_pImgCnt(new unsigned long(0))
+	, m_pDbgImgDir(new std::string(DBG_IMG_DIR))
+	, m_pWndNameList(new std::vector<std::string>)
+	, m_pImgFileList(new std::vector<std::string>)
+	, m_pRatioOfSmpROIToImgSz(new double(BIN_ROI_RATIO))
+	, m_pMaskToAvoidFgObj(new cv::Mat)
 {
 	/*pass*/
 }

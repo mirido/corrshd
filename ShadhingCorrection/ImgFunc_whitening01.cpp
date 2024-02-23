@@ -38,7 +38,7 @@ bool ImgFunc_whitening01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(dstImg, "image_after_black_hat");
 
 	if (m_bNeedMaskToKeepDrawLine) {
-		makeMaskToKeepDrawLine(dstImg);
+		makeMaskToKeepDrawLine(dstImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
 	}
 	else {
 		m_maskToKeepDrawLine.release();
