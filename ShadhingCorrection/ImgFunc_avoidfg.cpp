@@ -60,6 +60,9 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat YUVSrcImg;
 	cv::cvtColor(srcImg, YUVSrcImg, cv::COLOR_BGR2YUV);
 
+	// Disable 80% rule.
+	*(m_param.m_pRatioOfSmpROIToImgSz) = 1.0;
+
 	// Make initial mask to avoid fg obj.
 	cv::Mat maskToAvoidFgObj;
 	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
