@@ -7,7 +7,7 @@
 #include "../libimaging/shdcutil.h"
 
 ImgFunc_whitening02::ImgFunc_whitening02(Param& param)
-	: ImgFuncWithSampling(param)
+	: ImgFuncWithSampling(param), m_lastSizeOfSamplesOnBG(ZT(0))
 {
 	/*pass*/
 }
@@ -36,10 +36,11 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat morphoTmpImg;
 	cv::dilate(median3x3, morphoTmpImg, kernel);
 	auto samplesOnBg = sampleImage(morphoTmpImg);
-#ifndef NDEBUG
 	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
 	plotSamples(morphoTmpImg, samplesOnBg, "samples on background");
-#endif
+
+	// Memory for getLastSizeOfSamplesOnBG() method.
+	m_lastSizeOfSamplesOnBG = samplesOnBg.size();
 
 	// Approximate lighting tilt on background.
 	std::vector<double> cflistOnBg;
@@ -70,6 +71,12 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	}
 
 	return true;
+}
+
+/// Method to keep the same behavior as before refactoring on shdc02.
+size_t ImgFunc_whitening02::getLastSizeOfSamplesOnBG() const
+{
+	return m_lastSizeOfSamplesOnBG;
 }
 
 /// Sample pixels.
