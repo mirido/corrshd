@@ -2,7 +2,7 @@
 
 /// Sample pixels in image.
 std::vector<LumSample> sample_pixels(
-	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const int cyc_x, const int cyc_y);
+	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const cv::InputArray maskToAvoidFgObj, const int cyc_x, const int cyc_y);
 
 /// Approximate lighting tilt by cubic polynomial.
 bool approximate_lighting_tilt_by_cubic_poly(const std::vector<LumSample>& samples, std::vector<double>& cflist);

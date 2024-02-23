@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ImgFunc_whitening02wwm.h"
+#include "ImgFunc_whitening02.h"
 
 class ImgFunc_avoidfg : public ImgFuncBase
 {
-	ImgFunc_whitening02wwm m_whitening02wwm;
+	ImgFunc_whitening02 m_whitening02;
 
 public:
 	ImgFunc_avoidfg(Param& param);

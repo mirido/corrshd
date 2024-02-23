@@ -23,6 +23,10 @@ void ImgFuncWithSampling::dumpAppxImg(
 	const char* const caption
 )
 {
+	if (m_param.m_pbDump) {
+		return;
+	}
+
 	const int m = srcImg.rows;
 	const int n = srcImg.cols;
 	cv::Mat appxImg(m, n, CV_8UC1);
@@ -50,6 +54,10 @@ void ImgFuncWithSampling::plotSamples(
 	const char* const caption
 )
 {
+	if (m_param.m_pbDump) {
+		return;
+	}
+
 	const cv::Vec3b RED{ C_UCHAR(0), C_UCHAR(0), C_UCHAR(255) };
 
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());

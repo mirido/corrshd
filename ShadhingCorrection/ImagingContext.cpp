@@ -358,8 +358,9 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 	assert(BGRImgFromFront.channels() == 3);	// Œ‹‰Ê‚ÍBGR‰æ‘œ
 
 	// Avoid foreground objects.
-	if (m_avoidfg.run(BGRImgFromFront, dstImg)) {
-		return true;		// Test.
+	// *(m_param.m_pMaskToAvoidFgObj) willl be overwriten by this subroutine call.
+	if (!m_avoidfg.run(BGRImgFromFront, dstImg)) {
+		return false;
 	}
 
 	cv::Mat gray1;

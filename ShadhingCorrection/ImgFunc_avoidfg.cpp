@@ -18,11 +18,11 @@
 //#define JUDGE_255_OR_NOT
 
 ImgFunc_avoidfg::ImgFunc_avoidfg(Param& param)
-	: ImgFuncBase(param), m_whitening02wwm(param)
+	: ImgFuncBase(param), m_whitening02(param)
 {
-	m_whitening02wwm.needStdWhiteImg(true);
-	m_whitening02wwm.needMaskToKeepDrawLine(false);
-	m_whitening02wwm.doFinalInversion(false);
+	m_whitening02.needStdWhiteImg(true);
+	m_whitening02.needMaskToKeepDrawLine(false);
+	m_whitening02.doFinalInversion(false);
 }
 
 const char* ImgFunc_avoidfg::getName() const
@@ -65,18 +65,28 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (1st)");
 
+	// Surpress intermediate image dump.
+	const bool sv_bDump = *(m_param.m_pbDump);
+	*(m_param.m_pbDump) = false;
+
 	// Make grayscale image of srcImg.
 	cv::Mat grayImg;
 	cv::cvtColor(srcImg, grayImg, cv::COLOR_BGR2GRAY);
 
-	// Run whitening02wwm.
-	m_whitening02wwm.updateMaskToAvoidFgObj(maskToAvoidFgObj);
+	// Update global mask.
+	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
+
+	// Run whitening02.
 	cv::Mat whitened;
-	if (!m_whitening02wwm.run(grayImg, whitened)) {
+	if (!m_whitening02.run(grayImg, whitened)) {
+		*(m_param.m_pbDump) = sv_bDump;
 		return false;
 	}
 
-	// Whiten YUV image with whitening02wwm result.
+	// Restore intermediate image dump switch.
+	*(m_param.m_pbDump) = sv_bDump;
+
+	// Whiten YUV image with whitening02 result.
 	cv::Mat whitenedYUVImg;
 	whitenYUVImg(YUVSrcImg, whitenedYUVImg);
 	dumpYUVImgAsBGR(whitenedYUVImg, "whitened YUV image (as BGR)");
@@ -90,12 +100,18 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
 
-	// Run whitening02wwm (2nd).
-	m_whitening02wwm.updateMaskToAvoidFgObj(maskToAvoidFgObj);
-	if (!m_whitening02wwm.run(grayImg, dstImg)) {
+	// Update global mask (2nd).
+	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
+
+#if 0
+	// Run whitening02 (2nd).
+	if (!m_whitening02.run(grayImg, dstImg)) {
 		return false;
 	}
 	cv::bitwise_not(dstImg, dstImg);
+#else
+	dstImg = maskToAvoidFgObj;
+#endif
 
 	return true;
 }
@@ -104,7 +120,7 @@ void ImgFunc_avoidfg::whitenYUVImg(const cv::Mat& YUVSrcImg, cv::Mat& modifiedYU
 {
 	modifiedYUVImg = YUVSrcImg.clone();
 	cv::Size imgSz = modifiedYUVImg.size();
-	const cv::Mat& stdWhiteImg = m_whitening02wwm.getStdWhiteImg();		// Alias
+	const cv::Mat& stdWhiteImg = m_whitening02.getStdWhiteImg();		// Alias
 	for (int y = 0; y < imgSz.height; y++) {
 		for (int x = 0; x < imgSz.width; x++) {
 			cv::Vec3b& pixel = modifiedYUVImg.at<cv::Vec3b>(y, x);		// Alias
