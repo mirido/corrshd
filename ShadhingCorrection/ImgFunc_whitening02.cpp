@@ -36,10 +36,8 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat morphoTmpImg;
 	cv::dilate(median3x3, morphoTmpImg, kernel);
 	auto samplesOnBg = sampleImage(morphoTmpImg);
-#ifndef NDEBUG
 	cout << "samplesOnBg: size=" << samplesOnBg.size() << endl;
 	plotSamples(morphoTmpImg, samplesOnBg, "samples on background");
-#endif
 
 	// Approximate lighting tilt on background.
 	std::vector<double> cflistOnBg;

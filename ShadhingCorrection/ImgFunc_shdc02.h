@@ -1,7 +1,13 @@
 #pragma once
 
-class ImgFunc_shdc02 : public ImgFuncBase
+#include "ImgFunc_whitening01.h"
+#include "ImgFunc_whitening02.h"
+
+class ImgFunc_shdc02 : public ImgFuncWithSampling
 {
+	ImgFunc_whitening02 m_whitening02;
+	ImgFunc_whitening01 m_whitening01;
+
 public:
 	ImgFunc_shdc02(Param& param);
 
@@ -11,37 +17,8 @@ public:
 	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
 
 private:
-	/// Determine the threshold th1 for making mask.
-	double getTh1FromBluredBlackHatResult(
-		const cv::Mat& bluredBhatImg,
-		const cv::Rect& binROI
-	);
-
-	/// Make a mask to separate lines and background.
-	bool makeMaskImage(const cv::Mat& srcImg, cv::Mat& mask);
-
-	/// Sample pixels.
-	std::vector<LumSample> sampleImage(const cv::Mat_<uchar>& image);
-
 	/// Sample pixels on drawing line. 
 	std::vector<LumSample> sampleDrawLine(
 		const cv::Mat_<uchar>& invImage, const cv::Mat_<uchar>& maskForDLChg, const size_t nsamples);
 
-	//
-	//	For DEBUG
-	//
-
-	/// Dump approximation result visually. (For DEBUG.)
-	void dumpAppxImg(
-		const cv::Mat srcImg,
-		const std::vector<double>& cflist,
-		const char* const caption
-	);
-
-	/// Plot sample points. (For DEBUG.)
-	void plotSamples(
-		const cv::Mat_<uchar>& srcImg,
-		const std::vector<LumSample>& samples,
-		const char* const caption
-	);
 };

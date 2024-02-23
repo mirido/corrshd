@@ -8,9 +8,10 @@
 #include "../libimaging/imaging_op.h"
 
 ImgFunc_shdc01::ImgFunc_shdc01(Param& param)
-	: ImgFuncBase(param)
+	: ImgFuncBase(param), m_whitening01(param)
 {
-	/*pass*/
+	m_whitening01.needMaskToKeepDrawLine(true);
+	m_whitening01.doFinalInversion(false);
 }
 
 const char* ImgFunc_shdc01::getName() const
@@ -25,61 +26,24 @@ const char* ImgFunc_shdc01::getSummary() const
 
 bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 {
-	cv::Mat tmp;
-
-	cv::Mat gray1 = srcImg;
-
-#ifndef NDEBUG
 	cout << std::setbase(10);
-#endif
 
-	// 明るさのむらを均一化(ブラックハット演算、gray2)
-	// クロージング結果 - 原画像、という演算なので、均一化とともに背景と線の輝度が反転する。
-	// 以下の行末コメントは、srcImg.size().width == 800 の下でカーネルサイズを変えて実験した結果。
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));		// 線がかすれる
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(10, 10));
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));		// 良好
-	//cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(50, 50));		// 遅い
-	const cv::Mat kernel = get_bin_kernel(srcImg.size());
+	// Whitening with Black Top Hat and get mask to keep draw line.
 	cv::Mat gray2;
-	cv::morphologyEx(gray1, gray2, cv::MORPH_BLACKHAT, kernel);
-	dumpImg(gray2, "image_after_black_hat");
+	if (!m_whitening01.run(srcImg, gray2)) {
+		throw std::logic_error("*** ERR ***");
+	}
+	const cv::Mat maskToKeepDrawLine = m_whitening01.getMaskToKeepDrawLine();
 
 	// 以下、gray2を均一化画像と呼ぶ。
 
 	// 均一化画像gray2平滑化(gray1)
+	cv::Mat gray1;
 	cv::blur(gray2, gray1, cv::Size(3, 3));
-
-	// 平滑化結果gray1のbinROI内に対し、大津の方法で閾値th1を算出
-	const cv::Rect binROI = get_bin_ROI(gray1.size());
-	tmp = gray1(binROI).clone();
-	const double th1 = cv::threshold(tmp, tmp, 0, 255, cv::THRESH_OTSU);
-	cout << "th1=" << th1 << endl;
-	tmp.release();		// 2値化結果は使わない
-
-#ifndef NDEBUG
-	// get_unmasked_data()のテスト
-	{
-		cv::Mat nonmask = cv::Mat::ones(gray1.rows, gray1.cols, gray1.type()) * 255.0;
-		const std::vector<uchar> dbg_data = get_unmasked_data(gray1, nonmask, binROI);
-		const int dbg_th1 = discriminant_analysis_by_otsu(dbg_data);
-		cout << "dbg_th1=" << dbg_th1 << endl;
-		if (dbg_th1 != (int)std::round(th1)) {
-			throw std::logic_error("*** ERR ***");
-		}
-	}
-#endif
-
-	// マスク作成
-	// 平滑化画像gray1の輝度th1以下を黒(0)、超過を白(255)にする(mask)
-	cv::Mat mask;
-	cv::threshold(gray1, mask, th1, 255.0, cv::THRESH_BINARY);
-	dumpImg(mask, "mask");
-
-	// 均一化画像gray2のマスクされない画素データを抽出(data)
+	
+	// 均一化画像gray2 (の平滑化結果)のマスクされない画素データを抽出(data)
 	const cv::Rect smpROI = get_scaled_rect_from_size(gray1.size(), 1.0);
-	std::vector<uchar> data = get_unmasked_data(gray1, mask, smpROI);
+	std::vector<uchar> data = get_unmasked_data(gray1, maskToKeepDrawLine, smpROI);
 	if (data.size() < 2) {
 		return false;
 	}

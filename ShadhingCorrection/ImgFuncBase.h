@@ -15,7 +15,7 @@ public:
 		Param();
 	};
 
-private:
+protected:
 	Param m_param;
 
 public:

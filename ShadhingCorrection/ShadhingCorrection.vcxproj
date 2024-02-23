@@ -177,6 +177,7 @@
     <ClCompile Include="ImgFunc_shdc02.cpp" />
     <ClCompile Include="ImgFunc_shdc03.cpp" />
     <ClCompile Include="ImgFunc_shdc04.cpp" />
+    <ClCompile Include="ImgFunc_shdcWithUniform.cpp" />
     <ClCompile Include="ImgFunc_uniform.cpp" />
     <ClCompile Include="ImgFunc_whitening01.cpp" />
     <ClCompile Include="ImgFunc_whitening02.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="ImgFunc_shdc02.h" />
     <ClInclude Include="ImgFunc_shdc03.h" />
     <ClInclude Include="ImgFunc_shdc04.h" />
+    <ClInclude Include="ImgFunc_shdcWithUniform.h" />
     <ClInclude Include="ImgFunc_uniform.h" />
     <ClInclude Include="ImgFunc_whitening01.h" />
     <ClInclude Include="ImgFunc_whitening02.h" />
@@ -241,6 +243,9 @@
     <ProjectReference Include="..\libnumeric\libnumeric.vcxproj">
       <Project>{3d56258b-c101-447a-a5f1-d92eef8148d0}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test - ショートカット.lnk" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
