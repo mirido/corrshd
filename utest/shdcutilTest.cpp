@@ -70,7 +70,7 @@ namespace
 		// Sample pixels.
 		const cv::Rect smpROI = get_scaled_rect_from_size(image.size(), SMP_ROI_RATIO);
 		cout << "smpROI=" << smpROI << ", SMP_CYC=" << SMP_CYC << endl;
-		std::vector<LumSample> samples = sample_pixels(image, smpROI, cv::noArray(), SMP_CYC, SMP_CYC);
+		std::vector<LumSample> samples = sample_pixels(image, smpROI, SMP_CYC, SMP_CYC, cv::noArray());
 		ASSERT_GT(samples.size(), ZT(0));
 		const int expSz = ((smpROI.width + (SMP_CYC - 1)) / SMP_CYC) * ((smpROI.height + (SMP_CYC - 1)) / SMP_CYC);
 		EXPECT_EQ(ZT(expSz), samples.size());

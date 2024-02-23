@@ -89,7 +89,7 @@ std::vector<LumSample> ImgFunc_shdc02::sampleDrawLine(
 	const cv::Mat_<uchar>& invImage, const cv::Mat_<uchar>& maskForDLChg, const size_t nsamples)
 {
 	const cv::Rect smpROI = get_bin_ROI(invImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
-	auto samplesOnDL = get_unmasked_point_and_lum(invImage, maskForDLChg, smpROI);
+	auto samplesOnDL = get_unmasked_point_and_lum(invImage, maskForDLChg, smpROI, *(m_param.m_pMaskToAvoidFgObj));
 
 	const size_t sz = samplesOnDL.size();
 	if (sz <= nsamples) {

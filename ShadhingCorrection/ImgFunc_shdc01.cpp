@@ -43,7 +43,7 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	
 	// 均一化画像gray2 (の平滑化結果)のマスクされない画素データを抽出(data)
 	const cv::Rect smpROI = get_scaled_rect_from_size(gray1.size(), 1.0);
-	std::vector<uchar> data = get_unmasked_data(gray1, maskToKeepDrawLine, smpROI);
+	std::vector<uchar> data = get_unmasked_data(gray1, maskToKeepDrawLine, smpROI, *(m_param.m_pMaskToAvoidFgObj));
 	if (data.size() < 2) {
 		return false;
 	}

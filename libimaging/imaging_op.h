@@ -28,14 +28,16 @@ void warp_image(
 std::vector<uchar> get_unmasked_data(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& smpROI
+	const cv::Rect& smpROI,
+	const cv::InputArray globalMask
 );
 
 /// マスクされていない画像の座標と輝度を取得する。
 std::vector<LumSample> get_unmasked_point_and_lum(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& smpROI
+	const cv::Rect& smpROI,
+	const cv::InputArray globalMask
 );
 
 /// Clip as 8UC1 pixel value.

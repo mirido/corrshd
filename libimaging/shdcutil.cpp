@@ -14,7 +14,12 @@
 
 /// Sample pixels in image.
 std::vector<LumSample> sample_pixels(
-	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const cv::InputArray maskToAvoidFgObj, const int cyc_x, const int cyc_y)
+	const cv::Mat_<uchar>& image,
+	const cv::Rect& smpROI,
+	const int cyc_x,
+	const int cyc_y,
+	const cv::InputArray globalMask
+)
 {
 	const int cntx = get_num_grid_points(smpROI.width, cyc_x);
 	const int cnty = get_num_grid_points(smpROI.height, cyc_y);
@@ -24,7 +29,7 @@ std::vector<LumSample> sample_pixels(
 
 	int sx, sy, ex, ey;
 	decompose_rect(smpROI, sx, sy, ex, ey);
-	if (maskToAvoidFgObj.empty()) {
+	if (globalMask.empty()) {
 		for (int y = sy; y < ey; y += cyc_y) {
 			for (int x = sx; x < ex; x += cyc_x) {
 				const uchar lum = image.at<uchar>(y, x);
@@ -34,11 +39,14 @@ std::vector<LumSample> sample_pixels(
 		assert(samples.size() == expSz);
 	}
 	else {
-		const cv::Mat mask = maskToAvoidFgObj.getMat();
+		const cv::Mat gmask = globalMask.getMat();
+		if (!(gmask.size() == image.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
 		size_t ignoredCnt = ZT(0);
 		for (int y = sy; y < ey; y += cyc_y) {
 			for (int x = sx; x < ex; x += cyc_x) {
-				if (mask.at<uchar>(y, x) > C_UCHAR(0)) {
+				if (gmask.at<uchar>(y, x) > C_UCHAR(0)) {
 					const uchar lum = image.at<uchar>(y, x);
 					samples.push_back(LumSample(x, y, lum));
 				}

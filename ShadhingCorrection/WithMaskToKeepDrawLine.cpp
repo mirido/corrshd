@@ -19,7 +19,7 @@ void WithMaskToKeepDrawLine::needMaskToKeepDrawLine(const bool bNeed)
 void WithMaskToKeepDrawLine::makeMaskToKeepDrawLine(
 	const cv::Mat& srcImg,
 	const double ratioOfSmpROIToImgSz,
-	const cv::Mat& maskToAvoidFgObj
+	const cv::InputArray globalMask
 )
 {
 	// This method assumes that background pixels of srcImg are almost equalized to 0.
@@ -30,7 +30,7 @@ void WithMaskToKeepDrawLine::makeMaskToKeepDrawLine(
 
 	// Get binarization threshold from ROI of bluredImg. (th1)
 	const cv::Rect binROI = get_bin_ROI(bluredImg.size(), ratioOfSmpROIToImgSz);
-	m_thToKeepDrawLine = getThWithOtsu(bluredImg, binROI, maskToAvoidFgObj);
+	m_thToKeepDrawLine = getThWithOtsu(bluredImg, binROI, globalMask);
 
 	// マスク作成
 	// 平滑化画像bluredImgの輝度th1以下を黒(0)、超過を白(255)にする(maskImg)
@@ -46,7 +46,7 @@ const cv::Mat& WithMaskToKeepDrawLine::getMaskToKeepDrawLine() const
 double WithMaskToKeepDrawLine::getThWithOtsu(
 	const cv::Mat& bluredBhatImg,
 	const cv::Rect& binROI,
-	const cv::Mat& maskToAvoidFgObj
+	const cv::InputArray globalMask
 )
 {
 	// Make ROI image for determine binarization threshold. (binROIImg)
@@ -54,8 +54,8 @@ double WithMaskToKeepDrawLine::getThWithOtsu(
 
 	// 平滑化結果binROIImgに対し、大津の方法で閾値th1を算出
 	double th1;
-	if (maskToAvoidFgObj.empty()) {
-		// (Mask not specified)
+	if (globalMask.empty()) {
+		// (Global mask not specified)
 		cv::Mat tmp;
 		th1 = cv::threshold(binROIImg, tmp, 0, 255, cv::THRESH_OTSU);
 		//cout << "th1=" << th1 << endl;
@@ -67,7 +67,7 @@ double WithMaskToKeepDrawLine::getThWithOtsu(
 		{
 			cv::Mat nonmask = cv::Mat::ones(binROIImg.rows, binROIImg.cols, CV_8UC1) * 255.0;
 			const cv::Rect r(0, 0, binROIImg.cols, binROIImg.rows);
-			const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, nonmask, r);
+			const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, nonmask, r, cv::noArray());
 			const int dbg_th1 = discriminant_analysis_by_otsu(dbg_data);
 			cout << "dbg_th1=" << dbg_th1 << endl;
 			if (dbg_th1 != (int)std::round(th1)) {
@@ -77,10 +77,13 @@ double WithMaskToKeepDrawLine::getThWithOtsu(
 #endif
 	}
 	else {
-		// (Mask specified to avoid fg obj)
-		const cv::Rect r(0, 0, binROIImg.cols, binROIImg.rows);
-		const cv::Mat mask = maskToAvoidFgObj(r);
-		const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, mask, r);
+		// (Global mask specified)
+		const cv::Mat gmaskWhole = globalMask.getMat();
+		if (!(gmaskWhole.size() == bluredBhatImg.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		const cv::Mat gmask = gmaskWhole(binROI);
+		const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, gmask, binROI, cv::noArray());
 		th1 = discriminant_analysis_by_otsu(dbg_data);
 		//cout << "th1=" << th1 << endl;
 	}

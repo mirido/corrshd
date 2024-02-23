@@ -15,7 +15,7 @@ public:
 	void makeMaskToKeepDrawLine(
 		const cv::Mat& srcImg,
 		const double ratioOfSmpROIToImgSz,
-		const cv::Mat& maskToAvoidFgObj
+		const cv::InputArray globalMask
 	);
 
 	const cv::Mat& getMaskToKeepDrawLine() const;
@@ -25,7 +25,7 @@ private:
 	double getThWithOtsu(
 		const cv::Mat& bluredBhatImg,
 		const cv::Rect& binROI,
-		const cv::Mat& maskToAvoidFgObj
+		const cv::InputArray globalMask
 	);
 
 };

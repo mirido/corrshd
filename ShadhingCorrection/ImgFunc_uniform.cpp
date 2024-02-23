@@ -74,7 +74,7 @@ std::vector<LumSample> ImgFunc_uniform::sampleDrawLine(
 	const int cnty = get_num_grid_points(smpROI.height, kernelSz.height);
 	const size_t nsamples = ZT(cntx) * ZT(cnty);
 
-	auto samplesOnDL = get_unmasked_point_and_lum(image, maskToKeepDL, smpROI);
+	auto samplesOnDL = get_unmasked_point_and_lum(image, maskToKeepDL, smpROI, *(m_param.m_pMaskToAvoidFgObj));
 
 	const size_t sz = samplesOnDL.size();
 	if (sz <= nsamples) {

@@ -87,5 +87,5 @@ std::vector<LumSample> ImgFunc_whitening02::sampleImage(const cv::Mat_<uchar>& i
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
 	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
-	return sample_pixels(image, smpROI, *(m_param.m_pMaskToAvoidFgObj), kernelSz.width, kernelSz.height);
+	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height, *(m_param.m_pMaskToAvoidFgObj));
 }
