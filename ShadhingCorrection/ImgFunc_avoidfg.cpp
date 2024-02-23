@@ -12,10 +12,13 @@
 
 // [CONF] Parameters for cv::pyrMeanShiftFilter().
 #define SP		20.0
-#define SR		15.0
+#define SR		40.0
 
 // [CONF] Ease of accepting disturbances.
 #define MAG_TO_ACCEPT_DISTURB	1.0
+
+// [CONF] Luminance to white (255) margin to be considered white.
+#define LUM_MARGIN		15
 
 ImgFunc_avoidfg::ImgFunc_avoidfg(Param& param)
 	: ImgFuncBase(param), m_whitening02(param)
@@ -104,9 +107,26 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpYUVImgAsBGR(posterized, "posterized YUV image (as BGR)");
 
 	// Make second mask to avoid fg obj.
+	// TODO: Make it simple logic.
 	make_mask_to_avoid_fg_obj(posterized, maskToAvoidFgObj);
 	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
 	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
+	// Add pixels darker than white image.
+	std::vector<cv::Mat> planes;
+	cv::split(posterized, planes);
+	cv::Mat& unmasked = planes[0];
+	cv::bitwise_and(unmasked, maskToAvoidFgObj, unmasked);
+	cv::blur(unmasked, unmasked, kernel.size());
+	cv::blur(unmasked, unmasked, kernel.size());
+	cv::blur(unmasked, unmasked, kernel.size());
+	const cv::Size imgSz = posterized.size();
+	for (int y = 0; y < imgSz.height; y++) {
+		for (int x = 0; x < imgSz.width; x++) {
+			if ((int)unmasked.at<uchar>(y, x) < 255 - LUM_MARGIN) {
+				maskToAvoidFgObj.at<uchar>(y, x) = C_UCHAR(0);
+			}
+		}
+	}
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
 
 	// Update global mask (2nd).
