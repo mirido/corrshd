@@ -39,6 +39,14 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat fr2 = dl2 - dl1;
 	dumpImg(fr2, "Fringe mask fr2");
 
+	// Exclude disturbance pixel ranges from fringe mask.
+	if (!m_param.m_pMaskToAvoidFgObj->empty()) {
+		if (!(m_param.m_pMaskToAvoidFgObj->size() == fr2.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		cv::bitwise_and(fr2, *(m_param.m_pMaskToAvoidFgObj), fr2);
+	}
+
 	// Get background level with fr2.
 	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
 	cv::Mat fr2ROI = fr2(binROI);

@@ -12,10 +12,10 @@
 
 // [CONF] Parameters for cv::pyrMeanShiftFilter().
 #define SP		20.0
-#define SR		40.0
+#define SR		15.0
 
-// [CONF] Judge 255 or not.
-//#define JUDGE_255_OR_NOT
+// [CONF] Ease of accepting disturbances.
+#define MAG_TO_ACCEPT_DISTURB	1.0
 
 ImgFunc_avoidfg::ImgFunc_avoidfg(Param& param)
 	: ImgFuncBase(param), m_whitening02(param)
@@ -44,7 +44,7 @@ namespace
 		const int cyc_y = imgSz.height / 10;
 		auto samples = sample_Vec3b_pixels(YUVImg, cv::Rect(0, 0, imgSz.width, imgSz.height), cyc_x, cyc_y);
 		cout << "nsamples=" << samples.size() << endl;
-		make_mask_from_sample(YUVImg, samples, C_INT(SR + 0.5), maskToAvoidFgObj);
+		make_mask_from_sample(YUVImg, samples, C_INT(SR * MAG_TO_ACCEPT_DISTURB + 0.5), maskToAvoidFgObj);
 	}
 
 }	// namespace
@@ -63,9 +63,13 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Disable 80% rule.
 	*(m_param.m_pRatioOfSmpROIToImgSz) = 1.0;
 
+	// Prepare kernel for morphological operation.
+	const cv::Mat kernel = get_bin_kernel(YUVSrcImg.size());
+
 	// Make initial mask to avoid fg obj.
 	cv::Mat maskToAvoidFgObj;
 	make_mask_to_avoid_fg_obj(YUVSrcImg, maskToAvoidFgObj);
+	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (1st)");
 
 	// Surpress intermediate image dump.
@@ -101,6 +105,8 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 
 	// Make second mask to avoid fg obj.
 	make_mask_to_avoid_fg_obj(posterized, maskToAvoidFgObj);
+	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
+	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
 
 	// Update global mask (2nd).
