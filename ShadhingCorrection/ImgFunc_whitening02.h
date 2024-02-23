@@ -7,6 +7,8 @@
 class ImgFunc_whitening02
 	: public ImgFuncWithSampling, public WithFinalInversion, public WithMaskToKeepDrawLine
 {
+	size_t m_lastSizeOfSamplesOnBG;
+
 public:
 	ImgFunc_whitening02(Param& param);
 
@@ -14,6 +16,9 @@ public:
 	const char* getSummary() const;
 
 	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
+
+	/// Method to keep the same behavior as before refactoring on shdc02.
+	size_t getLastSizeOfSamplesOnBG() const;
 
 private:
 	/// Sample pixels.

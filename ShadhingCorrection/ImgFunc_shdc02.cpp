@@ -37,6 +37,13 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 		return false;
 	}
 
+	// Settings to keep the same behavior as before.
+	const cv::Size dstSz = srcImg.size();
+	const int knsz = (int)std::round(std::max(dstSz.width, dstSz.height) * 0.025);
+	const cv::Size kernelSz = cv::Size(knsz, knsz);
+	cv::Mat kernel2 = cv::getStructuringElement(cv::MORPH_ELLIPSE, kernelSz);
+	m_whitening01.setCustomKernel(kernel2);
+
 	// Make mask for drawing line change.
 	cv::Mat gray2;
 	if (!m_whitening01.run(srcImg, gray2)) {
@@ -48,12 +55,9 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Prepare kernel for dirate or erode.
 	const cv::Mat kernel = get_bin_kernel(invSrcImg.size());
 
-	// Estimate the size of samplesOnBg m_whitening01 used.
-	// It is no longer possible to directly obtain the value
-	// because the module m_whitening02 was separated by refactoring.
-	// If the values are similar, there is no problem, so estimate.
-	const int cyc = std::min(kernel.cols, kernel.rows);
-	const size_t nsamples = ZT(cv::countNonZero(maskForDLChg) / cyc);
+	// Get the size of samplesOnBg m_whitening01 used
+	// to keep the same behavior as before.
+	const size_t nsamples = m_whitening02.getLastSizeOfSamplesOnBG();
 	cout << "nsamples = " << nsamples << " (estimation of samplesOnBg.size())" << endl;
 
 	// Sample pixels on drawing line.
