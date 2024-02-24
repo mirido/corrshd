@@ -214,7 +214,7 @@ void stretch_and_invert_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, c
 					fLum = 255.0 * (1.0 - fLum / invBlackLumEnd);
 				}
 				else {
-					fLum = 0.0;
+					fLum = 128.0;		// Treat uncorrectable pixels as gray.
 				}
 			}
 
@@ -243,7 +243,7 @@ void stretch_luminance(cv::Mat& image, const cv::Mat& lumEndMap)
 				fLum = (255.0 * fLum) / lumEnd;
 			}
 			else {
-				fLum = 255.0;
+				fLum = 127.0;		// Treat uncorrectable pixels as gray.
 			}
 			clip_as_lum255(fLum);
 			lum = static_cast<uchar>(fLum);
