@@ -43,8 +43,8 @@ namespace
 	void make_mask_to_avoid_fg_obj(const cv::Mat& YUVImg, cv::Mat& maskToAvoidFgObj)
 	{
 		const cv::Size imgSz = YUVImg.size();
-		const int cyc_x = imgSz.width / 10;
-		const int cyc_y = imgSz.height / 10;
+		const int cyc_x = (imgSz.width + 9) / 10;
+		const int cyc_y = (imgSz.height + 9) / 10;
 		auto samples = sample_Vec3b_pixels(YUVImg, cv::Rect(0, 0, imgSz.width, imgSz.height), cyc_x, cyc_y);
 		cout << "nsamples=" << samples.size() << endl;
 		make_mask_from_sample(YUVImg, samples, C_INT(SR * MAG_TO_ACCEPT_DISTURB + 0.5), maskToAvoidFgObj);

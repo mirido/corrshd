@@ -6,6 +6,7 @@
 
 // [DBGSW] Dump estimated means.
 //#define DUMP_ESTM_MEANS
+#define DUMP_BEST_MEAN
 
 /// Sample pixels in cv::Vec3b image.
 std::vector<cv::Vec3b> sample_Vec3b_pixels(
@@ -116,8 +117,7 @@ cv::Vec3b estimate_mean_with_sample(
 
 	size_t max_n = ZT(0);
 	cv::Vec3b bestMean = samples.front();
-	const size_t delta = (sz + ZT(9)) / ZT(10);
-	for (size_t i = 0; i < sz; i += delta) {
+	for (size_t i = 0; i < sz; i ++) {
 		cv::Vec3b mean = samples[i];
 		const size_t n = estimate_mean_with_sample_ex(samples, mean, sr);
 #ifdef DUMP_ESTM_MEANS
@@ -129,7 +129,7 @@ cv::Vec3b estimate_mean_with_sample(
 		}
 	}
 
-#ifdef DUMP_ESTM_MEANS
+#ifdef DUMP_BEST_MEAN
 	cout << "bestMean=" << bestMean << ", n=" << max_n << endl;
 #endif
 	return bestMean;
