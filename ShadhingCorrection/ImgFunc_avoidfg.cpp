@@ -18,14 +18,14 @@
 #define MAG_TO_ACCEPT_DISTURB	1.0
 
 // [CONF] Luminance to white (255) margin to be considered white.
-#define LUM_MARGIN		15
+#define LUM_MARGIN		3
 
 ImgFunc_avoidfg::ImgFunc_avoidfg(Param& param)
 	: ImgFuncBase(param), m_whitening02(param)
 {
 	m_whitening02.needStdWhiteImg(true);
 	m_whitening02.needMaskToKeepDrawLine(false);
-	m_whitening02.doFinalInversion(false);
+	m_whitening02.doFinalInversion(true);
 }
 
 const char* ImgFunc_avoidfg::getName() const
@@ -48,6 +48,57 @@ namespace
 		auto samples = sample_Vec3b_pixels(YUVImg, cv::Rect(0, 0, imgSz.width, imgSz.height), cyc_x, cyc_y);
 		cout << "nsamples=" << samples.size() << endl;
 		make_mask_from_sample(YUVImg, samples, C_INT(SR * MAG_TO_ACCEPT_DISTURB + 0.5), maskToAvoidFgObj);
+	}
+
+	void add_blured_shadow_area_to_mask(cv::Mat& whitenedGrayImg, cv::Mat& curMask)
+	{
+		// Prepare kernel for morphological operation.
+		const cv::Mat kernel = get_bin_kernel(whitenedGrayImg.size());
+
+		// Erase hand drawing line.
+		cv::dilate(whitenedGrayImg, whitenedGrayImg, kernel);
+		cv::dilate(whitenedGrayImg, whitenedGrayImg, kernel);
+		cv::erode(whitenedGrayImg, whitenedGrayImg, kernel);
+		cv::erode(whitenedGrayImg, whitenedGrayImg, kernel);
+
+		// Go arouond edge of image and search shadow.
+		const cv::Size imgSz = whitenedGrayImg.size();
+		cv::Mat additionMask = cv::Mat::zeros(cv::Size(imgSz.width + 2, imgSz.height + 2), CV_8UC1);
+		auto maskAddFunc = [=, &additionMask](const cv::Point& seedPt) {
+			if (additionMask.at<uchar>(seedPt.y + 1, seedPt.x + 1) <= C_UCHAR(0)) {
+				const uchar lum = whitenedGrayImg.at<uchar>(seedPt);
+				if (lum < C_UCHAR(240)) {
+					// Fill area brightness between 0 and 255 - LUM_MARGIIN.
+					// 0 = lum - loDiff, lum + upDiff = (255 - LUM_MARGIN)
+					// ==> loDiff = lum, upDiff = (255 - LUM_MARGIN) - lum.
+					const double loDiff = (double)lum;
+					const double upDiff = (255.0 - (double)LUM_MARGIN) - lum;
+					if (loDiff >= 0.0 && upDiff >= 0.0) {
+						//cout << "seedPt=" << seedPt << ", lum=" << (double)lum << ", loDiff=" << loDiff << ", upDiff=" << upDiff << endl;
+						cv::floodFill(whitenedGrayImg, additionMask, seedPt, cv::Scalar(128.0), 0, cv::Scalar(loDiff), cv::Scalar(upDiff),
+							(8 | (255 << 8) | cv::FLOODFILL_MASK_ONLY | cv::FLOODFILL_FIXED_RANGE));
+					}
+				}
+			}
+		};
+		for (int x = 0; x < imgSz.width; x++) {
+			const cv::Point seedPt1(x, 0);
+			maskAddFunc(seedPt1);
+			const cv::Point seedPt2(x, imgSz.height - 1);
+			maskAddFunc(seedPt2);
+		}
+		for (int y = 0; y < imgSz.height; y++) {
+			const cv::Point seedPt1(0, y);
+			maskAddFunc(seedPt1);
+			const cv::Point seedPt2(imgSz.width - 1, y);
+			maskAddFunc(seedPt2);
+		}
+		cv::bitwise_not(additionMask, additionMask);
+
+		cv::Mat ROIMaskImg = additionMask(cv::Rect(1, 1, imgSz.width, imgSz.height));
+		cv::bitwise_and(curMask, ROIMaskImg, curMask);
+		cv::erode(curMask, curMask, kernel);
+		cv::erode(curMask, curMask, kernel);
 	}
 
 }	// namespace
@@ -87,8 +138,8 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
 
 	// Run whitening02.
-	cv::Mat whitened;
-	if (!m_whitening02.run(grayImg, whitened)) {
+	cv::Mat whitenedGrayImg;
+	if (!m_whitening02.run(grayImg, whitenedGrayImg)) {
 		*(m_param.m_pbDump) = sv_bDump;
 		return false;
 	}
@@ -107,27 +158,13 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpYUVImgAsBGR(posterized, "posterized YUV image (as BGR)");
 
 	// Make second mask to avoid fg obj.
-	// TODO: Make it simple logic.
 	make_mask_to_avoid_fg_obj(posterized, maskToAvoidFgObj);
 	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
-	cv::erode(maskToAvoidFgObj, maskToAvoidFgObj, kernel);		// Extend mask to avoid disturbance pixels.
-	// Add pixels darker than white image.
-	std::vector<cv::Mat> planes;
-	cv::split(posterized, planes);
-	cv::Mat& unmasked = planes[0];
-	cv::bitwise_and(unmasked, maskToAvoidFgObj, unmasked);
-	cv::blur(unmasked, unmasked, kernel.size());
-	cv::blur(unmasked, unmasked, kernel.size());
-	cv::blur(unmasked, unmasked, kernel.size());
-	const cv::Size imgSz = posterized.size();
-	for (int y = 0; y < imgSz.height; y++) {
-		for (int x = 0; x < imgSz.width; x++) {
-			if ((int)unmasked.at<uchar>(y, x) < 255 - LUM_MARGIN) {
-				maskToAvoidFgObj.at<uchar>(y, x) = C_UCHAR(0);
-			}
-		}
-	}
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (2nd)");
+
+	// Make blured shadow area to be masked.
+	add_blured_shadow_area_to_mask(whitenedGrayImg, maskToAvoidFgObj);
+	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (3rd)");
 
 	// Update global mask (2nd).
 	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
