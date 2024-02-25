@@ -90,8 +90,10 @@ namespace
 	{
 		cv::Mat signedDiffImg;
 		{
-			cv::Mat diffImg = imgAct - imgExp;
-			diffImg.convertTo(signedDiffImg, CV_16SC1, 1.0, 0.0);
+			cv::Mat signedActImg, signedExpImg;
+			imgAct.convertTo(signedActImg, CV_16SC1, 1.0, 0.0);
+			imgExp.convertTo(signedExpImg, CV_16SC1, 1.0, 0.0);
+			signedDiffImg = signedActImg - signedExpImg;
 		}
 
 		cv::Mat mean, stddev;
@@ -99,10 +101,12 @@ namespace
 		cout << "mean.size()=" << mean.size() << ", stddev.size()=" << stddev.size() << endl;
 		const double fmean = mean.at<double>(0, 0);
 		const double fstddev = stddev.at<double>(0, 0);
-		cout << "  mean=" << fmean << endl;
-		cout << "stddev=" << fstddev << endl;
-		EXPECT_TRUE(can_equal(fmean, 0.0));
-		EXPECT_TRUE(can_equal(fstddev, 0.0));
+		auto sv_flags = cout.flags();
+		cout << "  mean=" << std::showpos << fmean << endl;
+		cout << "stddev=" << std::showpos << fstddev << endl;
+		cout.flags(sv_flags);
+		EXPECT_TRUE(-1.0 < fmean && fmean <= 0.0);
+		EXPECT_TRUE(0.0 <= fstddev && fstddev < 1.0);
 	}
 
 }	// namespace

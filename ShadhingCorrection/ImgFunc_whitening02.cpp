@@ -57,6 +57,8 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(stdWhiteImg, "standard white image");
 	// Following subtraction is achieved as saturation operation.
 	dstImg = stdWhiteImg - srcImg;
+	dstImg -= 1.0;
+	//dstImg -= 0.7 * C_DBL((kernel.cols + kernel.rows) / 4);
 	dumpImg(dstImg, "shading corrected image");
 
 	morphoTmpImg.release();
