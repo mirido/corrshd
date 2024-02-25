@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Slightly modified README.md and remove unused .bat file.
 - Fixed crash when text ran out of source image canvas.
+- Measures against the OpenCV (cv::destroyWindow()) exception when window already closed.
 
 ## [1.0.1.1] - 2024-01-16
 ### Changed
