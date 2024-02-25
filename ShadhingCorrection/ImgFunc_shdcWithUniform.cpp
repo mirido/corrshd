@@ -60,7 +60,7 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::meanStdDev(iwhROI, mean, stddev, fr2ROI);
 	cout << "  mean=" << mean[0] << endl;
 	cout << "stddev=" << stddev[0] << endl;
-	const double bglevel = mean[0] + stddev[0];
+	const double bglevel = mean[0] + 0.7 * stddev[0];
 #endif
 
 	// Cancel background level.

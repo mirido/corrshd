@@ -5,6 +5,9 @@
 #include "../libnumeric/numericutil.h"
 #include "bin_kernel.h"
 
+// [CONF] Coefficient that makes lines less blurry
+#define COEF_TO_LESS_BLURRY		0.7
+
 WithMaskToKeepDrawLine::WithMaskToKeepDrawLine()
 	: m_thToKeepDrawLine(0.0), m_bNeedMaskToKeepDrawLine(false)
 {
@@ -85,6 +88,7 @@ double WithMaskToKeepDrawLine::getThWithOtsu(
 		const cv::Mat gmask = gmaskWhole(binROI);
 		const std::vector<uchar> dbg_data = get_unmasked_data(binROIImg, gmask, binROI, cv::noArray());
 		th1 = discriminant_analysis_by_otsu(dbg_data);
+		th1 *= COEF_TO_LESS_BLURRY;
 		//cout << "th1=" << th1 << endl;
 	}
 
