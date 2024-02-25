@@ -359,7 +359,8 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 
 	// Avoid foreground objects.
 	// *(m_param.m_pMaskToAvoidFgObj) will be overwriten by this subroutine call.
-	if (!m_avoidfg.run(BGRImgFromFront, dstImg)) {
+	cv::Mat dummy;
+	if (!m_avoidfg.run(BGRImgFromFront, dummy)) {
 		return false;
 	}
 
@@ -368,5 +369,38 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 	m_pImgFunc->dumpImg(gray1, "counter_warped_image");
 
 	// Image processing after perspective correction
-	return m_pImgFunc->run(gray1, dstImg);
+	const bool bSuc = m_pImgFunc->run(gray1, dstImg);
+
+	// Dump final result with global mask.
+	if (bSuc) {
+		cv::Mat& gmask = *(m_param.m_pMaskToAvoidFgObj);		// Alias
+		if (!gmask.empty()) {
+			// (Mask to avoid foreground object exists)
+
+			// Make blend image.
+			cv::Mat BGROutputImg;
+			cv::cvtColor(dstImg, BGROutputImg, cv::COLOR_GRAY2BGR);
+			std::vector<cv::Mat> planes(ZT(3));
+			planes[0] = gmask;
+			planes[1] = cv::Mat::zeros(gmask.size(), gmask.type());
+			planes[2] = cv::Mat::zeros(gmask.size(), gmask.type());
+			cv::Mat BGRBlendImg;
+			cv::merge(planes, BGRBlendImg);
+			cv::addWeighted(BGROutputImg, 0.8, BGRBlendImg, 0.2, 1.0, BGRBlendImg);
+			cv::Mat blendMask = gmask.clone();
+			cv::bitwise_not(blendMask, blendMask);
+			BGROutputImg.copyTo(BGRBlendImg, blendMask);
+
+			// Enable intermediate image dump.
+			const bool sv_bDump = *(m_param.m_pbDump);
+			*(m_param.m_pbDump) = true;
+
+			m_pImgFunc->dumpImg(BGRBlendImg, "output image with gmask");
+
+			// Restore intermediate image dump ON/OFF.
+			*(m_param.m_pbDump) = sv_bDump;
+		}
+	}
+
+	return bSuc;
 }

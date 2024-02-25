@@ -178,7 +178,10 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	}
 	cv::bitwise_not(dstImg, dstImg);
 #else
-	dstImg = maskToAvoidFgObj;
+	// ImgFunc_avoidfg::run() is designed to hage no output image.
+	// If we return maskToAvoidFgObj here, the caller will overwrite maskToAvoidFgObj.
+	// But Returning maskToAvoidFgObj.clone() is obviously wasteful.
+	dstImg = cv::Mat();
 #endif
 
 	return true;
