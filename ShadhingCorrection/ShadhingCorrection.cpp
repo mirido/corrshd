@@ -37,6 +37,9 @@ std::string OPENCV_URL = "https://opencv.org/";
 #define IMAGE_WND_MARGIN_HORZ		16
 #define IMAGE_WND_MARGIN_VERT		32
 
+// [DBGSW] Gray scale image read test.
+//#define DBG_GRAY_SCALE_SRC_IMG
+
 namespace
 {
 	/// Get the approximate size of the ROI.
@@ -322,6 +325,9 @@ int main(const int argc, char* argv[])
 		cout << "ERROR: cv::imread() failed. (file name=\"" << param.m_imageFile << "\")" << endl;
 		return 1;
 	}
+#ifdef DBG_GRAY_SCALE_SRC_IMG
+	cv::cvtColor(*pSrcImage, *pSrcImage, cv::COLOR_BGR2GRAY);
+#endif
 
 	{
 		const DstImgSizeFunc& dszfunc = param.m_dstImgSizeFunc;		// Alias

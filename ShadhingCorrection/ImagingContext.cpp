@@ -311,7 +311,9 @@ bool ImagingContext::correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg, c
 		}
 	}
 	else {
-		targetImage = *m_pSrcImage;
+		if (!conv_color_to_BGR(*m_pSrcImage, targetImage)) {
+			return false;
+		}
 	}
 
 	// If no corner point specified, do resize only.
