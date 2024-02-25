@@ -256,7 +256,7 @@ namespace
 		cout << "  vertical ratio=" << (100.0 * (double)outputImgSz.height) / (double)appxROISize.height << "%" << endl;
 
 		// Do correction.
-		bool bSuc;
+		bool bSuc = false;
 		const char* caption;
 		if (param.m_bCutoffOnly) {
 			bSuc = ctx.correctDistortion(outputImgSz, outputImg);
@@ -264,7 +264,7 @@ namespace
 		}
 		else {
 			bSuc = ctx.doShadingCorrection(outputImgSz, outputImg);
-			caption = " Shading correction";
+			caption = "Shading correction";
 		}
 		if (bSuc) {
 			cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
@@ -279,7 +279,7 @@ namespace
 			cout << "Info: " << caption << " failed." << endl;
 		}
 
-		return true;
+		return bSuc;
 	}
 
 }	// namespace
