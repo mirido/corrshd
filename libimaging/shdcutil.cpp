@@ -14,7 +14,12 @@
 
 /// Sample pixels in image.
 std::vector<LumSample> sample_pixels(
-	const cv::Mat_<uchar>& image, const cv::Rect& smpROI, const int cyc_x, const int cyc_y)
+	const cv::Mat_<uchar>& image,
+	const cv::Rect& smpROI,
+	const int cyc_x,
+	const int cyc_y,
+	const cv::InputArray globalMask
+)
 {
 	const int cntx = get_num_grid_points(smpROI.width, cyc_x);
 	const int cnty = get_num_grid_points(smpROI.height, cyc_y);
@@ -24,13 +29,34 @@ std::vector<LumSample> sample_pixels(
 
 	int sx, sy, ex, ey;
 	decompose_rect(smpROI, sx, sy, ex, ey);
-	for (int y = sy; y < ey; y += cyc_y) {
-		for (int x = sx; x < ex; x += cyc_x) {
-			const uchar lum = image.at<uchar>(y, x);
-			samples.push_back(LumSample(x, y, lum));
+	if (globalMask.empty()) {
+		for (int y = sy; y < ey; y += cyc_y) {
+			for (int x = sx; x < ex; x += cyc_x) {
+				const uchar lum = image.at<uchar>(y, x);
+				samples.push_back(LumSample(x, y, lum));
+			}
 		}
+		assert(samples.size() == expSz);
 	}
-	assert(samples.size() == expSz);
+	else {
+		const cv::Mat gmask = globalMask.getMat();
+		if (!(gmask.size() == image.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		size_t ignoredCnt = ZT(0);
+		for (int y = sy; y < ey; y += cyc_y) {
+			for (int x = sx; x < ex; x += cyc_x) {
+				if (gmask.at<uchar>(y, x) > C_UCHAR(0)) {
+					const uchar lum = image.at<uchar>(y, x);
+					samples.push_back(LumSample(x, y, lum));
+				}
+				else {
+					ignoredCnt++;
+				}
+			}
+		}
+		assert(samples.size() + ignoredCnt == expSz);
+	}
 
 	return samples;
 }
@@ -188,7 +214,7 @@ void stretch_and_invert_luminance(cv::Mat& image, const cv::Mat& maskForDLChg, c
 					fLum = 255.0 * (1.0 - fLum / invBlackLumEnd);
 				}
 				else {
-					fLum = 0.0;
+					fLum = 128.0;		// Treat uncorrectable pixels as gray.
 				}
 			}
 
@@ -217,7 +243,7 @@ void stretch_luminance(cv::Mat& image, const cv::Mat& lumEndMap)
 				fLum = (255.0 * fLum) / lumEnd;
 			}
 			else {
-				fLum = 255.0;
+				fLum = 127.0;		// Treat uncorrectable pixels as gray.
 			}
 			clip_as_lum255(fLum);
 			lum = static_cast<uchar>(fLum);

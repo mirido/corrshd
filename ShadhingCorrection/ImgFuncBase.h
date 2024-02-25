@@ -12,6 +12,10 @@ public:
 		std::shared_ptr<std::vector<std::string> > m_pWndNameList;
 		std::shared_ptr<std::vector<std::string> > m_pImgFileList;
 
+		// Global data for image processing
+		std::shared_ptr<double> m_pRatioOfSmpROIToImgSz;		// Ratio of sampling ROI to image size.
+		std::shared_ptr<cv::Mat> m_pMaskToAvoidFgObj;			// Mask to avoid foreground objects.
+
 		Param();
 	};
 

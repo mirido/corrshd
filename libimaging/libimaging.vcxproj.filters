@@ -27,6 +27,9 @@
     <ClInclude Include="shdcutil.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Vec3bImgUtil.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -39,6 +42,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="shdcutil.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Vec3bImgUtil.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -39,8 +39,16 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat fr2 = dl2 - dl1;
 	dumpImg(fr2, "Fringe mask fr2");
 
+	// Exclude disturbance pixel ranges from fringe mask.
+	if (!m_param.m_pMaskToAvoidFgObj->empty()) {
+		if (!(m_param.m_pMaskToAvoidFgObj->size() == fr2.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		cv::bitwise_and(fr2, *(m_param.m_pMaskToAvoidFgObj), fr2);
+	}
+
 	// Get background level with fr2.
-	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size());
+	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
 	cv::Mat fr2ROI = fr2(binROI);
 	cv::Mat iwhROI = invWhitenedImage(binROI);
 #if 0
@@ -52,7 +60,7 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::meanStdDev(iwhROI, mean, stddev, fr2ROI);
 	cout << "  mean=" << mean[0] << endl;
 	cout << "stddev=" << stddev[0] << endl;
-	const double bglevel = mean[0] + stddev[0];
+	const double bglevel = mean[0] + 0.7 * stddev[0];
 #endif
 
 	// Cancel background level.

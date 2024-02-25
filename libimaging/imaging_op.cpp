@@ -75,7 +75,8 @@ void warp_image(
 std::vector<uchar> get_unmasked_data(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& smpROI
+	const cv::Rect& smpROI,
+	const cv::InputArray globalMask
 )
 {
 	const int width = image.cols;
@@ -89,10 +90,25 @@ std::vector<uchar> get_unmasked_data(
 	decompose_rect(ROI, sx, sy, ex, ey);
 
 	std::vector<uchar> data;
-	for (int y = sy; y < ey; y++) {
-		for (int x = sx; x < ex; x++) {
-			if (mask(y, x) > 0) {
-				data.push_back(image(y, x));
+	if (globalMask.empty()) {
+		for (int y = sy; y < ey; y++) {
+			for (int x = sx; x < ex; x++) {
+				if (mask(y, x) > C_UCHAR(0)) {
+					data.push_back(image(y, x));
+				}
+			}
+		}
+	}
+	else {
+		const cv::Mat gmask = globalMask.getMat();
+		if (!(gmask.size() == image.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		for (int y = sy; y < ey; y++) {
+			for (int x = sx; x < ex; x++) {
+				if (mask(y, x) > C_UCHAR(0) && gmask.at<uchar>(y, x) > C_UCHAR(0)) {
+					data.push_back(image(y, x));
+				}
 			}
 		}
 	}
@@ -104,7 +120,8 @@ std::vector<uchar> get_unmasked_data(
 std::vector<LumSample> get_unmasked_point_and_lum(
 	const cv::Mat_<uchar>& image,
 	const cv::Mat_<uchar>& mask,
-	const cv::Rect& smpROI
+	const cv::Rect& smpROI,
+	const cv::InputArray globalMask
 )
 {
 	const int width = image.cols;
@@ -118,13 +135,31 @@ std::vector<LumSample> get_unmasked_point_and_lum(
 	decompose_rect(ROI, sx, sy, ex, ey);
 
 	std::vector<LumSample> data;
-	for (int y = sy; y < ey; y++) {
-		for (int x = sx; x < ex; x++) {
-			if (mask(y, x) > 0) {
-				LumSample val;
-				val.m_point = cv::Point(x, y);
-				val.m_lum = image(y, x);
-				data.push_back(val);
+	if (globalMask.empty()) {
+		for (int y = sy; y < ey; y++) {
+			for (int x = sx; x < ex; x++) {
+				if (mask(y, x) > C_UCHAR(0)) {
+					LumSample val;
+					val.m_point = cv::Point(x, y);
+					val.m_lum = image(y, x);
+					data.push_back(val);
+				}
+			}
+		}
+	}
+	else {
+		const cv::Mat gmask = globalMask.getMat();
+		if (!(gmask.size() == image.size())) {
+			throw std::logic_error("*** ERR ***");
+		}
+		for (int y = sy; y < ey; y++) {
+			for (int x = sx; x < ex; x++) {
+				if (mask(y, x) > C_UCHAR(0) && gmask.at<uchar>(y, x) > C_UCHAR(0)) {
+					LumSample val;
+					val.m_point = cv::Point(x, y);
+					val.m_lum = image(y, x);
+					data.push_back(val);
+				}
 			}
 		}
 	}

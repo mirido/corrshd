@@ -87,6 +87,12 @@
     <ClCompile Include="streamutil.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="ImgFunc_avoidfg.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="WithStdWhiteImg.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="ImgFunc_shdcWithUniform.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -168,6 +174,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="streamutil.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgFunc_avoidfg.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="WithStdWhiteImg.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="ImgFunc_shdcWithUniform.h">

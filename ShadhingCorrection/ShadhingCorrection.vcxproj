@@ -173,6 +173,7 @@
     <ClCompile Include="ImagingContext.cpp" />
     <ClCompile Include="ImgFuncBase.cpp" />
     <ClCompile Include="ImgFuncWithSampling.cpp" />
+    <ClCompile Include="ImgFunc_avoidfg.cpp" />
     <ClCompile Include="ImgFunc_shdc01.cpp" />
     <ClCompile Include="ImgFunc_shdc02.cpp" />
     <ClCompile Include="ImgFunc_shdc03.cpp" />
@@ -203,6 +204,7 @@
     <ClCompile Include="streamutil.cpp" />
     <ClCompile Include="WithFinalInversion.cpp" />
     <ClCompile Include="WithMaskToKeepDrawLine.cpp" />
+    <ClCompile Include="WithStdWhiteImg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppParam.h" />
@@ -215,6 +217,7 @@
     <ClInclude Include="IImgFunc.h" />
     <ClInclude Include="ImgFuncBase.h" />
     <ClInclude Include="ImgFuncWithSampling.h" />
+    <ClInclude Include="ImgFunc_avoidfg.h" />
     <ClInclude Include="ImgFunc_shdc01.h" />
     <ClInclude Include="ImgFunc_shdc02.h" />
     <ClInclude Include="ImgFunc_shdc03.h" />
@@ -232,6 +235,7 @@
     <ClInclude Include="streamutil.h" />
     <ClInclude Include="WithFinalInversion.h" />
     <ClInclude Include="WithMaskToKeepDrawLine.h" />
+    <ClInclude Include="WithStdWhiteImg.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ShadhingCorrection.rc" />

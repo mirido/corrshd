@@ -51,16 +51,21 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Whitening.
 	cv::Mat stdWhiteImg;
 	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
+	if (m_bNeedStdWhiteImg) {
+		updateStdWhiteImg(stdWhiteImg);
+	}
 	dumpImg(stdWhiteImg, "standard white image");
 	// Following subtraction is achieved as saturation operation.
 	dstImg = stdWhiteImg - srcImg;
+	dstImg -= 1.0;
+	//dstImg -= 0.7 * C_DBL((kernel.cols + kernel.rows) / 4);
 	dumpImg(dstImg, "shading corrected image");
 
 	morphoTmpImg.release();
 	stdWhiteImg.release();
 
 	if (m_bNeedMaskToKeepDrawLine) {
-		makeMaskToKeepDrawLine(dstImg);
+		makeMaskToKeepDrawLine(dstImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
 	}
 	else {
 		m_maskToKeepDrawLine.release();
@@ -83,6 +88,6 @@ size_t ImgFunc_whitening02::getLastSizeOfSamplesOnBG() const
 std::vector<LumSample> ImgFunc_whitening02::sampleImage(const cv::Mat_<uchar>& image)
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
-	const cv::Rect smpROI = get_bin_ROI(image.size());
-	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height);
+	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
+	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height, *(m_param.m_pMaskToAvoidFgObj));
 }

@@ -23,7 +23,7 @@ void ImgFuncWithSampling::dumpAppxImg(
 	const char* const caption
 )
 {
-	if (m_param.m_pbDump) {
+	if (!m_param.m_pbDump) {
 		return;
 	}
 
@@ -54,7 +54,7 @@ void ImgFuncWithSampling::plotSamples(
 	const char* const caption
 )
 {
-	if (m_param.m_pbDump) {
+	if (!m_param.m_pbDump) {
 		return;
 	}
 

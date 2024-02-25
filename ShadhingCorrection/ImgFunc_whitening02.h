@@ -3,9 +3,11 @@
 #include "ImgFuncWithSampling.h"
 #include "WithFinalInversion.h"
 #include "WithMaskToKeepDrawLine.h"
+#include "WithStdWhiteImg.h"
 
 class ImgFunc_whitening02
 	: public ImgFuncWithSampling, public WithFinalInversion, public WithMaskToKeepDrawLine
+	, public WithStdWhiteImg
 {
 	size_t m_lastSizeOfSamplesOnBG;
 

@@ -37,6 +37,9 @@ std::string OPENCV_URL = "https://opencv.org/";
 #define IMAGE_WND_MARGIN_HORZ		16
 #define IMAGE_WND_MARGIN_VERT		32
 
+// [DBGSW] Gray scale image read test.
+//#define DBG_GRAY_SCALE_SRC_IMG
+
 namespace
 {
 	/// Get the approximate size of the ROI.
@@ -256,7 +259,7 @@ namespace
 		cout << "  vertical ratio=" << (100.0 * (double)outputImgSz.height) / (double)appxROISize.height << "%" << endl;
 
 		// Do correction.
-		bool bSuc;
+		bool bSuc = false;
 		const char* caption;
 		if (param.m_bCutoffOnly) {
 			bSuc = ctx.correctDistortion(outputImgSz, outputImg);
@@ -264,7 +267,7 @@ namespace
 		}
 		else {
 			bSuc = ctx.doShadingCorrection(outputImgSz, outputImg);
-			caption = " Shading correction";
+			caption = "Shading correction";
 		}
 		if (bSuc) {
 			cv::namedWindow(OUTPUT_WND_NAME, cv::WINDOW_AUTOSIZE);
@@ -279,7 +282,7 @@ namespace
 			cout << "Info: " << caption << " failed." << endl;
 		}
 
-		return true;
+		return bSuc;
 	}
 
 }	// namespace
@@ -322,6 +325,9 @@ int main(const int argc, char* argv[])
 		cout << "ERROR: cv::imread() failed. (file name=\"" << param.m_imageFile << "\")" << endl;
 		return 1;
 	}
+#ifdef DBG_GRAY_SCALE_SRC_IMG
+	cv::cvtColor(*pSrcImage, *pSrcImage, cv::COLOR_BGR2GRAY);
+#endif
 
 	{
 		const DstImgSizeFunc& dszfunc = param.m_dstImgSizeFunc;		// Alias

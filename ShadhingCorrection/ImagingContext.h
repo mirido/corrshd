@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ImgFunc_avoidfg.h"
+
 class ImagingContext
 {
 	cv::Ptr<cv::Mat> m_pSrcImage;
@@ -15,6 +17,9 @@ class ImagingContext
 public:
 	// For intermediate image dump.
 	ImgFuncBase::Param m_param;
+
+private:
+	ImgFunc_avoidfg m_avoidfg;		// Must come after m_param.
 
 public:
 	ImagingContext();
@@ -75,7 +80,7 @@ public:
 
 	/// キャンバスとソース画像回転
 	void rotate(const int dir);
-	
+
 	/// Get rotation angle of canvas and source image.
 	int getImgRotAngle() const;
 
@@ -95,7 +100,7 @@ public:
 	int getNumImagingAlgorithms() const;
 
 	/// 歪み補正
-	bool correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg);
+	bool correctDistortion(const cv::Size& dstSz, cv::Mat& dstImg, const bool bConvToGray = true);
 
 	/// シェーディング補正
 	bool doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg);
