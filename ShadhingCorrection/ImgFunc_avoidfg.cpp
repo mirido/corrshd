@@ -64,7 +64,7 @@ namespace
 		// Go arouond edge of image and search shadow.
 		const cv::Size imgSz = whitenedGrayImg.size();
 		cv::Mat additionMask = cv::Mat::zeros(cv::Size(imgSz.width + 2, imgSz.height + 2), CV_8UC1);
-		auto maskAddFunc = [=, &additionMask](const cv::Point& seedPt) {
+		auto maskAddFunc = [=, &whitenedGrayImg, &additionMask](const cv::Point& seedPt) {
 			if (additionMask.at<uchar>(seedPt.y + 1, seedPt.x + 1) <= C_UCHAR(0)) {
 				const uchar lum = whitenedGrayImg.at<uchar>(seedPt);
 				if (lum < C_UCHAR(240)) {
@@ -114,11 +114,13 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::Mat YUVSrcImg;
 	cv::cvtColor(srcImg, YUVSrcImg, cv::COLOR_BGR2YUV);
 
-	// Disable 80% rule.
-	*(m_param.m_pRatioOfSmpROIToImgSz) = 1.0;
-
 	// Prepare kernel for morphological operation.
 	const cv::Mat kernel = get_bin_kernel(YUVSrcImg.size());
+
+	// Disable 80% rule.
+	const int imgLongSideLen = std::max(YUVSrcImg.cols, YUVSrcImg.rows);
+	const int smpLongSideLen = std::max(YUVSrcImg.cols - kernel.cols, YUVSrcImg.rows - kernel.rows);
+	*(m_param.m_pRatioOfSmpROIToImgSz) = std::max(0.0, (double)smpLongSideLen / (double)imgLongSideLen);
 
 	// Make initial mask to avoid fg obj.
 	cv::Mat maskToAvoidFgObj;
@@ -191,8 +193,7 @@ void ImgFunc_avoidfg::whitenYUVImg(const cv::Mat& YUVSrcImg, cv::Mat& modifiedYU
 		for (int x = 0; x < imgSz.width; x++) {
 			cv::Vec3b& pixel = modifiedYUVImg.at<cv::Vec3b>(y, x);		// Alias
 			int newY = (int)pixel[0] + (255 - (int)stdWhiteImg.at<uchar>(y, x));
-			newY = std::max(0, newY);
-			newY = std::min(newY, 255);
+			clip_as_lum255(newY);
 			pixel[0] = C_UCHAR(newY);
 		}
 	}
