@@ -102,7 +102,13 @@ void ImgFuncBase::cleanup()
 	// Destroy intermediate image windows.
 	auto pWndNameList = m_param.m_pWndNameList;		// Alias
 	for (auto it = pWndNameList->begin(); it != pWndNameList->end(); it++) {
-		cv::destroyWindow(*it);
+		try {
+			cv::destroyWindow(*it);
+		}
+		catch (cv::Exception& e) {
+			const char* const msg = e.what();
+			cout << "Warning: " << msg << endl;
+		}
 	}
 	pWndNameList->clear();
 

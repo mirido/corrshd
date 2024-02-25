@@ -261,7 +261,7 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		// m_imageFile
 		do {
 			// Input
-			os << "[Required] Input image file." << endl;
+			os << "[Required] Source (input) image file:" << endl;
 			if (!m_imageFile.empty()) {
 				os << "(current=\"" << m_imageFile << "\")" << endl;
 			}
@@ -287,10 +287,12 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		// m_dstImgSizeFunc
 		do {
 			// Input
-			os << "[Required] Physical size of target (or magnification to target to output image)" << endl;
+			os << "[Required] Physical size of target (or magnification of output image to target):" << endl;
 			if (!m_dstImgSizeFunc.empty()) {
 				os << "(current=" << m_dstImgSizeFunc << ")" << endl;
 			}
+			os << "Physical size Example: \"B5\" means B5 size, \"LB5\" means landscape B5 size." << endl;
+			os << "Magnification Example: \"x0.5\" means the maginification 0.5 of output image to target." << endl;
 			os << ">";
 			strTmp = get_line_from_istream(is);
 			if (!is) { return false; }
@@ -314,7 +316,7 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		if (!m_dstImgSizeFunc.isMagnificationMode()) {
 			do {
 				// Input
-				os << "[Required] Input dpi of output image." << endl;
+				os << "[Required] dpi of output image:" << endl;
 				if (!m_dstImgSizeFunc.empty()) {
 					os << "(current=" << m_dstImgSizeFunc.getDpi() << " dpi)" << endl;
 				}
@@ -339,7 +341,7 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		// m_outfileOrg
 		do {
 			// Input
-			os << "[Optional] Output image file." << endl;
+			os << "[Optional] Output image file:" << endl;
 			if (!m_outfileOrg.empty()) {
 				os << "(current=\"" << m_outfileOrg << "\")" << endl;
 			}
@@ -359,7 +361,7 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		// m_bCutoffOnly
 		do {
 			// Input
-			os << "[Optional] Do you want to shading correction after cut-out? ";
+			os << "[Optional] Do you want to shading correction after cut out? ";
 			bRet = get_selection_from_istream(os, is, "Yes No", strTmp, true);
 
 			// Check
@@ -383,11 +385,14 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		// m_imgAlgorithm -- Excluded from dialogue.
 		/*pass*/
 
-		// Confirm
+		// Show output file path.
 		updateOutfilePath();
+		os << "Result image file path=\"" << m_outfile << "\")" << endl;
+		os << endl;
+
+		// Confirm
 		do {
 			// Input
-			os << "Result image file path=\"" << m_outfile << "\")" << endl;
 			os << "Confirm above setting. ";
 			bRet = get_selection_from_istream(os, is, "Yes No Retry", strTmp, false);
 
@@ -419,11 +424,13 @@ bool AppParam::inputDialogue(std::ostream& os, std::istream& is)
 		os << "*" << endl;
 		os << endl;
 
-		// Show current.
+		// Show current settings.
+		os << "Current settings:" << endl;
 		os << "- Dump intermediate image: " << ((m_bDumpItmImg) ? "YES" : "NO") << endl;
 		if (m_bDumpItmImg) {
 			os << "- Directory to save intermediate images: \"" << m_dbgImgDir << "\"" << endl;
 		}
+		os << endl;
 
 		// Query go / nogo.
 		os << "Proceed with above setting(s)? ";
