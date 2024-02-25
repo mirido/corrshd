@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - On the existing shading correction algorithm
    (currently named ImgFunc_shdc01), calcuration of binarization ROI
    improved.
+- Increased resistance to dark foreground objects and shadows.
+  (It mainly implemented as ImgFunc_avoidfg class.)
+- Taken measures to prevent false images that often occur when calculating shadows in line drawings.
+  (It mainly implemented as add_artificial_samples_to_modify_uncorrectables() in ImgFunc_uniform.cpp)
+- Taken measures to prevent line blurring.
+  In particular, the introduction of coefficient COEF_TO_LESS_BLURRY
+  had a great effect on eliminating blurred lines.
 
 ### Fixed
 - Slightly modified README.md and remove unused .bat file.
