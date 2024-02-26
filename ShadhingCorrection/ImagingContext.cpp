@@ -388,7 +388,7 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 			planes[2] = cv::Mat::zeros(gmask.size(), gmask.type());
 			cv::Mat BGRBlendImg;
 			cv::merge(planes, BGRBlendImg);
-			cv::addWeighted(BGROutputImg, 0.8, BGRBlendImg, 0.2, 1.0, BGRBlendImg);
+			cv::addWeighted(BGROutputImg, 0.8, BGRBlendImg, 0.2, 0.0, BGRBlendImg);
 			cv::Mat blendMask = gmask.clone();
 			cv::bitwise_not(blendMask, blendMask);
 			BGROutputImg.copyTo(BGRBlendImg, blendMask);
