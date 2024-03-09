@@ -6,8 +6,8 @@
 
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_whitening02::ImgFunc_whitening02(Param& param)
-	: ImgFuncWithSampling(param), m_lastSizeOfSamplesOnBG(ZT(0))
+ImgFunc_whitening02::ImgFunc_whitening02(ParamPtr pParam)
+	: ImgFuncWithSampling(pParam), m_lastSizeOfSamplesOnBG(ZT(0))
 {
 	/*pass*/
 }
@@ -65,7 +65,7 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	stdWhiteImg.release();
 
 	if (m_bNeedMaskToKeepDrawLine) {
-		makeMaskToKeepDrawLine(dstImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
+		makeMaskToKeepDrawLine(dstImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
 	}
 	else {
 		m_maskToKeepDrawLine.release();
@@ -88,6 +88,6 @@ size_t ImgFunc_whitening02::getLastSizeOfSamplesOnBG() const
 std::vector<LumSample> ImgFunc_whitening02::sampleImage(const cv::Mat_<uchar>& image)
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
-	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
-	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height, *(m_param.m_pMaskToAvoidFgObj));
+	const cv::Rect smpROI = get_bin_ROI(image.size(), m_pParam->m_ratioOfSmpROIToImgSz);
+	return sample_pixels(image, smpROI, kernelSz.width, kernelSz.height, m_pParam->m_maskToAvoidFgObj);
 }

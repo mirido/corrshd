@@ -5,25 +5,27 @@ class ImgFuncBase : public IImgFunc
 public:
 	struct Param
 	{
-		std::shared_ptr<bool> m_pbDump;
-		std::shared_ptr<unsigned long> m_pImgCnt;
-		std::shared_ptr<std::string> m_pDbgImgDir;
+		bool m_bDump;
+		unsigned long m_imgCnt;
+		std::string m_dbgImgDir;
 
-		std::shared_ptr<std::vector<std::string> > m_pWndNameList;
-		std::shared_ptr<std::vector<std::string> > m_pImgFileList;
+		std::vector<std::string> m_wndNameList;
+		std::vector<std::string> m_imgFileList;
 
 		// Global data for image processing
-		std::shared_ptr<double> m_pRatioOfSmpROIToImgSz;		// Ratio of sampling ROI to image size.
-		std::shared_ptr<cv::Mat> m_pMaskToAvoidFgObj;			// Mask to avoid foreground objects.
+		double m_ratioOfSmpROIToImgSz;		// Ratio of sampling ROI to image size.
+		cv::Mat m_maskToAvoidFgObj;			// Mask to avoid foreground objects.
 
 		Param();
 	};
 
+	using ParamPtr = std::shared_ptr<Param>;
+
 protected:
-	Param m_param;
+	ParamPtr m_pParam;
 
 public:
-	ImgFuncBase(Param& param);
+	ImgFuncBase(ParamPtr pParam);
 
 	//
 	//	For DEBUG

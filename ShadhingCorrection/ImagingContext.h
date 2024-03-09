@@ -16,10 +16,10 @@ class ImagingContext
 
 public:
 	// For intermediate image dump.
-	ImgFuncBase::Param m_param;
+	ImgFuncBase::ParamPtr m_pParam;
 
 private:
-	ImgFunc_avoidfg m_avoidfg;		// Must come after m_param.
+	ImgFunc_avoidfg m_avoidfg;		// Must come after m_pParam.
 
 public:
 	ImagingContext();

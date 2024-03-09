@@ -8,9 +8,8 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_shdcWithUniform::ImgFunc_shdcWithUniform(Param& param)
-	: ImgFuncBase(param),
-	m_uniform(param)
+ImgFunc_shdcWithUniform::ImgFunc_shdcWithUniform(ParamPtr pParam)
+	: ImgFuncBase(pParam), m_uniform(pParam)
 {
 	/*pass*/
 }
@@ -40,15 +39,15 @@ bool ImgFunc_shdcWithUniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(fr2, "Fringe mask fr2");
 
 	// Exclude disturbance pixel ranges from fringe mask.
-	if (!m_param.m_pMaskToAvoidFgObj->empty()) {
-		if (!(m_param.m_pMaskToAvoidFgObj->size() == fr2.size())) {
+	if (!m_pParam->m_maskToAvoidFgObj.empty()) {
+		if (!(m_pParam->m_maskToAvoidFgObj.size() == fr2.size())) {
 			throw std::logic_error("*** ERR ***");
 		}
-		cv::bitwise_and(fr2, *(m_param.m_pMaskToAvoidFgObj), fr2);
+		cv::bitwise_and(fr2, m_pParam->m_maskToAvoidFgObj, fr2);
 	}
 
 	// Get background level with fr2.
-	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
+	const cv::Rect binROI = get_bin_ROI(invWhitenedImage.size(), m_pParam->m_ratioOfSmpROIToImgSz);
 	cv::Mat fr2ROI = fr2(binROI);
 	cv::Mat iwhROI = invWhitenedImage(binROI);
 #if 0

@@ -9,7 +9,7 @@ class ImgFunc_shdc02 : public ImgFuncWithSampling
 	ImgFunc_whitening01 m_whitening01;
 
 public:
-	ImgFunc_shdc02(Param& param);
+	ImgFunc_shdc02(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

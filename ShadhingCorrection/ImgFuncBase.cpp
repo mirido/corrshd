@@ -15,19 +15,16 @@
 #define BIN_ROI_RATIO		0.8
 
 ImgFuncBase::Param::Param()
-	: m_pbDump(new bool(false))
-	, m_pImgCnt(new unsigned long(0))
-	, m_pDbgImgDir(new std::string(DBG_IMG_DIR))
-	, m_pWndNameList(new std::vector<std::string>)
-	, m_pImgFileList(new std::vector<std::string>)
-	, m_pRatioOfSmpROIToImgSz(new double(BIN_ROI_RATIO))
-	, m_pMaskToAvoidFgObj(new cv::Mat)
+	: m_bDump(false)
+	, m_imgCnt(C_ULONG(0))
+	, m_dbgImgDir(DBG_IMG_DIR)
+	, m_ratioOfSmpROIToImgSz(C_DBL(BIN_ROI_RATIO))
 {
 	/*pass*/
 }
 
-ImgFuncBase::ImgFuncBase(Param& param)
-	: m_param(param)
+ImgFuncBase::ImgFuncBase(ParamPtr pParam)
+	: m_pParam(pParam)
 {
 	/*pass*/
 }
@@ -39,20 +36,20 @@ ImgFuncBase::ImgFuncBase(Param& param)
 /// Reset image dump count.
 void ImgFuncBase::resetImgDumpCnt()
 {
-	*m_param.m_pImgCnt = C_ULONG(0);
+	m_pParam->m_imgCnt = C_ULONG(0);
 	cleanup();
 }
 
 /// Dump intermediate image. (For DEBUG.)
 void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption)
 {
-	if (!*m_param.m_pbDump) {
+	if (!m_pParam->m_bDump) {
 		return;
 	}
 
-	(*m_param.m_pImgCnt)++;
+	(m_pParam->m_imgCnt)++;
 
-	cv::String numStr = std::to_string(*m_param.m_pImgCnt);
+	cv::String numStr = std::to_string(m_pParam->m_imgCnt);
 	if (numStr.length() < 2) {
 		numStr = cv::String("0") + numStr;
 	}
@@ -60,13 +57,15 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption)
 	// Display the image on the screen.
 	cv::String cap = numStr + cv::String("_") + caption;
 	cv::imshow(cap, image);
-	const int wnd_x = (*m_param.m_pImgCnt) * STRIDE_WND_X;
-	const int wnd_y = (*m_param.m_pImgCnt) * STRIDE_WND_Y;
+	const int wnd_x = (m_pParam->m_imgCnt) * STRIDE_WND_X;
+	const int wnd_y = (m_pParam->m_imgCnt) * STRIDE_WND_Y;
 	cv::moveWindow(cap, wnd_x, wnd_y);
-	m_param.m_pWndNameList->push_back(cap);
+	auto& wndNameList = m_pParam->m_wndNameList;		// Alias
+	wndNameList.push_back(cap);
 
 	// Save image to specified directory.
-	const char* const dstDir = m_param.m_pDbgImgDir->c_str();
+	auto& dbgImgDir = m_pParam->m_dbgImgDir;		// Alias
+	const char* const dstDir = dbgImgDir.c_str();
 	if (dstDir != NULL) {
 		// Make directory path string.
 		cv::String dir(dstDir);
@@ -97,7 +96,8 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption)
 		// Save image.
 		const std::string fpath = dir + filename;
 		cv::imwrite(fpath, image);
-		m_param.m_pImgFileList->push_back(fpath);
+		auto& imgFileList = m_pParam->m_imgFileList;		// Alias
+		imgFileList.push_back(fpath);
 	}
 }
 
@@ -105,8 +105,8 @@ void ImgFuncBase::dumpImg(const cv::Mat& image, const char* const caption)
 void ImgFuncBase::cleanup()
 {
 	// Destroy intermediate image windows.
-	auto pWndNameList = m_param.m_pWndNameList;		// Alias
-	for (auto it = pWndNameList->begin(); it != pWndNameList->end(); it++) {
+	auto& wndNameList = m_pParam->m_wndNameList;		// Alias
+	for (auto it = wndNameList.begin(); it != wndNameList.end(); it++) {
 		try {
 			cv::destroyWindow(*it);
 		}
@@ -115,12 +115,12 @@ void ImgFuncBase::cleanup()
 			cout << "Warning: " << msg << endl;
 		}
 	}
-	pWndNameList->clear();
+	wndNameList.clear();
 
 	// Delete intermediate image files.
-	auto pImgFileList = m_param.m_pImgFileList;		// Alias
-	for (auto it = pImgFileList->begin(); it != pImgFileList->end(); it++) {
+	auto& imgFileList = m_pParam->m_imgFileList;		// Alias
+	for (auto it = imgFileList.begin(); it != imgFileList.end(); it++) {
 		std::remove(it->c_str());
 	}
-	pImgFileList->clear();
+	imgFileList.clear();
 }

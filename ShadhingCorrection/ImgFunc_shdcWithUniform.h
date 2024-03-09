@@ -5,7 +5,7 @@ class ImgFunc_shdcWithUniform : public ImgFuncBase
 	ImgFunc_uniform m_uniform;
 
 public:
-	ImgFunc_shdcWithUniform(Param& param);
+	ImgFunc_shdcWithUniform(ParamPtr pParam);
 
 	bool run(const cv::Mat& SrcImg, cv::Mat& dstImg);
 

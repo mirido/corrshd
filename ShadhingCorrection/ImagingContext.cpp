@@ -39,14 +39,14 @@ namespace
 }	// namespace
 
 ImagingContext::ImagingContext()
-	: m_avoidfg(m_param)
+	: m_pParam(new ImgFuncBase::Param()), m_avoidfg(m_pParam)
 {
-	append_imgfunc(new ImgFunc_shdc01(m_param), m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc02(m_param), m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_whitening01(m_param), m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_whitening02(m_param), m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc03(m_param), m_imgFuncDic, m_imgFuncNames);
-	append_imgfunc(new ImgFunc_shdc04(m_param), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc01(m_pParam), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc02(m_pParam), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening01(m_pParam), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_whitening02(m_pParam), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc03(m_pParam), m_imgFuncDic, m_imgFuncNames);
+	append_imgfunc(new ImgFunc_shdc04(m_pParam), m_imgFuncDic, m_imgFuncNames);
 	if (!selectImagingAlgorithmByName(m_imgFuncNames.front())) {
 		// (Internal error.)
 		throw std::logic_error("*** ERR ***");
@@ -360,7 +360,7 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 	assert(BGRImgFromFront.channels() == 3);	// Œ‹‰Ê‚ÍBGR‰æ‘œ
 
 	// Avoid foreground objects.
-	// *(m_param.m_pMaskToAvoidFgObj) will be overwriten by this subroutine call.
+	// (m_pParam->m_maskToAvoidFgObj) will be overwriten by this subroutine call.
 	cv::Mat dummy;
 	if (!m_avoidfg.run(BGRImgFromFront, dummy)) {
 		return false;
@@ -375,7 +375,7 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 
 	// Dump final result with global mask.
 	if (bSuc) {
-		cv::Mat& gmask = *(m_param.m_pMaskToAvoidFgObj);		// Alias
+		cv::Mat& gmask = m_pParam->m_maskToAvoidFgObj;		// Alias
 		if (!gmask.empty()) {
 			// (Mask to avoid foreground object exists)
 
@@ -394,13 +394,13 @@ bool ImagingContext::doShadingCorrection(const cv::Size& dstSz, cv::Mat& dstImg)
 			BGROutputImg.copyTo(BGRBlendImg, blendMask);
 
 			// Enable intermediate image dump.
-			const bool sv_bDump = *(m_param.m_pbDump);
-			*(m_param.m_pbDump) = true;
+			const bool sv_bDump = m_pParam->m_bDump;
+			m_pParam->m_bDump = true;
 
 			m_pImgFunc->dumpImg(BGRBlendImg, "output image with gmask");
 
 			// Restore intermediate image dump ON/OFF.
-			*(m_param.m_pbDump) = sv_bDump;
+			m_pParam->m_bDump = sv_bDump;
 		}
 	}
 

@@ -9,8 +9,8 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_shdc04::ImgFunc_shdc04(Param& param)
-	: ImgFunc_shdcWithUniform(param), m_whitening02(param)
+ImgFunc_shdc04::ImgFunc_shdc04(ParamPtr pParam)
+	: ImgFunc_shdcWithUniform(pParam), m_whitening02(pParam)
 {
 	m_whitening02.needMaskToKeepDrawLine(true);
 	m_whitening02.doFinalInversion(false);

@@ -5,7 +5,7 @@
 class ImgFuncWithSampling : public ImgFuncBase
 {
 public:
-	ImgFuncWithSampling(Param& param);
+	ImgFuncWithSampling(ParamPtr pParam);
 
 	//
 	//	For DEBUG

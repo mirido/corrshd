@@ -9,7 +9,7 @@ class ImgFunc_whitening01
 	cv::Mat m_customKernel;
 
 public:
-	ImgFunc_whitening01(Param& param);
+	ImgFunc_whitening01(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

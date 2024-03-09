@@ -8,8 +8,8 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_shdc02::ImgFunc_shdc02(Param& param)
-	: ImgFuncWithSampling(param), m_whitening02(param), m_whitening01(param)
+ImgFunc_shdc02::ImgFunc_shdc02(ParamPtr pParam)
+	: ImgFuncWithSampling(pParam), m_whitening02(pParam), m_whitening01(pParam)
 {
 	m_whitening02.needMaskToKeepDrawLine(false);
 	m_whitening02.doFinalInversion(false);
@@ -88,8 +88,8 @@ bool ImgFunc_shdc02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 std::vector<LumSample> ImgFunc_shdc02::sampleDrawLine(
 	const cv::Mat_<uchar>& invImage, const cv::Mat_<uchar>& maskForDLChg, const size_t nsamples)
 {
-	const cv::Rect smpROI = get_bin_ROI(invImage.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
-	auto samplesOnDL = get_unmasked_point_and_lum(invImage, maskForDLChg, smpROI, *(m_param.m_pMaskToAvoidFgObj));
+	const cv::Rect smpROI = get_bin_ROI(invImage.size(), m_pParam->m_ratioOfSmpROIToImgSz);
+	auto samplesOnDL = get_unmasked_point_and_lum(invImage, maskForDLChg, smpROI, m_pParam->m_maskToAvoidFgObj);
 
 	const size_t sz = samplesOnDL.size();
 	if (sz <= nsamples) {

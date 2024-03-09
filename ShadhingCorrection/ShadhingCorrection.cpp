@@ -347,8 +347,8 @@ int main(const int argc, char* argv[])
 	ctx.setSrcImage(pSrcImage);
 
 	// Select dump or not intermediate image.
-	*ctx.m_param.m_pbDump = param.m_bDumpItmImg;
-	*ctx.m_param.m_pDbgImgDir = param.m_dbgImgDir;
+	ctx.m_pParam->m_bDump = param.m_bDumpItmImg;
+	ctx.m_pParam->m_dbgImgDir = param.m_dbgImgDir;
 
 	// 表示
 	g_bShowAsSameMag = false;		// 最初の表示は全体表示(centerPtが無いため)

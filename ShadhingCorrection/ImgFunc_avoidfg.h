@@ -7,7 +7,7 @@ class ImgFunc_avoidfg : public ImgFuncBase
 	ImgFunc_whitening02 m_whitening02;
 
 public:
-	ImgFunc_avoidfg(Param& param);
+	ImgFunc_avoidfg(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

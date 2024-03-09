@@ -6,8 +6,8 @@
 #include "../libnumeric/numericutil.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFunc_uniform::ImgFunc_uniform(Param& param)
-	: ImgFuncWithSampling(param)
+ImgFunc_uniform::ImgFunc_uniform(ParamPtr pParam)
+	: ImgFuncWithSampling(pParam)
 {
 	/*pass*/
 }
@@ -103,7 +103,7 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// This method assumes that background pixels of srcImg are almost equalized to 0.
 
 	// Make mask to keep draw line.
-	makeMaskToKeepDrawLine(srcImg, *(m_param.m_pRatioOfSmpROIToImgSz), *(m_param.m_pMaskToAvoidFgObj));
+	makeMaskToKeepDrawLine(srcImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
 	cv::Mat maskToKeepDL = m_maskToKeepDrawLine;
 
 	// Prepare kernel for dirate or erode.
@@ -157,13 +157,13 @@ std::vector<LumSample> ImgFunc_uniform::sampleDrawLine(
 )
 {
 	const cv::Size kernelSz = get_bin_kernel_size(image.size());
-	const cv::Rect smpROI = get_bin_ROI(image.size(), *(m_param.m_pRatioOfSmpROIToImgSz));
+	const cv::Rect smpROI = get_bin_ROI(image.size(), m_pParam->m_ratioOfSmpROIToImgSz);
 
 	const int cntx = get_num_grid_points(smpROI.width, kernelSz.width);
 	const int cnty = get_num_grid_points(smpROI.height, kernelSz.height);
 	const size_t nsamples = ZT(cntx) * ZT(cnty);
 
-	auto samplesOnDL = get_unmasked_point_and_lum(image, maskToKeepDL, smpROI, *(m_param.m_pMaskToAvoidFgObj));
+	auto samplesOnDL = get_unmasked_point_and_lum(image, maskToKeepDL, smpROI, m_pParam->m_maskToAvoidFgObj);
 
 	const size_t sz = samplesOnDL.size();
 	if (sz <= nsamples) {

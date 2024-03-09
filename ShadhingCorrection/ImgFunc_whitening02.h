@@ -12,7 +12,7 @@ class ImgFunc_whitening02
 	size_t m_lastSizeOfSamplesOnBG;
 
 public:
-	ImgFunc_whitening02(Param& param);
+	ImgFunc_whitening02(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

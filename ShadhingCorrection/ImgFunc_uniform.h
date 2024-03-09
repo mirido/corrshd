@@ -7,7 +7,7 @@ class ImgFunc_uniform
 	: public ImgFuncWithSampling, public WithMaskToKeepDrawLine
 {
 public:
-	ImgFunc_uniform(Param& param);
+	ImgFunc_uniform(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

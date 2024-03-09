@@ -7,7 +7,7 @@ class ImgFunc_shdc03 : public ImgFunc_shdcWithUniform
 	ImgFunc_whitening01 m_whitening01;
 
 public:
-	ImgFunc_shdc03(Param& param);
+	ImgFunc_shdc03(ParamPtr pParam);
 
 	const char* getName() const;
 	const char* getSummary() const;

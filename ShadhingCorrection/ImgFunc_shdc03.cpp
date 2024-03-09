@@ -5,8 +5,8 @@
 #include "ImgFunc_uniform.h"
 #include "ImgFunc_shdc03.h"
 
-ImgFunc_shdc03::ImgFunc_shdc03(Param& param)
-	: ImgFunc_shdcWithUniform(param), m_whitening01(param)
+ImgFunc_shdc03::ImgFunc_shdc03(ParamPtr pParam)
+	: ImgFunc_shdcWithUniform(pParam), m_whitening01(pParam)
 {
 	m_whitening01.needMaskToKeepDrawLine(true);
 	m_whitening01.doFinalInversion(false);

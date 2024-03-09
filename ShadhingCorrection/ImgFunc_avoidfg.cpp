@@ -20,8 +20,8 @@
 // [CONF] Luminance to white (255) margin to be considered white.
 #define LUM_MARGIN		3
 
-ImgFunc_avoidfg::ImgFunc_avoidfg(Param& param)
-	: ImgFuncBase(param), m_whitening02(param)
+ImgFunc_avoidfg::ImgFunc_avoidfg(ParamPtr pParam)
+	: ImgFuncBase(pParam), m_whitening02(pParam)
 {
 	m_whitening02.needStdWhiteImg(true);
 	m_whitening02.needMaskToKeepDrawLine(false);
@@ -120,7 +120,7 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Disable 80% rule.
 	const int imgLongSideLen = std::max(YUVSrcImg.cols, YUVSrcImg.rows);
 	const int smpLongSideLen = std::max(YUVSrcImg.cols - kernel.cols, YUVSrcImg.rows - kernel.rows);
-	*(m_param.m_pRatioOfSmpROIToImgSz) = std::max(0.0, (double)smpLongSideLen / (double)imgLongSideLen);
+	m_pParam->m_ratioOfSmpROIToImgSz = std::max(0.0, (double)smpLongSideLen / (double)imgLongSideLen);
 
 	// Make initial mask to avoid fg obj.
 	cv::Mat maskToAvoidFgObj;
@@ -129,25 +129,25 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (1st)");
 
 	// Surpress intermediate image dump.
-	const bool sv_bDump = *(m_param.m_pbDump);
-	*(m_param.m_pbDump) = false;
+	const bool sv_bDump = m_pParam->m_bDump;
+	m_pParam->m_bDump = false;
 
 	// Make grayscale image of srcImg.
 	cv::Mat grayImg;
 	cv::cvtColor(srcImg, grayImg, cv::COLOR_BGR2GRAY);
 
 	// Update global mask.
-	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
+	m_pParam->m_maskToAvoidFgObj = maskToAvoidFgObj;
 
 	// Run whitening02.
 	cv::Mat whitenedGrayImg;
 	if (!m_whitening02.run(grayImg, whitenedGrayImg)) {
-		*(m_param.m_pbDump) = sv_bDump;
+		m_pParam->m_bDump = sv_bDump;
 		return false;
 	}
 
 	// Restore intermediate image dump switch.
-	*(m_param.m_pbDump) = sv_bDump;
+	m_pParam->m_bDump = sv_bDump;
 
 	// Whiten YUV image with whitening02 result.
 	cv::Mat whitenedYUVImg;
@@ -169,7 +169,7 @@ bool ImgFunc_avoidfg::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	dumpImg(maskToAvoidFgObj, "mask to avoid fg obj (3rd)");
 
 	// Update global mask (2nd).
-	*(m_param.m_pMaskToAvoidFgObj) = maskToAvoidFgObj;
+	m_pParam->m_maskToAvoidFgObj = maskToAvoidFgObj;
 
 #if 0
 	// Run whitening02 (2nd).
@@ -204,7 +204,7 @@ void ImgFunc_avoidfg::whitenYUVImg(const cv::Mat& YUVSrcImg, cv::Mat& modifiedYU
 
 void ImgFunc_avoidfg::dumpYUVImgAsBGR(const cv::Mat& YUVImg, const char* const caption)
 {
-	if (*m_param.m_pbDump) {
+	if (m_pParam->m_bDump) {
 		cv::Mat tmpBGRImg;
 		cv::cvtColor(YUVImg, tmpBGRImg, cv::COLOR_YUV2BGR);
 		dumpImg(tmpBGRImg, caption);

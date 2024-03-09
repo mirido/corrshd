@@ -6,8 +6,8 @@
 #include "../libnumeric/regression.h"
 #include "../libimaging/shdcutil.h"
 
-ImgFuncWithSampling::ImgFuncWithSampling(Param& param)
-	: ImgFuncBase(param)
+ImgFuncWithSampling::ImgFuncWithSampling(ParamPtr pParam)
+	: ImgFuncBase(pParam)
 {
 	/*pass*/
 }
@@ -23,7 +23,7 @@ void ImgFuncWithSampling::dumpAppxImg(
 	const char* const caption
 )
 {
-	if (!m_param.m_pbDump) {
+	if (!m_pParam->m_bDump) {
 		return;
 	}
 
@@ -54,7 +54,7 @@ void ImgFuncWithSampling::plotSamples(
 	const char* const caption
 )
 {
-	if (!m_param.m_pbDump) {
+	if (!m_pParam->m_bDump) {
 		return;
 	}
 

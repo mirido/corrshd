@@ -7,8 +7,8 @@
 #include "../libimaging/geometryutil.h"
 #include "../libimaging/imaging_op.h"
 
-ImgFunc_shdc01::ImgFunc_shdc01(Param& param)
-	: ImgFuncBase(param), m_whitening01(param)
+ImgFunc_shdc01::ImgFunc_shdc01(ParamPtr pParam)
+	: ImgFuncBase(pParam), m_whitening01(pParam)
 {
 	m_whitening01.needMaskToKeepDrawLine(true);
 	m_whitening01.doFinalInversion(false);
@@ -43,7 +43,7 @@ bool ImgFunc_shdc01::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	
 	// 均一化画像gray2 (の平滑化結果)のマスクされない画素データを抽出(data)
 	const cv::Rect smpROI = get_scaled_rect_from_size(gray1.size(), 1.0);
-	std::vector<uchar> data = get_unmasked_data(gray1, maskToKeepDrawLine, smpROI, *(m_param.m_pMaskToAvoidFgObj));
+	std::vector<uchar> data = get_unmasked_data(gray1, maskToKeepDrawLine, smpROI, m_pParam->m_maskToAvoidFgObj);
 	if (data.size() < 2) {
 		return false;
 	}
