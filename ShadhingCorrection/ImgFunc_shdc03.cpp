@@ -8,8 +8,8 @@
 ImgFunc_shdc03::ImgFunc_shdc03(ParamPtr pParam)
 	: ImgFunc_shdcWithUniform(pParam), m_whitening01(pParam)
 {
-	m_whitening01.needMaskToKeepDrawLine(true);
-	m_whitening01.doFinalInversion(false);
+	m_whitening01.setFlagToMakeMaskToKeepDrawLine(true);
+	m_whitening01.setFinalInversionFlag(false);
 }
 
 const char* ImgFunc_shdc03::getName() const

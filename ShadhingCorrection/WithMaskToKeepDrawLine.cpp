@@ -9,14 +9,50 @@
 #define COEF_TO_LESS_BLURRY		0.7
 
 WithMaskToKeepDrawLine::WithMaskToKeepDrawLine()
-	: m_thToKeepDrawLine(0.0), m_bNeedMaskToKeepDrawLine(false)
+	: m_thToKeepDrawLine(0.0), m_bMakeMaskToKeepDrawLine(false)
 {
 	/*pass*/
 }
 
-void WithMaskToKeepDrawLine::needMaskToKeepDrawLine(const bool bNeed)
+void WithMaskToKeepDrawLine::updateMaskToKeepDrawLine(
+	const cv::Mat& srcImg,
+	const double ratioOfSmpROIToImgSz,
+	const cv::InputArray globalMask
+)
 {
-	m_bNeedMaskToKeepDrawLine = bNeed;
+	if (m_bMakeMaskToKeepDrawLine) {
+		makeMaskToKeepDrawLine(srcImg, ratioOfSmpROIToImgSz, globalMask);
+	}
+	else {
+		m_maskToKeepDrawLine.release();
+	}
+}
+
+void WithMaskToKeepDrawLine::releaseMaskToKeepDrawLine()
+{
+	m_maskToKeepDrawLine.release();
+}
+
+void WithMaskToKeepDrawLine::setFlagToMakeMaskToKeepDrawLine(const bool bMake)
+{
+	m_bMakeMaskToKeepDrawLine = bMake;
+}
+
+bool WithMaskToKeepDrawLine::getFlagToMakeMaskToKeepDrawLine() const
+{
+	return m_bMakeMaskToKeepDrawLine;
+}
+
+const cv::Mat& WithMaskToKeepDrawLine::getMaskToKeepDrawLine() const
+{
+	assert(m_bMakeMaskToKeepDrawLine && !m_maskToKeepDrawLine.empty());
+	return m_maskToKeepDrawLine;
+}
+
+double WithMaskToKeepDrawLine::getThToKeepDrawLine() const
+{
+	assert(m_bMakeMaskToKeepDrawLine /*&& !m_maskToKeepDrawLine.empty()*/);
+	return m_thToKeepDrawLine;
 }
 
 void WithMaskToKeepDrawLine::makeMaskToKeepDrawLine(
@@ -38,11 +74,6 @@ void WithMaskToKeepDrawLine::makeMaskToKeepDrawLine(
 	// マスク作成
 	// 平滑化画像bluredImgの輝度th1以下を黒(0)、超過を白(255)にする(maskImg)
 	cv::threshold(bluredImg, m_maskToKeepDrawLine, m_thToKeepDrawLine, 255.0, cv::THRESH_BINARY);
-}
-
-const cv::Mat& WithMaskToKeepDrawLine::getMaskToKeepDrawLine() const
-{
-	return m_maskToKeepDrawLine;
 }
 
 /// Get binarization threshold with Otsu.

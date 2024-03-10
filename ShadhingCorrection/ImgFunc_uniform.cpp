@@ -103,8 +103,9 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// This method assumes that background pixels of srcImg are almost equalized to 0.
 
 	// Make mask to keep draw line.
-	makeMaskToKeepDrawLine(srcImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
-	cv::Mat maskToKeepDL = m_maskToKeepDrawLine;
+	setFlagToMakeMaskToKeepDrawLine(true);
+	updateMaskToKeepDrawLine(srcImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
+	const cv::Mat& maskToKeepDL = getMaskToKeepDrawLine();
 
 	// Prepare kernel for dirate or erode.
 	const cv::Mat kernel = get_bin_kernel(srcImg.size());
@@ -114,7 +115,7 @@ bool ImgFunc_uniform::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	cv::dilate(srcImg, morphoTmpImg, kernel);
 	auto samplesOnDL = sampleDrawLine(morphoTmpImg, maskToKeepDL);
 
-	maskToKeepDL.release();
+	releaseMaskToKeepDrawLine();
 
 	// Approximage blackness tilt on drawing line (1st).
 	std::vector<double> cflistOnDL;

@@ -10,8 +10,8 @@
 ImgFunc_shdc01::ImgFunc_shdc01(ParamPtr pParam)
 	: ImgFuncBase(pParam), m_whitening01(pParam)
 {
-	m_whitening01.needMaskToKeepDrawLine(true);
-	m_whitening01.doFinalInversion(false);
+	m_whitening01.setFlagToMakeMaskToKeepDrawLine(true);
+	m_whitening01.setFinalInversionFlag(false);
 }
 
 const char* ImgFunc_shdc01::getName() const

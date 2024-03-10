@@ -2,19 +2,22 @@
 
 class WithStdWhiteImg
 {
-protected:
 	cv::Mat m_stdWhiteImg;
-	bool m_bNeedStdWhiteImg;
+	bool m_bMakeStdWhiteImg;
 
 public:
 	WithStdWhiteImg();
 
-	void needStdWhiteImg(const bool bNeed);
+	void setFlagToMakeStdWhiteImg(const bool bMake);
+
+	bool getFlagToMakeStdWhiteImg() const;
 
 protected:
 	void updateStdWhiteImg(const cv::Mat& newImg);
 
+	void releaseStdWhiteImg();
+
 public:
-	const cv::Mat getStdWhiteImg() const;
+	const cv::Mat& getStdWhiteImg() const;
 
 };

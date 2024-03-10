@@ -2,12 +2,13 @@
 
 class WithFinalInversion
 {
-protected:
 	bool m_bDoFinalInversion;
 
 public:
 	WithFinalInversion();
 
-	void doFinalInversion(const bool bDo);
+	void setFinalInversionFlag(const bool bInvert);
+
+	bool getFinalInversionFlag() const;
 
 };

@@ -11,10 +11,10 @@
 ImgFunc_shdc02::ImgFunc_shdc02(ParamPtr pParam)
 	: ImgFuncWithSampling(pParam), m_whitening02(pParam), m_whitening01(pParam)
 {
-	m_whitening02.needMaskToKeepDrawLine(false);
-	m_whitening02.doFinalInversion(false);
-	m_whitening01.needMaskToKeepDrawLine(true);
-	m_whitening01.doFinalInversion(false);
+	m_whitening02.setFlagToMakeMaskToKeepDrawLine(false);
+	m_whitening02.setFinalInversionFlag(false);
+	m_whitening01.setFlagToMakeMaskToKeepDrawLine(true);
+	m_whitening01.setFinalInversionFlag(false);
 }
 
 const char* ImgFunc_shdc02::getName() const

@@ -51,9 +51,9 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	// Whitening.
 	cv::Mat stdWhiteImg;
 	predict_image(srcImg.size(), cflistOnBg, stdWhiteImg);
-	if (m_bNeedStdWhiteImg) {
-		updateStdWhiteImg(stdWhiteImg);
-	}
+	//assert(getFlagToMakeStdWhiteImg());
+	setFlagToMakeStdWhiteImg(true);
+	updateStdWhiteImg(stdWhiteImg);
 	dumpImg(stdWhiteImg, "standard white image");
 	// Following subtraction is achieved as saturation operation.
 	dstImg = stdWhiteImg - srcImg;
@@ -64,14 +64,9 @@ bool ImgFunc_whitening02::run(const cv::Mat& srcImg, cv::Mat& dstImg)
 	morphoTmpImg.release();
 	stdWhiteImg.release();
 
-	if (m_bNeedMaskToKeepDrawLine) {
-		makeMaskToKeepDrawLine(dstImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
-	}
-	else {
-		m_maskToKeepDrawLine.release();
-	}
+	updateMaskToKeepDrawLine(dstImg, m_pParam->m_ratioOfSmpROIToImgSz, m_pParam->m_maskToAvoidFgObj);
 
-	if (m_bDoFinalInversion) {
+	if (getFinalInversionFlag()) {
 		cv::bitwise_not(dstImg, dstImg);
 	}
 

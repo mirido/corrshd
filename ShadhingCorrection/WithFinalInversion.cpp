@@ -7,7 +7,12 @@ WithFinalInversion::WithFinalInversion()
 	/*pass*/
 }
 
-void WithFinalInversion::doFinalInversion(const bool bDo)
+void WithFinalInversion::setFinalInversionFlag(const bool bInvert)
 {
-	m_bDoFinalInversion = bDo;
+	m_bDoFinalInversion = bInvert;
+}
+
+bool WithFinalInversion::getFinalInversionFlag() const
+{
+	return m_bDoFinalInversion;
 }

@@ -23,9 +23,9 @@
 ImgFunc_avoidfg::ImgFunc_avoidfg(ParamPtr pParam)
 	: ImgFuncBase(pParam), m_whitening02(pParam)
 {
-	m_whitening02.needStdWhiteImg(true);
-	m_whitening02.needMaskToKeepDrawLine(false);
-	m_whitening02.doFinalInversion(true);
+	m_whitening02.setFlagToMakeStdWhiteImg(true);
+	m_whitening02.setFlagToMakeMaskToKeepDrawLine(false);
+	m_whitening02.setFinalInversionFlag(true);
 }
 
 const char* ImgFunc_avoidfg::getName() const

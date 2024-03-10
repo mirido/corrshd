@@ -2,25 +2,38 @@
 
 class WithMaskToKeepDrawLine
 {
-protected:
 	cv::Mat m_maskToKeepDrawLine;
 	double m_thToKeepDrawLine;
-	bool m_bNeedMaskToKeepDrawLine;
+	bool m_bMakeMaskToKeepDrawLine;
 
 public:
 	WithMaskToKeepDrawLine();
 
-	void needMaskToKeepDrawLine(const bool bNeed);
+	void setFlagToMakeMaskToKeepDrawLine(const bool bMake);
 
+	bool getFlagToMakeMaskToKeepDrawLine() const;
+
+protected:
+	void updateMaskToKeepDrawLine(
+		const cv::Mat& srcImg,
+		const double ratioOfSmpROIToImgSz,
+		const cv::InputArray globalMask
+	);
+
+	void releaseMaskToKeepDrawLine();
+
+public:
+	const cv::Mat& getMaskToKeepDrawLine() const;
+
+	double getThToKeepDrawLine() const;
+
+private:
 	void makeMaskToKeepDrawLine(
 		const cv::Mat& srcImg,
 		const double ratioOfSmpROIToImgSz,
 		const cv::InputArray globalMask
 	);
 
-	const cv::Mat& getMaskToKeepDrawLine() const;
-
-private:
 	/// Get binarization threshold with Otsu.
 	double getThWithOtsu(
 		const cv::Mat& bluredBhatImg,
